@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" stroke="#222" stroke-width="1.2">
+  <circle cx="200" cy="200" r="188" stroke-width="1.5"/>
+  <!-- 6 large lotus petals outer -->
+  <path d="M200 15 Q250 100 200 130 Q150 100 200 15Z" transform="rotate(0 200 200)"/>
+  <path d="M200 15 Q250 100 200 130 Q150 100 200 15Z" transform="rotate(60 200 200)"/>
+  <path d="M200 15 Q250 100 200 130 Q150 100 200 15Z" transform="rotate(120 200 200)"/>
+  <path d="M200 15 Q250 100 200 130 Q150 100 200 15Z" transform="rotate(180 200 200)"/>
+  <path d="M200 15 Q250 100 200 130 Q150 100 200 15Z" transform="rotate(240 200 200)"/>
+  <path d="M200 15 Q250 100 200 130 Q150 100 200 15Z" transform="rotate(300 200 200)"/>
+  <!-- 6 pointed petals between -->
+  <path d="M200 40 Q225 95 200 115 Q175 95 200 40Z" transform="rotate(30 200 200)"/>
+  <path d="M200 40 Q225 95 200 115 Q175 95 200 40Z" transform="rotate(90 200 200)"/>
+  <path d="M200 40 Q225 95 200 115 Q175 95 200 40Z" transform="rotate(150 200 200)"/>
+  <path d="M200 40 Q225 95 200 115 Q175 95 200 40Z" transform="rotate(210 200 200)"/>
+  <path d="M200 40 Q225 95 200 115 Q175 95 200 40Z" transform="rotate(270 200 200)"/>
+  <path d="M200 40 Q225 95 200 115 Q175 95 200 40Z" transform="rotate(330 200 200)"/>
+  <!-- Outer ring -->
+  <circle cx="200" cy="200" r="155"/>
+  <!-- Decorative triangles -->
+  <path d="M200 48 L215 90 L185 90Z" transform="rotate(0 200 200)"/>
+  <path d="M200 48 L215 90 L185 90Z" transform="rotate(60 200 200)"/>
+  <path d="M200 48 L215 90 L185 90Z" transform="rotate(120 200 200)"/>
+  <path d="M200 48 L215 90 L185 90Z" transform="rotate(180 200 200)"/>
+  <path d="M200 48 L215 90 L185 90Z" transform="rotate(240 200 200)"/>
+  <path d="M200 48 L215 90 L185 90Z" transform="rotate(300 200 200)"/>
+  <!-- Mid circle -->
+  <circle cx="200" cy="200" r="100"/>
+  <!-- Inner petals -->
+  <path d="M200 103 Q220 145 200 162 Q180 145 200 103Z" transform="rotate(0 200 200)"/>
+  <path d="M200 103 Q220 145 200 162 Q180 145 200 103Z" transform="rotate(60 200 200)"/>
+  <path d="M200 103 Q220 145 200 162 Q180 145 200 103Z" transform="rotate(120 200 200)"/>
+  <path d="M200 103 Q220 145 200 162 Q180 145 200 103Z" transform="rotate(180 200 200)"/>
+  <path d="M200 103 Q220 145 200 162 Q180 145 200 103Z" transform="rotate(240 200 200)"/>
+  <path d="M200 103 Q220 145 200 162 Q180 145 200 103Z" transform="rotate(300 200 200)"/>
+  <!-- Inner rings -->
+  <circle cx="200" cy="200" r="60"/>
+  <circle cx="200" cy="200" r="38"/>
+  <!-- Hexagon -->
+  <polygon points="200,162 234,181 234,219 200,238 166,219 166,181"/>
+  <!-- Center -->
+  <circle cx="200" cy="200" r="20"/>
+  <circle cx="200" cy="200" r="8"/>
+  <!-- Dot ring -->
+  <circle cx="200" cy="178" r="3" transform="rotate(0 200 200)"/>
+  <circle cx="200" cy="178" r="3" transform="rotate(60 200 200)"/>
+  <circle cx="200" cy="178" r="3" transform="rotate(120 200 200)"/>
+  <circle cx="200" cy="178" r="3" transform="rotate(180 200 200)"/>
+  <circle cx="200" cy="178" r="3" transform="rotate(240 200 200)"/>
+  <circle cx="200" cy="178" r="3" transform="rotate(300 200 200)"/>
+</svg>

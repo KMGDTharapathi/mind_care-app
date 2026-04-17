@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none" stroke="#333" stroke-width="1.5">
+  <!-- Sky -->
+  <rect x="0" y="0" width="400" height="220" fill="#E3F2FD" stroke="none"/>
+  <!-- Sun -->
+  <circle cx="200" cy="80" r="45" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5"/>
+  <circle cx="200" cy="80" r="32" fill="#FFD54F" stroke="#F57F17" stroke-width="1"/>
+  <!-- Sun rays -->
+  <line x1="200" y1="25" x2="200" y2="10" stroke="#F9A825" stroke-width="2"/>
+  <line x1="200" y1="135" x2="200" y2="150" stroke="#F9A825" stroke-width="2"/>
+  <line x1="145" y1="80" x2="130" y2="80" stroke="#F9A825" stroke-width="2"/>
+  <line x1="255" y1="80" x2="270" y2="80" stroke="#F9A825" stroke-width="2"/>
+  <line x1="161" y1="41" x2="150" y2="30" stroke="#F9A825" stroke-width="2"/>
+  <line x1="239" y1="41" x2="250" y2="30" stroke="#F9A825" stroke-width="2"/>
+  <line x1="161" y1="119" x2="150" y2="130" stroke="#F9A825" stroke-width="2"/>
+  <line x1="239" y1="119" x2="250" y2="130" stroke="#F9A825" stroke-width="2"/>
+  <!-- Clouds -->
+  <ellipse cx="80" cy="50" rx="40" ry="18" fill="white" stroke="#B0BEC5" stroke-width="1"/>
+  <ellipse cx="60" cy="55" rx="28" ry="14" fill="white" stroke="#B0BEC5" stroke-width="1"/>
+  <ellipse cx="100" cy="55" rx="28" ry="14" fill="white" stroke="#B0BEC5" stroke-width="1"/>
+  <ellipse cx="320" cy="40" rx="38" ry="16" fill="white" stroke="#B0BEC5" stroke-width="1"/>
+  <ellipse cx="300" cy="45" rx="26" ry="13" fill="white" stroke="#B0BEC5" stroke-width="1"/>
+  <ellipse cx="340" cy="45" rx="26" ry="13" fill="white" stroke="#B0BEC5" stroke-width="1"/>
+  <!-- Horizon glow -->
+  <rect x="0" y="180" width="400" height="40" fill="#FFE0B2" stroke="none"/>
+  <!-- Ocean layers -->
+  <rect x="0" y="220" width="400" height="280" fill="#0D47A1" stroke="none"/>
+  <rect x="0" y="250" width="400" height="250" fill="#1565C0" stroke="none"/>
+  <rect x="0" y="290" width="400" height="210" fill="#1976D2" stroke="none"/>
+  <rect x="0" y="340" width="400" height="160" fill="#1E88E5" stroke="none"/>
+  <rect x="0" y="400" width="400" height="100" fill="#42A5F5" stroke="none"/>
+  <!-- Sun reflection -->
+  <path d="M170 220 L230 220 L260 500 L140 500Z" fill="#FFF9C4" stroke="none" opacity="0.3"/>
+  <!-- Waves -->
+  <path d="M0 230 Q50 220 100 230 Q150 240 200 230 Q250 220 300 230 Q350 240 400 230" stroke="white" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M0 260 Q40 250 80 260 Q120 270 160 260 Q200 250 240 260 Q280 270 320 260 Q360 250 400 260" stroke="white" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <path d="M0 300 Q60 288 120 300 Q180 312 240 300 Q300 288 360 300 Q380 306 400 300" stroke="white" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <path d="M0 350 Q50 338 100 350 Q150 362 200 350 Q250 338 300 350 Q350 362 400 350" stroke="white" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <path d="M0 400 Q70 388 140 400 Q210 412 280 400 Q340 388 400 400" stroke="white" stroke-width="1.5" fill="none" opacity="0.3"/>
+  <!-- Seagulls -->
+  <path d="M100 140 Q110 133 120 140" stroke="#546E7A" stroke-width="1.5" fill="none"/>
+  <path d="M130 125 Q142 117 154 125" stroke="#546E7A" stroke-width="1.5" fill="none"/>
+  <path d="M280 150 Q290 143 300 150" stroke="#546E7A" stroke-width="1.5" fill="none"/>
+  <!-- Boat silhouette -->
+  <path d="M160 215 L240 215 L250 230 L150 230Z" fill="#4E342E" stroke="#3E2723" stroke-width="1"/>
+  <line x1="200" y1="215" x2="200" y2="175" stroke="#4E342E" stroke-width="2"/>
+  <path d="M200 175 L200 195 L230 195Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1"/>
+  <!-- Fish underwater -->
+  <ellipse cx="100" cy="380" rx="20" ry="10" fill="#FFD54F" stroke="#F57F17" stroke-width="1"/>
+  <path d="M120 380 L135 370 L135 390Z" fill="#FFD54F" stroke="#F57F17" stroke-width="1"/>
+  <circle cx="108" cy="377" r="3" fill="#333"/>
+  <ellipse cx="300" cy="420" rx="18" ry="9" fill="#EF9A9A" stroke="#C62828" stroke-width="1"/>
+  <path d="M318 420 L332 411 L332 429Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1"/>
+  <circle cx="307" cy="417" r="2.5" fill="#333"/>
+  <!-- Coral -->
+  <path d="M50 480 Q45 460 50 440 Q55 460 60 440 Q65 460 70 440 Q75 460 70 480Z" fill="#FF8A65" stroke="#E64A19" stroke-width="1"/>
+  <path d="M330 490 Q325 465 330 445 Q335 465 340 445 Q345 465 350 445 Q355 465 350 490Z" fill="#CE93D8" stroke="#7B1FA2" stroke-width="1"/>
+</svg>

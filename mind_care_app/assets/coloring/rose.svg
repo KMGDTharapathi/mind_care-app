@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none" stroke="#333" stroke-width="1.5">
+  <rect x="0" y="0" width="400" height="500" fill="#FFF8F8" stroke="none"/>
+  <!-- Stem -->
+  <path d="M200 480 Q195 420 200 360" stroke="#388E3C" stroke-width="4" fill="none"/>
+  <!-- Left leaf -->
+  <path d="M200 420 Q160 400 140 370 Q170 375 200 400Z" fill="#A5D6A7" stroke="#388E3C" stroke-width="1.5"/>
+  <path d="M200 420 Q165 395 145 368" stroke="#388E3C" stroke-width="1" fill="none"/>
+  <!-- Right leaf -->
+  <path d="M200 400 Q240 380 260 350 Q230 355 200 380Z" fill="#A5D6A7" stroke="#388E3C" stroke-width="1.5"/>
+  <path d="M200 400 Q235 375 255 348" stroke="#388E3C" stroke-width="1" fill="none"/>
+  <!-- Thorns -->
+  <path d="M200 440 L185 430" stroke="#388E3C" stroke-width="1.5" fill="none"/>
+  <path d="M200 460 L215 450" stroke="#388E3C" stroke-width="1.5" fill="none"/>
+  <!-- Rose - outer petals layer 1 -->
+  <path d="M200 360 Q155 330 140 290 Q165 310 185 320 Q190 340 200 355Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1.5"/>
+  <path d="M200 360 Q245 330 260 290 Q235 310 215 320 Q210 340 200 355Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1.5"/>
+  <path d="M200 360 Q165 315 155 270 Q180 295 195 310 Q198 335 200 355Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1.5"/>
+  <path d="M200 360 Q235 315 245 270 Q220 295 205 310 Q202 335 200 355Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1.5"/>
+  <path d="M200 355 Q175 305 175 265 Q192 290 200 310Z" fill="#E57373" stroke="#C62828" stroke-width="1.5"/>
+  <path d="M200 355 Q225 305 225 265 Q208 290 200 310Z" fill="#E57373" stroke="#C62828" stroke-width="1.5"/>
+  <!-- Rose - middle petals layer 2 -->
+  <path d="M200 340 Q172 310 168 278 Q185 298 198 315Z" fill="#EF5350" stroke="#B71C1C" stroke-width="1.5"/>
+  <path d="M200 340 Q228 310 232 278 Q215 298 202 315Z" fill="#EF5350" stroke="#B71C1C" stroke-width="1.5"/>
+  <path d="M200 340 Q180 300 182 268 Q195 285 200 305Z" fill="#E53935" stroke="#B71C1C" stroke-width="1.5"/>
+  <path d="M200 340 Q220 300 218 268 Q205 285 200 305Z" fill="#E53935" stroke="#B71C1C" stroke-width="1.5"/>
+  <!-- Rose - inner petals layer 3 -->
+  <path d="M200 325 Q183 298 185 275 Q196 290 200 308Z" fill="#C62828" stroke="#B71C1C" stroke-width="1"/>
+  <path d="M200 325 Q217 298 215 275 Q204 290 200 308Z" fill="#C62828" stroke="#B71C1C" stroke-width="1"/>
+  <!-- Rose center -->
+  <ellipse cx="200" cy="285" rx="16" ry="12" fill="#B71C1C" stroke="#7F0000" stroke-width="1.5"/>
+  <path d="M192 285 Q200 278 208 285 Q200 292 192 285Z" fill="#7F0000" stroke="none"/>
+  <!-- Sepals -->
+  <path d="M200 360 Q180 370 170 385 Q185 375 200 368Z" fill="#388E3C" stroke="#1B5E20" stroke-width="1"/>
+  <path d="M200 360 Q220 370 230 385 Q215 375 200 368Z" fill="#388E3C" stroke="#1B5E20" stroke-width="1"/>
+  <path d="M200 360 Q195 372 192 388 Q198 378 200 368Z" fill="#388E3C" stroke="#1B5E20" stroke-width="1"/>
+  <!-- Small decorative flowers -->
+  <circle cx="60" cy="100" r="25" fill="#FCE4EC" stroke="#E91E63" stroke-width="1.2"/>
+  <circle cx="60" cy="100" r="10" fill="#FFF9C4" stroke="#F9A825" stroke-width="1"/>
+  <circle cx="340" cy="120" r="20" fill="#E8EAF6" stroke="#3F51B5" stroke-width="1.2"/>
+  <circle cx="340" cy="120" r="8" fill="#FFF9C4" stroke="#F9A825" stroke-width="1"/>
+  <!-- Dewdrops on petals -->
+  <ellipse cx="175" cy="310" rx="4" ry="6" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+  <ellipse cx="225" cy="305" rx="3" ry="5" fill="#E3F2FD" stroke="#90CAF9" stroke-width="0.8"/>
+</svg>

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none" stroke="#333" stroke-width="1.5">
+  <rect x="0" y="0" width="400" height="500" fill="#E8F5E9" stroke="none"/>
+  <!-- Tail feathers - back layer -->
+  <path d="M200 320 Q120 260 80 180 Q130 220 170 270 Q185 295 200 315Z" fill="#B2EBF2" stroke="#00838F" stroke-width="1.2"/>
+  <path d="M200 320 Q280 260 320 180 Q270 220 230 270 Q215 295 200 315Z" fill="#B2EBF2" stroke="#00838F" stroke-width="1.2"/>
+  <path d="M200 320 Q100 280 60 200 Q115 240 165 280 Q183 300 200 318Z" fill="#C8E6C9" stroke="#2E7D32" stroke-width="1.2"/>
+  <path d="M200 320 Q300 280 340 200 Q285 240 235 280 Q217 300 200 318Z" fill="#C8E6C9" stroke="#2E7D32" stroke-width="1.2"/>
+  <path d="M200 320 Q150 250 130 160 Q170 210 190 270 Q196 295 200 318Z" fill="#B2EBF2" stroke="#00838F" stroke-width="1.2"/>
+  <path d="M200 320 Q250 250 270 160 Q230 210 210 270 Q204 295 200 318Z" fill="#B2EBF2" stroke="#00838F" stroke-width="1.2"/>
+  <!-- Tail feather eyes -->
+  <ellipse cx="80" cy="178" rx="14" ry="18" fill="#1A237E" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="80" cy="178" rx="9" ry="12" fill="#1565C0" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="80" cy="178" rx="5" ry="7" fill="#42A5F5" stroke="#1565C0" stroke-width="1"/>
+  <circle cx="80" cy="178" r="2.5" fill="#E3F2FD"/>
+  <ellipse cx="320" cy="178" rx="14" ry="18" fill="#1A237E" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="320" cy="178" rx="9" ry="12" fill="#1565C0" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="320" cy="178" rx="5" ry="7" fill="#42A5F5" stroke="#1565C0" stroke-width="1"/>
+  <circle cx="320" cy="178" r="2.5" fill="#E3F2FD"/>
+  <ellipse cx="60" cy="198" rx="12" ry="16" fill="#1A237E" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="60" cy="198" rx="7" ry="10" fill="#42A5F5" stroke="#1565C0" stroke-width="1"/>
+  <circle cx="60" cy="198" r="3" fill="#E3F2FD"/>
+  <ellipse cx="340" cy="198" rx="12" ry="16" fill="#1A237E" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="340" cy="198" rx="7" ry="10" fill="#42A5F5" stroke="#1565C0" stroke-width="1"/>
+  <circle cx="340" cy="198" r="3" fill="#E3F2FD"/>
+  <ellipse cx="130" cy="158" rx="12" ry="16" fill="#1A237E" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="130" cy="158" rx="7" ry="10" fill="#42A5F5" stroke="#1565C0" stroke-width="1"/>
+  <circle cx="130" cy="158" r="3" fill="#E3F2FD"/>
+  <ellipse cx="270" cy="158" rx="12" ry="16" fill="#1A237E" stroke="#0D47A1" stroke-width="1"/>
+  <ellipse cx="270" cy="158" rx="7" ry="10" fill="#42A5F5" stroke="#1565C0" stroke-width="1"/>
+  <circle cx="270" cy="158" r="3" fill="#E3F2FD"/>
+  <!-- Body -->
+  <ellipse cx="200" cy="360" rx="45" ry="60" fill="#1B5E20" stroke="#0A3D0A" stroke-width="1.5"/>
+  <!-- Neck -->
+  <path d="M185 305 Q180 270 185 240 Q200 255 215 240 Q220 270 215 305Z" fill="#00695C" stroke="#004D40" stroke-width="1.5"/>
+  <!-- Head -->
+  <ellipse cx="200" cy="225" rx="28" ry="25" fill="#00695C" stroke="#004D40" stroke-width="1.5"/>
+  <!-- Crest -->
+  <path d="M190 202 Q185 175 180 160" stroke="#00695C" stroke-width="2" fill="none"/>
+  <circle cx="180" cy="158" r="5" fill="#FDD835" stroke="#F9A825" stroke-width="1"/>
+  <path d="M200 200 Q200 172 200 155" stroke="#00695C" stroke-width="2" fill="none"/>
+  <circle cx="200" cy="153" r="5" fill="#FDD835" stroke="#F9A825" stroke-width="1"/>
+  <path d="M210 202 Q215 175 220 160" stroke="#00695C" stroke-width="2" fill="none"/>
+  <circle cx="220" cy="158" r="5" fill="#FDD835" stroke="#F9A825" stroke-width="1"/>
+  <!-- Eye -->
+  <circle cx="210" cy="220" r="7" fill="#FFF9C4" stroke="#333" stroke-width="1"/>
+  <circle cx="211" cy="220" r="4" fill="#1A237E"/>
+  <circle cx="212" cy="219" r="1.5" fill="white"/>
+  <!-- Beak -->
+  <path d="M225 228 Q240 225 245 230 Q240 235 225 232Z" fill="#FDD835" stroke="#F9A825" stroke-width="1"/>
+  <!-- Wing detail -->
+  <path d="M160 340 Q140 310 145 280 Q160 305 170 330Z" fill="#2E7D32" stroke="#1B5E20" stroke-width="1"/>
+  <path d="M240 340 Q260 310 255 280 Q240 305 230 330Z" fill="#2E7D32" stroke="#1B5E20" stroke-width="1"/>
+  <!-- Legs -->
+  <line x1="185" y1="415" x2="175" y2="460" stroke="#795548" stroke-width="3"/>
+  <line x1="215" y1="415" x2="225" y2="460" stroke="#795548" stroke-width="3"/>
+  <path d="M175 460 L160 465 M175 460 L175 470 M175 460 L190 465" stroke="#795548" stroke-width="2" fill="none"/>
+  <path d="M225 460 L210 465 M225 460 L225 470 M225 460 L240 465" stroke="#795548" stroke-width="2" fill="none"/>
+</svg>

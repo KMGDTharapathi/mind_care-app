@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" stroke="#222" stroke-width="1.3">
+  <circle cx="200" cy="200" r="190"/>
+  <!-- Outer scallop ring -->
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(0 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(36 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(72 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(108 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(144 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(180 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(216 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(252 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(288 200 200)"/>
+  <path d="M200 10 Q220 50 200 70 Q180 50 200 10Z" transform="rotate(324 200 200)"/>
+  <circle cx="200" cy="200" r="145"/>
+  <!-- 10 teardrop mid -->
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(0 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(36 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(72 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(108 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(144 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(180 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(216 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(252 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(288 200 200)"/>
+  <path d="M200 58 Q218 100 200 118 Q182 100 200 58Z" transform="rotate(324 200 200)"/>
+  <!-- Decagon -->
+  <polygon points="200,90 238,108 252,148 238,188 200,206 162,188 148,148 162,108"/>
+  <circle cx="200" cy="200" r="80"/>
+  <!-- 5 inner petals -->
+  <path d="M200 122 Q215 155 200 168 Q185 155 200 122Z" transform="rotate(0 200 200)"/>
+  <path d="M200 122 Q215 155 200 168 Q185 155 200 122Z" transform="rotate(72 200 200)"/>
+  <path d="M200 122 Q215 155 200 168 Q185 155 200 122Z" transform="rotate(144 200 200)"/>
+  <path d="M200 122 Q215 155 200 168 Q185 155 200 122Z" transform="rotate(216 200 200)"/>
+  <path d="M200 122 Q215 155 200 168 Q185 155 200 122Z" transform="rotate(288 200 200)"/>
+  <circle cx="200" cy="200" r="45"/>
+  <circle cx="200" cy="200" r="25"/>
+  <circle cx="200" cy="200" r="12"/>
+  <!-- Dot ring -->
+  <circle cx="200" cy="175" r="3" transform="rotate(0 200 200)"/>
+  <circle cx="200" cy="175" r="3" transform="rotate(72 200 200)"/>
+  <circle cx="200" cy="175" r="3" transform="rotate(144 200 200)"/>
+  <circle cx="200" cy="175" r="3" transform="rotate(216 200 200)"/>
+  <circle cx="200" cy="175" r="3" transform="rotate(288 200 200)"/>
+</svg>

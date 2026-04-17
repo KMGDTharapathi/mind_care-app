@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none" stroke="#333" stroke-width="1.5">
+  <!-- Water -->
+  <rect x="0" y="380" width="400" height="120" fill="#E3F2FD" stroke="#90CAF9"/>
+  <!-- Water ripples -->
+  <ellipse cx="200" cy="420" rx="180" ry="18" fill="none" stroke="#90CAF9" stroke-width="1"/>
+  <ellipse cx="200" cy="440" rx="150" ry="14" fill="none" stroke="#90CAF9" stroke-width="1"/>
+  <ellipse cx="200" cy="460" rx="120" ry="10" fill="none" stroke="#90CAF9" stroke-width="1"/>
+  <!-- Lily pad left -->
+  <ellipse cx="80" cy="400" rx="65" ry="30" fill="#C8E6C9" stroke="#388E3C" stroke-width="1.5"/>
+  <line x1="80" y1="370" x2="80" y2="400" stroke="#388E3C" stroke-width="1.5"/>
+  <!-- Lily pad right -->
+  <ellipse cx="320" cy="405" rx="60" ry="28" fill="#C8E6C9" stroke="#388E3C" stroke-width="1.5"/>
+  <line x1="320" y1="377" x2="320" y2="405" stroke="#388E3C" stroke-width="1.5"/>
+  <!-- Main stem -->
+  <path d="M200 380 Q195 340 200 300" stroke="#388E3C" stroke-width="3" fill="none"/>
+  <!-- Left stem -->
+  <path d="M200 350 Q160 330 130 290" stroke="#388E3C" stroke-width="2" fill="none"/>
+  <!-- Right stem -->
+  <path d="M200 350 Q240 330 270 290" stroke="#388E3C" stroke-width="2" fill="none"/>
+  <!-- Main lotus - outer petals -->
+  <path d="M200 300 Q170 260 165 220 Q185 250 200 260 Q215 250 235 220 Q230 260 200 300Z" fill="#FCE4EC" stroke="#E91E63" stroke-width="1.5"/>
+  <path d="M200 300 Q230 255 260 240 Q245 265 230 280 Q215 285 200 300Z" fill="#FCE4EC" stroke="#E91E63" stroke-width="1.5"/>
+  <path d="M200 300 Q170 255 140 240 Q155 265 170 280 Q185 285 200 300Z" fill="#FCE4EC" stroke="#E91E63" stroke-width="1.5"/>
+  <path d="M200 300 Q240 270 270 255 Q260 280 245 295 Q225 300 200 300Z" fill="#F8BBD0" stroke="#E91E63" stroke-width="1.5"/>
+  <path d="M200 300 Q160 270 130 255 Q140 280 155 295 Q175 300 200 300Z" fill="#F8BBD0" stroke="#E91E63" stroke-width="1.5"/>
+  <!-- Inner petals -->
+  <path d="M200 295 Q182 268 180 248 Q192 262 200 270 Q208 262 220 248 Q218 268 200 295Z" fill="#F48FB1" stroke="#C2185B" stroke-width="1.5"/>
+  <path d="M200 295 Q218 265 228 252 Q220 270 212 280 Q207 285 200 295Z" fill="#F48FB1" stroke="#C2185B" stroke-width="1.5"/>
+  <path d="M200 295 Q182 265 172 252 Q180 270 188 280 Q193 285 200 295Z" fill="#F48FB1" stroke="#C2185B" stroke-width="1.5"/>
+  <!-- Center -->
+  <ellipse cx="200" cy="278" rx="18" ry="14" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5"/>
+  <ellipse cx="200" cy="278" rx="10" ry="8" fill="#FFD54F" stroke="#F57F17" stroke-width="1"/>
+  <!-- Stamens -->
+  <circle cx="196" cy="274" r="2" fill="#FF8F00"/>
+  <circle cx="204" cy="274" r="2" fill="#FF8F00"/>
+  <circle cx="200" cy="271" r="2" fill="#FF8F00"/>
+  <circle cx="196" cy="281" r="2" fill="#FF8F00"/>
+  <circle cx="204" cy="281" r="2" fill="#FF8F00"/>
+  <!-- Left small lotus bud -->
+  <path d="M130 290 Q118 268 115 250 Q125 262 130 270 Q135 262 145 250 Q142 268 130 290Z" fill="#FCE4EC" stroke="#E91E63" stroke-width="1.2"/>
+  <ellipse cx="130" cy="272" rx="10" ry="7" fill="#FFF9C4" stroke="#F9A825" stroke-width="1"/>
+  <!-- Right small lotus bud -->
+  <path d="M270 290 Q258 268 255 250 Q265 262 270 270 Q275 262 285 250 Q282 268 270 290Z" fill="#FCE4EC" stroke="#E91E63" stroke-width="1.2"/>
+  <ellipse cx="270" cy="272" rx="10" ry="7" fill="#FFF9C4" stroke="#F9A825" stroke-width="1"/>
+  <!-- Dragonfly -->
+  <ellipse cx="310" cy="200" rx="12" ry="4" fill="#B3E5FC" stroke="#0288D1" stroke-width="1"/>
+  <ellipse cx="310" cy="208" rx="10" ry="3.5" fill="#B3E5FC" stroke="#0288D1" stroke-width="1"/>
+  <ellipse cx="310" cy="204" rx="5" ry="8" fill="#E1F5FE" stroke="#0288D1" stroke-width="1"/>
+  <circle cx="310" cy="197" r="3" fill="#0288D1"/>
+  <!-- Background sky gradient suggestion -->
+  <rect x="0" y="0" width="400" height="380" fill="#E8F5E9" stroke="none"/>
+  <!-- Decorative leaves -->
+  <path d="M50 320 Q30 290 60 270 Q55 300 50 320Z" fill="#A5D6A7" stroke="#388E3C" stroke-width="1"/>
+  <path d="M350 310 Q370 280 340 265 Q345 295 350 310Z" fill="#A5D6A7" stroke="#388E3C" stroke-width="1"/>
+</svg>

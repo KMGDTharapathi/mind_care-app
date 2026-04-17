@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" stroke="#222" stroke-width="1.2">
+  <circle cx="200" cy="200" r="188" stroke-width="1.5"/>
+  <circle cx="200" cy="200" r="170"/>
+  <!-- 8 large outer petals -->
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(0 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(45 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(90 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(135 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(180 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(225 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(270 200 200)"/>
+  <path d="M200 12 Q230 80 200 110 Q170 80 200 12Z" transform="rotate(315 200 200)"/>
+  <!-- 8 small outer petals between -->
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(22.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(67.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(112.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(157.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(202.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(247.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(292.5 200 200)"/>
+  <path d="M200 30 Q215 75 200 95 Q185 75 200 30Z" transform="rotate(337.5 200 200)"/>
+  <!-- Mid circle -->
+  <circle cx="200" cy="200" r="115"/>
+  <!-- Mid petals -->
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(0 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(45 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(90 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(135 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(180 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(225 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(270 200 200)"/>
+  <path d="M200 88 Q220 130 200 150 Q180 130 200 88Z" transform="rotate(315 200 200)"/>
+  <!-- Inner rings -->
+  <circle cx="200" cy="200" r="70"/>
+  <circle cx="200" cy="200" r="45"/>
+  <!-- Star pattern -->
+  <polygon points="200,155 210,190 245,190 218,212 228,247 200,226 172,247 182,212 155,190 190,190" stroke-width="1"/>
+  <!-- Center -->
+  <circle cx="200" cy="200" r="22"/>
+  <circle cx="200" cy="200" r="10"/>
+</svg>
