@@ -3,7 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
-import 'package:mind_care_app/main.dart' show appUserName;
+import 'package:mind_care_app/main.dart' show appUserName, appLanguage;
 
 class HomeScreen extends StatefulWidget {
   final String lang;
@@ -22,6 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() {});
   }
 
+  void _onLanguageChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
     appUserName.addListener(_onUserNameChanged);
+    appLanguage.addListener(_onLanguageChanged);
     // Load name into global notifier if not already set
     if (appUserName.value == null) {
       PreferencesService.getUserName()
@@ -43,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     appUserName.removeListener(_onUserNameChanged);
+    appLanguage.removeListener(_onLanguageChanged);
     super.dispose();
   }
 
@@ -62,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isSinhala = widget.lang == 'si';
+    final isSinhala = appLanguage.value.isSinhala;
 
     // Background: teal gradient matching the design
     const bgLight = Color(0xFF7EC8C8);
@@ -73,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: 'විලෝ සමග\nකතා කරන්න',
         icon: Icons.eco_outlined,
         color: isDark ? const Color(0xFF2A4040) : Colors.white.withOpacity(0.85),
-        onTap: (ctx) => ctx.push('${AppRouter.willowChat}?lang=si'),
+        onTap: (ctx) => ctx.push('${AppRouter.willowChat}?lang=${appLanguage.value.languageCode}'),
         iconColor: const Color(0xFF5BA8A0),
         layout: _CardLayout.iconLeft,
       ),
@@ -138,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: 'Chat with\nWillow',
         icon: Icons.eco_outlined,
         color: isDark ? const Color(0xFF2A4040) : Colors.white.withOpacity(0.85),
-        onTap: (ctx) => ctx.push('${AppRouter.willowChat}?lang=en'),
+        onTap: (ctx) => ctx.push('${AppRouter.willowChat}?lang=${appLanguage.value.languageCode}'),
         iconColor: const Color(0xFF5BA8A0),
         layout: _CardLayout.iconLeft,
       ),
@@ -286,9 +292,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         // Calculate aspect ratio so all 4 rows fit in available height
-                        final availableHeight = constraints.maxHeight - 12; // bottom padding
-                        final cardHeight = (availableHeight - (3 * 10)) / 4; // 4 rows, 3 gaps
-                        final cardWidth = (constraints.maxWidth - 10) / 2; // 2 cols, 1 gap
+                        final availableHeight = constraints.maxHeight - 12;
+                        final cardHeight = (availableHeight - (3 * 10)) / 4;
+                        final cardWidth = (constraints.maxWidth - 10) / 2;
                         final ratio = cardWidth / cardHeight;
                         return GridView.builder(
                           physics: const NeverScrollableScrollPhysics(),

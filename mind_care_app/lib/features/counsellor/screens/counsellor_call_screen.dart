@@ -5,6 +5,7 @@ import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import '../models/doctor_model.dart';
 import '../data/doctor_seed_service.dart';
+import '../data/doctor_seed_data.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDark = Color(0xFF1A4A4A);
@@ -87,7 +88,7 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
 
 // ── Doctor List Tab ───────────────────────────────────────────────────────────
 
-class _DoctorListTab extends StatelessWidget {
+class _DoctorListTab extends StatefulWidget {
   final String filterSpec;
   final String filterLang;
   final List<String> specValues;
@@ -111,67 +112,347 @@ class _DoctorListTab extends StatelessWidget {
   });
 
   @override
+  State<_DoctorListTab> createState() => _DoctorListTabState();
+}
+
+/// All 9 provinces of Sri Lanka — used for the autocomplete province selector.
+const List<String> _kProvinces = [
+  'All Provinces',
+  'Western Province',
+  'Central Province',
+  'Southern Province',
+  'Northern Province',
+  'Eastern Province',
+  'North Western Province',
+  'North Central Province',
+  'Uva Province',
+  'Sabaragamuwa Province',
+];
+
+/// Keywords in doctor addresses that map to each province.
+/// Used to filter the Firebase doctor list by selected province.
+const Map<String, List<String>> _kProvinceKeywords = {
+  'Western Province': ['Colombo', 'Gampaha', 'Kalutara', 'Angoda', 'Dehiwala', 'Maharagama', 'Wattala', 'Ragama', 'Kelaniya', 'Western Province'],
+  'Central Province': ['Kandy', 'Peradeniya', 'Matale', 'Nuwara Eliya', 'Central Province'],
+  'Southern Province': ['Galle', 'Matara', 'Hambantota', 'Karapitiya', 'Southern Province'],
+  'Northern Province': ['Jaffna', 'Vavuniya', 'Kilinochchi', 'Mannar', 'Northern Province'],
+  'Eastern Province': ['Batticaloa', 'Trincomalee', 'Ampara', 'Eastern Province'],
+  'North Western Province': ['Kurunegala', 'Puttalam', 'North Western Province'],
+  'North Central Province': ['Anuradhapura', 'Polonnaruwa', 'North Central Province'],
+  'Uva Province': ['Badulla', 'Monaragala', 'Uva Province'],
+  'Sabaragamuwa Province': ['Ratnapura', 'Kegalle', 'Sabaragamuwa Province'],
+};
+
+class _DoctorListTabState extends State<_DoctorListTab> {
+  final _provinceController = TextEditingController();
+  String _selectedProvince = 'All Provinces';
+
+  @override
+  void dispose() {
+    _provinceController.dispose();
+    super.dispose();
+  }
+
+  void _onProvinceSelected(String province) {
+    setState(() {
+      _selectedProvince = province;
+      _provinceController.text = province == 'All Provinces' ? '' : province;
+    });
+  }
+
+  void _clearProvince() {
+    setState(() {
+      _selectedProvince = 'All Provinces';
+      _provinceController.clear();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _FilterBar(
-          options: specValues,
-          labels: specLabels,
-          selected: filterSpec,
-          onChanged: onSpecChanged,
-        ),
-        _FilterBar(
-          options: langValues,
-          labels: langLabels,
-          selected: filterLang,
-          onChanged: onLangChanged,
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('doctors')
-                .where('is_verified', isEqualTo: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return _ErrorState(strings: strings, onRetry: () {});
+        // ── Province autocomplete dropdown ───────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          child: Autocomplete<String>(
+            optionsBuilder: (TextEditingValue textValue) {
+              final input = textValue.text.trim().toLowerCase();
+              if (input.isEmpty) {
+                // Show all provinces except 'All Provinces' when empty
+                return _kProvinces.skip(1);
               }
-              if (!snapshot.hasData) {
-                return const Center(
-                    child: CircularProgressIndicator(color: _kTeal));
+              // Filter provinces that START WITH the typed letters
+              return _kProvinces
+                  .skip(1)
+                  .where((p) => p.toLowerCase().startsWith(input));
+            },
+            displayStringForOption: (p) => p,
+            onSelected: _onProvinceSelected,
+            fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+              // Sync external controller text when province is cleared
+              if (_selectedProvince == 'All Provinces' && controller.text.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) controller.clear();
+                });
               }
-
-              var doctors = snapshot.data!.docs
-                  .map((d) => Doctor.fromFirestore(d))
-                  .where((d) {
-                if (filterSpec != 'All' && d.specialization != filterSpec) {
-                  return false;
-                }
-                if (filterLang != 'All' && !d.languages.contains(filterLang)) {
-                  return false;
-                }
-                return true;
-              }).toList();
-
-              doctors.sort((a, b) =>
-                  (b.isAvailable ? 1 : 0).compareTo(a.isAvailable ? 1 : 0));
-
-              if (doctors.isEmpty) {
-                return Center(
-                  child: Text(strings.noDoctorsFound,
-                      style: const TextStyle(color: Colors.grey)),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: doctors.length,
-                itemBuilder: (_, i) => _DoctorCard(doctor: doctors[i], strings: strings),
+              return TextField(
+                controller: controller,
+                focusNode: focusNode,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => onSubmitted(),
+                decoration: InputDecoration(
+                  hintText: 'Type a province (e.g. Western, Kandy...)',
+                  hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                  prefixIcon: const Icon(Icons.map_outlined, color: _kTeal, size: 20),
+                  suffixIcon: _selectedProvince != 'All Provinces'
+                      ? IconButton(
+                          icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                          tooltip: 'Clear province filter',
+                          onPressed: () {
+                            controller.clear();
+                            _clearProvince();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kTeal),
+                  ),
+                ),
+              );
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(12),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 240),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (context, index) {
+                        final province = options.elementAt(index);
+                        return InkWell(
+                          onTap: () => onSelected(province),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on_outlined,
+                                    size: 16, color: _kTeal),
+                                const SizedBox(width: 10),
+                                Text(province,
+                                    style: const TextStyle(
+                                        fontSize: 14, color: _kDark)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               );
             },
           ),
         ),
+
+        // ── Active province chip ─────────────────────────────────────────
+        if (_selectedProvince != 'All Provinces')
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+            child: Row(
+              children: [
+                const Icon(Icons.filter_alt_outlined, size: 14, color: _kTeal),
+                const SizedBox(width: 4),
+                Text('Showing doctors in: ',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _kTeal.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(_selectedProvince,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: _kTeal,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+
+        // ── Spec / language filters ──────────────────────────────────────
+        _FilterBar(
+          options: widget.specValues,
+          labels: widget.specLabels,
+          selected: widget.filterSpec,
+          onChanged: widget.onSpecChanged,
+        ),
+        _FilterBar(
+          options: widget.langValues,
+          labels: widget.langLabels,
+          selected: widget.filterLang,
+          onChanged: widget.onLangChanged,
+        ),
+
+        // ── Doctor list filtered by province ─────────────────────────────
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              _FirebaseDoctorList(
+                filterSpec: widget.filterSpec,
+                filterLang: widget.filterLang,
+                filterProvince: _selectedProvince,
+                strings: widget.strings,
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+}
+
+// ── Firebase doctor list (inline, no Expanded needed inside ListView) ─────────
+
+class _FirebaseDoctorList extends StatelessWidget {
+  final String filterSpec;
+  final String filterLang;
+  final String filterProvince;
+  final AppStrings strings;
+
+  const _FirebaseDoctorList({
+    required this.filterSpec,
+    required this.filterLang,
+    required this.filterProvince,
+    required this.strings,
+  });
+
+  /// Returns true if the doctor's address contains any keyword for the province.
+  bool _matchesProvince(Doctor doctor) {
+    if (filterProvince == 'All Provinces') return true;
+    final keywords = _kProvinceKeywords[filterProvince] ?? [];
+    final address = (doctor.address ?? '').toLowerCase();
+    final hospital = doctor.hospital.toLowerCase();
+    return keywords.any((kw) =>
+        address.contains(kw.toLowerCase()) ||
+        hospital.contains(kw.toLowerCase()));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('doctors')
+          .where('is_verified', isEqualTo: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _ErrorState(strings: strings, onRetry: () {});
+        }
+        if (!snapshot.hasData) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator(color: _kTeal)),
+          );
+        }
+
+        var doctors = snapshot.data!.docs
+            .map((d) {
+              final doctor = Doctor.fromFirestore(d);
+              if ((doctor.address == null || doctor.address!.isEmpty) &&
+                  (doctor.clinicHours == null || doctor.clinicHours!.isEmpty)) {
+                final match = kRealDoctors
+                    .where((s) => s['name'] == doctor.name)
+                    .firstOrNull;
+                if (match != null) {
+                  return Doctor(
+                    id: doctor.id,
+                    name: doctor.name,
+                    photoUrl: doctor.photoUrl,
+                    specialization: doctor.specialization,
+                    languages: doctor.languages,
+                    bio: doctor.bio,
+                    qualifications: doctor.qualifications,
+                    registrationNo: doctor.registrationNo,
+                    hospital: doctor.hospital,
+                    address: match['address'] as String?,
+                    clinicHours: match['clinic_hours'] as String?,
+                    isVerified: doctor.isVerified,
+                    isAvailable: doctor.isAvailable,
+                    callType: doctor.callType,
+                  );
+                }
+              }
+              return doctor;
+            })
+            .where((d) {
+              if (d.id == '__seed_meta__') return false;
+              if (filterSpec != 'All' && d.specialization != filterSpec) return false;
+              if (filterLang != 'All' && !d.languages.contains(filterLang)) return false;
+              if (!_matchesProvince(d)) return false;
+              return true;
+            })
+            .toList();
+
+        doctors.sort((a, b) =>
+            (b.isAvailable ? 1 : 0).compareTo(a.isAvailable ? 1 : 0));
+
+        if (doctors.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.person_search_outlined,
+                      size: 48, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  Text(
+                    filterProvince == 'All Provinces'
+                        ? strings.noDoctorsFound
+                        : 'No doctors found in $filterProvince',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${doctors.length} provider${doctors.length == 1 ? '' : 's'} found',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ),
+            ...doctors.map((d) => _DoctorCard(doctor: d, strings: strings)),
+          ],
+        );
+      },
     );
   }
 }
@@ -299,34 +580,6 @@ class _DoctorCard extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade600)),
                     const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded,
-                            size: 14, color: Colors.amber),
-                        const SizedBox(width: 2),
-                        Text('${doctor.rating}',
-                            style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600)),
-                        const SizedBox(width: 4),
-                        Text('(${doctor.totalReviews})',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade500)),
-                        const Spacer(),
-                        Text(
-                          doctor.sessionFeeLkr == 0
-                              ? strings.freeLabel
-                              : 'LKR ${doctor.sessionFeeLkr}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: doctor.sessionFeeLkr == 0
-                                ? Colors.green
-                                : _kTeal,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
                       children: doctor.languages
@@ -428,30 +681,6 @@ class _DoctorProfileSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            // Stats row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _StatBox(
-                    label: strings.ratingLabel,
-                    value: '${doctor.rating}',
-                    icon: Icons.star_rounded,
-                    iconColor: Colors.amber),
-                _StatBox(
-                    label: strings.reviewsLabel,
-                    value: '${doctor.totalReviews}',
-                    icon: Icons.reviews_outlined,
-                    iconColor: _kTeal),
-                _StatBox(
-                    label: strings.feeLabel,
-                    value: doctor.sessionFeeLkr == 0
-                        ? strings.freeLabel
-                        : 'LKR ${doctor.sessionFeeLkr}',
-                    icon: Icons.payments_outlined,
-                    iconColor: Colors.green),
-              ],
-            ),
-            const SizedBox(height: 16),
             // Availability badge
             Container(
               padding:
@@ -508,38 +737,38 @@ class _DoctorProfileSheet extends StatelessWidget {
             Text('Reg. No: ${doctor.registrationNo}',
                 style: TextStyle(
                     fontSize: 12, color: Colors.grey.shade500)),
-            const SizedBox(height: 24),
-            // Book button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: doctor.isAvailable
-                    ? () {
-                        final messenger = ScaffoldMessenger.of(context);
-                        Navigator.pop(context);
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(strings.bookingComingSoon),
-                            backgroundColor: _kTeal,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    : null,
-                icon: const Icon(Icons.headset_mic_outlined),
-                label: Text(strings.bookAudioSession),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTeal,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  textStyle: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+            const SizedBox(height: 16),
+            // ── Contact & Location ─────────────────────────────────────
+            _SectionTitle(strings.contactSection),
+            if (doctor.address != null && doctor.address!.isNotEmpty)
+              _ContactRow(
+                icon: Icons.location_on_outlined,
+                label: doctor.address!,
+                color: Colors.orange,
+                onTap: () async {
+                  final encoded = Uri.encodeComponent(doctor.address!);
+                  final uri = Uri.parse('https://maps.google.com/?q=$encoded');
+                  if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+              ),
+            if (doctor.clinicHours != null && doctor.clinicHours!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.access_time_outlined, size: 18, color: _kTeal),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        doctor.clinicHours!,
+                        style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.5),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -654,6 +883,7 @@ class _HotlineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSinhala = LanguageProvider.of(context).isSinhala;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -676,13 +906,13 @@ class _HotlineCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(hotline.name,
+                  Text(hotline.localName(isSinhala),
                       style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                           color: _kDark)),
                   const SizedBox(height: 2),
-                  Text(hotline.description,
+                  Text(hotline.localDescription(isSinhala),
                       style: TextStyle(
                           fontSize: 12, color: Colors.grey.shade600)),
                   const SizedBox(height: 4),
@@ -737,6 +967,49 @@ class _HotlineCard extends StatelessWidget {
 }
 
 // ── Shared small widgets ──────────────────────────────────────────────────────
+
+class _ContactRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ContactRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: color,
+                  decoration: TextDecoration.underline,
+                  decorationColor: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _Chip extends StatelessWidget {
   final String label;

@@ -10,11 +10,10 @@ class Doctor {
   final List<String> qualifications;
   final String registrationNo;
   final String hospital;
+  final String? address;
+  final String? clinicHours;
   final bool isVerified;
   final bool isAvailable;
-  final double rating;
-  final int totalReviews;
-  final int sessionFeeLkr;
   final String callType;
 
   const Doctor({
@@ -27,11 +26,10 @@ class Doctor {
     required this.qualifications,
     required this.registrationNo,
     required this.hospital,
+    this.address,
+    this.clinicHours,
     required this.isVerified,
     required this.isAvailable,
-    required this.rating,
-    required this.totalReviews,
-    required this.sessionFeeLkr,
     required this.callType,
   });
 
@@ -47,11 +45,10 @@ class Doctor {
       qualifications: List<String>.from(d['qualifications'] ?? []),
       registrationNo: d['registration_no'] ?? '',
       hospital: d['hospital'] ?? '',
+      address: d['address'],
+      clinicHours: d['clinic_hours'],
       isVerified: d['is_verified'] ?? false,
       isAvailable: d['is_available'] ?? false,
-      rating: (d['rating'] ?? 0.0).toDouble(),
-      totalReviews: d['total_reviews'] ?? 0,
-      sessionFeeLkr: d['session_fee_lkr'] ?? 0,
       callType: d['call_type'] ?? 'audio',
     );
   }
@@ -72,11 +69,10 @@ class Doctor {
       ],
       registrationNo: 'SLMC-12345',
       hospital: 'NIMH Angoda',
+      address: 'Mulleriyawa New Town, Angoda, Colombo 10',
+      clinicHours: 'Mon–Fri: 8:00 AM – 4:00 PM\nSat: 8:00 AM – 12:00 PM',
       isVerified: true,
       isAvailable: true,
-      rating: 4.8,
-      totalReviews: 124,
-      sessionFeeLkr: 1500,
       callType: 'audio',
     ),
     Doctor(
@@ -93,11 +89,10 @@ class Doctor {
       ],
       registrationNo: 'SLMC-67890',
       hospital: 'Nawaloka Hospital',
+      address: '23 Sri Sugathadasa Mawatha, Colombo 2',
+      clinicHours: 'Mon–Fri: 8:00 AM – 5:00 PM\nSat: 8:00 AM – 1:00 PM',
       isVerified: true,
       isAvailable: true,
-      rating: 4.6,
-      totalReviews: 89,
-      sessionFeeLkr: 0,
       callType: 'audio',
     ),
     Doctor(
@@ -114,11 +109,10 @@ class Doctor {
       ],
       registrationNo: 'SLMC-24680',
       hospital: 'Lanka Hospitals',
+      address: '578 Elvitigala Mawatha, Colombo 5',
+      clinicHours: 'Mon–Fri: 8:00 AM – 8:00 PM\nSat–Sun: 8:00 AM – 5:00 PM',
       isVerified: true,
       isAvailable: false,
-      rating: 4.9,
-      totalReviews: 210,
-      sessionFeeLkr: 2500,
       callType: 'audio',
     ),
     Doctor(
@@ -134,11 +128,10 @@ class Doctor {
       ],
       registrationNo: 'SLMC-11223',
       hospital: 'Asiri Medical Hospital',
+      address: '181 Kirula Road, Colombo 5',
+      clinicHours: 'Mon–Fri: 8:00 AM – 8:00 PM\nSat–Sun: 8:00 AM – 5:00 PM',
       isVerified: true,
       isAvailable: true,
-      rating: 4.5,
-      totalReviews: 56,
-      sessionFeeLkr: 800,
       callType: 'audio',
     ),
     Doctor(
@@ -155,11 +148,10 @@ class Doctor {
       ],
       registrationNo: 'SLMC-33445',
       hospital: 'Lady Ridgeway Hospital',
+      address: 'Dr. Denister De Silva Mawatha, Colombo 8',
+      clinicHours: 'Mon–Sat: 8:00 AM – 12:00 PM',
       isVerified: true,
       isAvailable: true,
-      rating: 4.7,
-      totalReviews: 143,
-      sessionFeeLkr: 1200,
       callType: 'audio',
     ),
   ];
@@ -168,8 +160,10 @@ class Doctor {
 class Hotline {
   final String id;
   final String name;
+  final String? nameSi;
   final String number;
   final String description;
+  final String? descriptionSi;
   final List<String> languages;
   final bool isFree;
   final String available;
@@ -178,21 +172,33 @@ class Hotline {
   const Hotline({
     required this.id,
     required this.name,
+    this.nameSi,
     required this.number,
     required this.description,
+    this.descriptionSi,
     required this.languages,
     required this.isFree,
     required this.available,
     required this.category,
   });
 
+  String localName(bool isSinhala) =>
+      (isSinhala && nameSi != null && nameSi!.isNotEmpty) ? nameSi! : name;
+
+  String localDescription(bool isSinhala) =>
+      (isSinhala && descriptionSi != null && descriptionSi!.isNotEmpty)
+          ? descriptionSi!
+          : description;
+
   factory Hotline.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
     return Hotline(
       id: doc.id,
       name: d['name'] ?? '',
+      nameSi: d['name_si'],
       number: d['number'] ?? '',
       description: d['description'] ?? '',
+      descriptionSi: d['description_si'],
       languages: List<String>.from(d['languages'] ?? []),
       isFree: d['is_free'] ?? true,
       available: d['available'] ?? '24/7',
@@ -204,8 +210,10 @@ class Hotline {
     Hotline(
       id: 'nimh',
       name: 'NIMH Mental Health Helpline',
+      nameSi: 'NIMH මානසික සෞඛ්‍ය උපකාර මාර්ගය',
       number: '1926',
       description: '24/7 free and confidential mental health support',
+      descriptionSi: '24/7 නොමිලේ සහ රහස්‍ය මානසික සෞඛ්‍ය සහාය',
       languages: ['Sinhala', 'English', 'Tamil'],
       isFree: true,
       available: '24/7',
@@ -214,8 +222,10 @@ class Hotline {
     Hotline(
       id: 'sumithrayo',
       name: 'Sumithrayo',
+      nameSi: 'සුමිත්‍රයෝ',
       number: '0112696666',
       description: 'Emotional support and suicide prevention',
+      descriptionSi: 'චිත්තවේගීය සහාය සහ සියදිවි නසාගැනීම් වැළැක්වීම',
       languages: ['Sinhala', 'English'],
       isFree: true,
       available: '24/7',
@@ -224,8 +234,10 @@ class Hotline {
     Hotline(
       id: 'emergency',
       name: 'Emergency',
+      nameSi: 'හදිසි ඇමතුම',
       number: '119',
       description: 'Police and emergency services',
+      descriptionSi: 'පොලිස් සහ හදිසි සේවා',
       languages: ['Sinhala', 'English', 'Tamil'],
       isFree: true,
       available: '24/7',

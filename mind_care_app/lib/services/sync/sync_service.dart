@@ -274,7 +274,6 @@ class FirestoreSyncService implements SyncService {
   Future<void> flushQueue() async {
     final uid = _currentUid;
     if (uid == null) return;
-    if (_authService.currentUser?.isAnonymous == true) return;
 
     final entries = _writeQueue.getAll(); // already FIFO sorted
     for (final entry in entries) {
@@ -374,8 +373,8 @@ class FirestoreSyncService implements SyncService {
     };
 
     if (_authService.currentUser?.isAnonymous == true) {
-      // NEVER write to Firestore for anonymous users
-      await _enqueue('mood_entries', entry.id, data);
+      // Write to Firestore for anonymous users too
+      await _writeToFirestore('mood_entries', entry.id, data);
       return;
     }
 
@@ -402,7 +401,7 @@ class FirestoreSyncService implements SyncService {
     };
 
     if (_authService.currentUser?.isAnonymous == true) {
-      await _enqueue('journal_entries', entry.id, data);
+      await _writeToFirestore('journal_entries', entry.id, data);
       return;
     }
 
@@ -430,7 +429,7 @@ class FirestoreSyncService implements SyncService {
     };
 
     if (_authService.currentUser?.isAnonymous == true) {
-      await _enqueue('bookmarks', resourceId, data);
+      await _writeToFirestore('bookmarks', resourceId, data);
       return;
     }
 
@@ -448,7 +447,7 @@ class FirestoreSyncService implements SyncService {
     // Settings are stored in SharedPreferences locally; no Hive write needed here.
 
     if (_authService.currentUser?.isAnonymous == true) {
-      await _enqueue('settings', 'preferences', settings);
+      await _writeToFirestore('settings', 'preferences', settings);
       return;
     }
 
@@ -469,7 +468,7 @@ class FirestoreSyncService implements SyncService {
     };
 
     if (_authService.currentUser?.isAnonymous == true) {
-      await _enqueue('settings', 'preferences', data);
+      await _writeToFirestore('settings', 'preferences', data);
       return;
     }
 

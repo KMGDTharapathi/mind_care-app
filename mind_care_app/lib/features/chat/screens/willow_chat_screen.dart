@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
 import '../services/willow_engine.dart';
 import '../services/willow_api_service.dart';
+import 'package:mind_care_app/main.dart' show appLanguage;
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDarkTeal = Color(0xFF1A4A4A);
@@ -36,7 +37,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   @override
   void initState() {
     super.initState();
-    _engine = WillowEngine(isSinhala: widget.lang == 'si');
+    _engine = WillowEngine(isSinhala: appLanguage.value.isSinhala);
     _textController.addListener(() {
       final hasText = _textController.text.trim().isNotEmpty;
       if (hasText != _hasText) setState(() => _hasText = hasText);
@@ -114,7 +115,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   }
 
   Future<void> _pickAttachment() async {
-    final isSi = widget.lang == 'si';
+    final isSi = appLanguage.value.isSinhala;
     final choice = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -208,7 +209,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isSi = widget.lang == 'si';
+    final isSi = appLanguage.value.isSinhala;
     final bg = isDark ? const Color(0xFF0D1A1A) : _kBg;
 
     return Scaffold(

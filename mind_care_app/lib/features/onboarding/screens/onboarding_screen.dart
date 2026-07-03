@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/gradient_scaffold.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/onboarding/bloc/onboarding_cubit.dart';
+import 'package:mind_care_app/main.dart' show appUserName, splashSavedLang;
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final bool returning;
+  const OnboardingScreen({super.key, this.returning = false});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -26,6 +30,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.returning) {
+      return GradientScaffold(
+        body: LeafBackground(
+          child: SafeArea(
+            child: const _WelcomeBackPage(),
+          ),
+        ),
+      );
+    }
+
     return BlocProvider(
       create: (_) => OnboardingCubit(),
       child: BlocBuilder<OnboardingCubit, int>(
@@ -163,11 +177,39 @@ class _NameInputPageState extends State<_NameInputPage> {
       setState(() => _showError = true);
       return;
     }
+
+    // Save name locally
     PreferencesService.setUserName(name);
+    // Keep global notifier in sync so returning-user detection works immediately
+    appUserName.value = name;
+
+    // Save to Firestore with a random user ID
+    _saveUserToFirestore(name);
+
     widget.pageController.nextPage(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
+  }
+
+  Future<void> _saveUserToFirestore(String name) async {
+    try {
+      // Generate a random user ID and persist it locally
+      String? userId = await PreferencesService.getUserId();
+      if (userId == null || userId.isEmpty) {
+        userId = const Uuid().v4();
+        await PreferencesService.setUserId(userId);
+      }
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'name': name,
+        'userId': userId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'platform': 'android',
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore save error: $e');
+    }
   }
 
   @override
@@ -466,6 +508,134 @@ class _BottomSection extends StatelessWidget {
                 ),
               ],
             ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Welcome Back page (returning users) ─────────────────────────────────────
+
+class _WelcomeBackPage extends StatefulWidget {
+  const _WelcomeBackPage();
+
+  @override
+  State<_WelcomeBackPage> createState() => _WelcomeBackPageState();
+}
+
+class _WelcomeBackPageState extends State<_WelcomeBackPage> {
+  String? _name;
+  String _lang = 'en';
+
+  @override
+  void initState() {
+    super.initState();
+    // Read from globals first (zero platform calls — already pre-fetched by _heavyInit)
+    _name = appUserName.value;
+    _lang = (splashSavedLang != null && splashSavedLang!.isNotEmpty)
+        ? splashSavedLang!
+        : 'en';
+
+    // Defensive async fallbacks — only if globals weren't populated
+    // Use Future.microtask to avoid blocking initState
+    if (_name == null || _name!.isEmpty) {
+      Future.microtask(() async {
+        try {
+          final n = await PreferencesService.getUserName()
+              .timeout(const Duration(seconds: 2));
+          if (mounted && n != null && n.isNotEmpty) {
+            setState(() => _name = n);
+          }
+        } catch (_) {}
+      });
+    }
+    if (_lang == 'en') {
+      Future.microtask(() async {
+        try {
+          final l = await PreferencesService.getAppLanguage()
+              .timeout(const Duration(seconds: 2));
+          if (mounted && l != null && l.isNotEmpty) {
+            setState(() => _lang = l);
+          }
+        } catch (_) {}
+      });
+    }
+  }
+
+  void _onContinue() {
+    context.go('${AppRouter.moodCheckin}?lang=$_lang');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = (_name != null && _name!.isNotEmpty) ? _name! : '';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.85),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryLight.withOpacity(0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.waving_hand_rounded,
+              size: 52,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            displayName.isNotEmpty
+                ? 'Welcome back, $displayName! 👋'
+                : 'Welcome back! 👋',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Great to see you again.\nHow are you feeling today?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondaryDark,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 48),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _onContinue,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryDark,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                elevation: 2,
+              ),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
         ],
       ),
     );

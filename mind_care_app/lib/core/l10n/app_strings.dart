@@ -45,6 +45,10 @@ class AppStrings {
   String get onboardingNext => _s('ඊළඟ', 'Next');
   String get onboardingContinue => _s('ඉදිරියට', 'Continue');
 
+  // ── Onboarding — Welcome back ─────────────────────────────────────────────
+  String get welcomeBackGreeting => _s('නැවත සාදරයෙන් පිළිගනිමු', 'Welcome back');
+  String get welcomeBackSubtitle => _s('ඔබ නැවත ආවාට සතුටුයි!', 'Great to see you again!');
+
   // ── Settings ──────────────────────────────────────────────────────────────
   String get settingsTitle => _s('සැකසුම්', 'Settings');
   String get sectionAccount => _s('ගිණුම', 'Account');
@@ -66,6 +70,22 @@ class AppStrings {
   );
   String get notNow => _s('දැන් නොවේ', 'Not Now');
   String get allow => _s('ඉඩ දෙන්න', 'Allow');
+
+  // ── Settings — Language section ───────────────────────────────────────────
+  String get sectionLanguage => _s('භාෂාව', 'Language');
+  String get languageEnglish => _s('ඉංග්‍රීසි', 'English');
+  String get languageSinhala => _s('සිංහල', 'සිංහල');
+  String get languageSaveError => _s('භාෂා මනාපය සුරැකීමට නොහැකි විය', 'Failed to save language preference');
+
+  // ── Settings — Profile section ────────────────────────────────────────────
+  String get sectionProfile => _s('පැතිකඩ', 'Profile');
+  String get yourName => _s('ඔබේ නම', 'Your Name');
+  String get nameNotSet => _s('සකසා නැත', 'Not set');
+  String get changeName => _s('නම වෙනස් කරන්න', 'Change Name');
+  String get enterYourName => _s('ඔබේ නම ඇතුළත් කරන්න', 'Enter your name');
+  String get logAsNewUser => _s('නව පරිශීලකයෙකු ලෙස ලොග් වන්න', 'Log as New User');
+  String get logAsNewUserSubtitle => _s('ඔබේ නම මකා නැවත ආරම්භ කරන්න', 'Clear your name and restart onboarding');
+  String get logAsNewUserContent => _s('මෙය ඔබේ නම මකා ආයාචනා තිරයට ආපසු යයි. ඔබේ අනෙකුත් දත්ත රඳවා ගනී.', 'This will clear your name and take you back to the welcome screen. Your other data will be kept.');
 
   // ── Mood ──────────────────────────────────────────────────────────────────
   String get moodHistory => _s('මනෝභාවය ඉතිහාසය', 'Mood History');
@@ -357,6 +377,7 @@ class AppStrings {
   String get languagesSection => _s('භාෂා', 'Languages');
   String get bookAudioSession => _s('ශ්‍රව්‍ය සැසිය වෙන් කරන්න', 'Book Audio Session');
   String get bookingComingSoon => _s('වෙන් කිරීම ඉක්මනින් ලැබේ! අංගය සංවර්ධනය වෙමින් පවතී.', 'Booking coming soon! Feature in development.');
+  String get contactSection => _s('සම්බන්ධ වන්න සහ ස්ථානය', 'Contact & Location');
   String get hotlineInfoNote => _s('සියලු හොට්ලයින් නොමිලේ සහ රහස්‍ය ය. ඇමතීමට අංකයක් ස්පර්ශ කරන්න.', 'All hotlines are free and confidential. Tap a number to call.');
   String get catMentalHealth => _s('මානසික සෞඛ්‍යය', 'Mental Health');
   String get catCrisisSupport => _s('අර්බුද සහාය', 'Crisis Support');

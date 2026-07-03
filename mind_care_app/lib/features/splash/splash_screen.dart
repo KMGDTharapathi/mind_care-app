@@ -51,9 +51,8 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (!mounted) return;
       if (savedName != null && savedName.isNotEmpty) {
-        // Returning user — show mood check-in, skip onboarding
-        final langParam = (savedLang != null && savedLang.isNotEmpty) ? savedLang : 'en';
-        context.go('${AppRouter.moodCheckin}?lang=$langParam');
+        // Returning user — show welcome-back onboarding screen
+        context.go('${AppRouter.onboarding}?returning=true');
       } else {
         // New user — full onboarding flow
         context.go(AppRouter.onboarding);

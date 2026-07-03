@@ -61,6 +61,9 @@ Future<void> main() async {
 
 /// All heavy init — called after first frame is painted.
 Future<_InitResult> _heavyInit() async {
+  // Yield immediately so the first frame renders before any heavy work
+  await Future.delayed(const Duration(milliseconds: 50));
+
   final consentService = ConsentService();
   final crashlyticsService =
       FirebaseCrashlyticsService(consentService: consentService);
@@ -112,6 +115,12 @@ Future<_InitResult> _heavyInit() async {
   ]);
   splashSavedName = navResults[0];
   splashSavedLang = navResults[1];
+
+  // Restore saved language into the global notifier immediately so all
+  // screens reflect the correct language from the very first frame.
+  if (splashSavedLang == 'si') {
+    appLanguage.value = AppStrings.si;
+  }
 
   // Signal splash screen that Hive + nav data are ready — safe to navigate now.
   if (!hiveReadyCompleter.isCompleted) hiveReadyCompleter.complete();

@@ -9,6 +9,7 @@ class PreferencesService {
   static const _keyLastActiveDate = 'last_active_date';
   static const _keyUserName = 'user_name';
   static const _keyAppLanguage = 'app_language';
+  static const _keyUserId = 'user_id';
 
   // Cached instance — avoids repeated platform channel calls on every read/write
   static SharedPreferences? _prefs;
@@ -103,5 +104,15 @@ class PreferencesService {
   static Future<void> setAppLanguage(String lang) async {
     final prefs = await _get();
     await prefs.setString(_keyAppLanguage, lang);
+  }
+
+  static Future<String?> getUserId() async {
+    final prefs = await _get();
+    return prefs.getString(_keyUserId);
+  }
+
+  static Future<void> setUserId(String id) async {
+    final prefs = await _get();
+    await prefs.setString(_keyUserId, id);
   }
 }

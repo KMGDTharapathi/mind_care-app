@@ -4,6 +4,7 @@ import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
+import 'package:mind_care_app/main.dart' show appLanguage;
 import 'package:uuid/uuid.dart';
 
 class MoodCheckinScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class MoodCheckinScreen extends StatefulWidget {
 class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
   int? _selectedIndex;
 
-  bool get _isSinhala => widget.lang == 'si';
+  bool get _isSinhala => appLanguage.value.isSinhala;
 
   List<_MoodOption> get _moods => _isSinhala ? const [
     _MoodOption('😄', 'අපූරුයි', MoodType.excited, Color(0xFFFFE066)),
@@ -47,7 +48,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
     } catch (_) {}
 
     await Future.delayed(const Duration(milliseconds: 600));
-    if (mounted) context.go('${AppRouter.home}?lang=${widget.lang}');
+    if (mounted) context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}');
   }
 
   @override
@@ -155,7 +156,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                 const Spacer(),
                 // Skip option — gentle, not prominent
                 TextButton(
-                  onPressed: () => context.go('${AppRouter.home}?lang=${widget.lang}'),
+                  onPressed: () => context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}'),
                   child: Text(
                     _isSinhala ? 'පසුව සමහරවිට' : 'Maybe later',
                     style: TextStyle(

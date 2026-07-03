@@ -39,6 +39,13 @@ import 'package:mind_care_app/features/painting/screens/painting_screen.dart';
 import 'package:mind_care_app/features/splash/splash_screen.dart';
 import 'package:mind_care_app/features/chat/screens/willow_chat_screen.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:mind_care_app/features/find_doctor/cubit/doctor_search_cubit.dart';
+import 'package:mind_care_app/features/find_doctor/screens/find_doctor_screen.dart';
+import 'package:mind_care_app/features/find_doctor/services/firestore_doctor_service.dart';
+import 'package:mind_care_app/features/find_doctor/services/geocoder_service.dart';
+import 'package:mind_care_app/features/find_doctor/services/location_service.dart';
+import 'package:mind_care_app/features/find_doctor/services/overpass_service.dart';
 
 class AppRouter {
   // Named route constants
@@ -71,6 +78,7 @@ class AppRouter {
   static const String dailyReminders = '/daily-reminders';
   static const String sinhalaChatRoute = '/sinhala-chat';
   static const String willowChat = '/willow-chat';
+  static const String findDoctor = '/find-doctor';
 
   /// Creates a router with a synchronous redirect based on the pre-loaded
   /// [onboardingComplete] flag â€” avoids async deadlock on startup.
@@ -92,7 +100,10 @@ class AppRouter {
       ),
       GoRoute(
         path: onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) {
+          final returning = state.uri.queryParameters['returning'] == 'true';
+          return OnboardingScreen(returning: returning);
+        },
       ),
       GoRoute(
         path: moodCheckin,
@@ -105,8 +116,6 @@ class AppRouter {
         path: home,
         builder: (context, state) {
           final lang = state.uri.queryParameters['lang'] ?? 'en';
-          // Update global language notifier so all screens reflect the choice
-          appLanguage.value = lang == 'si' ? AppStrings.si : AppStrings.en;
           return HomeScreen(lang: lang);
         },
       ),
@@ -260,6 +269,19 @@ class AppRouter {
           final lang = state.uri.queryParameters['lang'] ?? 'en';
           return WillowChatScreen(lang: lang);
         },
+      ),
+      GoRoute(
+        path: AppRouter.findDoctor,
+        builder: (context, state) => BlocProvider(
+          create: (_) => DoctorSearchCubit(
+            firestoreService: FirestoreDoctorService(),
+            locationService: LocationService(),
+            geocoderService: GeocoderService(),
+            overpassService: OverpassService(),
+            connectivity: Connectivity(),
+          )..init(),
+          child: const FindDoctorScreen(),
+        ),
       ),
     ];
 }
