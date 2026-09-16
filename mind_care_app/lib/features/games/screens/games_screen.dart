@@ -23,7 +23,10 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameBubbleMood,
         color: isDark ? const Color(0xFF002A2E) : const Color(0xFFE0F7FA),
         accentColor: const Color(0xFF5BA8A0),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BubbleBlasterGame())),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BubbleBlasterGame()),
+        ),
       ),
       _GameInfo(
         emoji: '🐍',
@@ -32,7 +35,10 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameSnakeMood,
         color: isDark ? const Color(0xFF0D1F0D) : const Color(0xFFE8F5E9),
         accentColor: const Color(0xFF43A047),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SnakeGame())),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SnakeGame()),
+        ),
       ),
       _GameInfo(
         emoji: '🧩',
@@ -41,7 +47,10 @@ class GamesScreen extends StatelessWidget {
         mood: s.gamePatternMood,
         color: isDark ? const Color(0xFF1A1535) : const Color(0xFFEDE7F6),
         accentColor: const Color(0xFF7986CB),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PatternMatchGame())),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PatternMatchGame()),
+        ),
       ),
       _GameInfo(
         emoji: '🎯',
@@ -50,7 +59,10 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameAimMood,
         color: isDark ? const Color(0xFF2A1A00) : const Color(0xFFFFF8E1),
         accentColor: const Color(0xFFFFA000),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AimDropGame())),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AimDropGame()),
+        ),
       ),
       _GameInfo(
         emoji: '🏗️',
@@ -59,12 +71,17 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameStackMood,
         color: isDark ? const Color(0xFF1A0A2A) : const Color(0xFFF3E5F5),
         accentColor: const Color(0xFF7B1FA2),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StackBuilderGame())),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const StackBuilderGame()),
+        ),
       ),
     ];
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1A2A2A) : const Color(0xFFF0F9F9),
+      backgroundColor: isDark
+          ? const Color(0xFF1A2A2A)
+          : const Color(0xFFF0F9F9),
       body: LeafBackground(
         child: SafeArea(
           child: Column(
@@ -76,18 +93,24 @@ class GamesScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: isDark ? Colors.white : const Color(0xFF1A4A4A)),
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF1A4A4A),
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(width: 4),
-                    Text(s.gameHub,
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF1A4A4A))),
+                    Text(
+                      s.gameHub,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1A4A4A),
+                      ),
+                    ),
                     const Spacer(),
-                    const Text('🎮', style: TextStyle(fontSize: 28)),                  ],
+                    const Text('🎮', style: TextStyle(fontSize: 28)),
+                  ],
                 ),
               ),
               // Big icon + tagline
@@ -100,22 +123,32 @@ class GamesScreen extends StatelessWidget {
                         width: 90,
                         height: 90,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0xFF5BA8A0).withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 6))
+                              color: const Color(
+                                0xFF5BA8A0,
+                              ).withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
+                            ),
                           ],
                         ),
-                        child: const Center(child: Text('🎮', style: TextStyle(fontSize: 48))),
+                        child: const Center(
+                          child: Text('🎮', style: TextStyle(fontSize: 48)),
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text(s.playToRelax,
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: isDark ? Colors.white54 : const Color(0xFF5BA8A0))),
+                      Text(
+                        s.playToRelax,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark
+                              ? Colors.white54
+                              : const Color(0xFF5BA8A0),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -125,8 +158,9 @@ class GamesScreen extends StatelessWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: games.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) => _GameCard(game: games[i], isDark: isDark),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) =>
+                      _GameCard(game: games[i], isDark: isDark),
                 ),
               ),
             ],
@@ -142,8 +176,13 @@ class _GameInfo {
   final Color color, accentColor;
   final VoidCallback onTap;
   _GameInfo({
-    required this.emoji, required this.title, required this.description,
-    required this.mood, required this.color, required this.accentColor, required this.onTap,
+    required this.emoji,
+    required this.title,
+    required this.description,
+    required this.mood,
+    required this.color,
+    required this.accentColor,
+    required this.onTap,
   });
 }
 
@@ -164,8 +203,16 @@ class _GameCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: game.color,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: game.accentColor.withOpacity(0.35), width: 1.5),
-            boxShadow: [BoxShadow(color: game.accentColor.withOpacity(0.1), blurRadius: 8)],
+            border: Border.all(
+              color: game.accentColor.withValues(alpha: 0.35),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: game.accentColor.withValues(alpha: 0.1),
+                blurRadius: 8,
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -175,11 +222,16 @@ class _GameCard extends StatelessWidget {
                 width: 68,
                 height: 68,
                 decoration: BoxDecoration(
-                  color: game.accentColor.withOpacity(0.15),
+                  color: game.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: game.accentColor.withOpacity(0.3), width: 1.5),
+                  border: Border.all(
+                    color: game.accentColor.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
                 ),
-                child: Center(child: Text(game.emoji, style: const TextStyle(fontSize: 34))),
+                child: Center(
+                  child: Text(game.emoji, style: const TextStyle(fontSize: 34)),
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -189,34 +241,57 @@ class _GameCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(game.title,
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : const Color(0xFF1A3333))),
+                          child: Text(
+                            game.title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1A3333),
+                            ),
+                          ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: game.accentColor.withOpacity(0.15),
+                            color: game.accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(game.mood,
-                              style: TextStyle(fontSize: 9, color: game.accentColor, fontWeight: FontWeight.w600)),
+                          child: Text(
+                            game.mood,
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: game.accentColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(game.description,
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.white60 : const Color(0xFF4A6A6A),
-                            height: 1.4)),
+                    Text(
+                      game.description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? Colors.white60
+                            : const Color(0xFF4A6A6A),
+                        height: 1.4,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.play_circle_rounded, color: game.accentColor, size: 30),
+              Icon(
+                Icons.play_circle_rounded,
+                color: game.accentColor,
+                size: 30,
+              ),
             ],
           ),
         ),

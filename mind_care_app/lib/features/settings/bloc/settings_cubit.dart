@@ -94,13 +94,17 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   Future<void> _reschedule() async {
-    await NotificationService.cancelAll();
-    final time = state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
-    await NotificationService.scheduleReminder(
-      time: time,
-      repeatDays: state.repeatDays,
-      message: state.reminderMessage,
-    );
+    try {
+      await NotificationService.cancelAll();
+      final time = state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
+      await NotificationService.scheduleReminder(
+        time: time,
+        repeatDays: state.repeatDays,
+        message: state.reminderMessage,
+      );
+    } catch (e) {
+      debugPrint('Reminder reschedule failed: $e');
+    }
   }
 
   void updateAuthState(AuthUser? user) {

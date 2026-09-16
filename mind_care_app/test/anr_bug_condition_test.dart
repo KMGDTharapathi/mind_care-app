@@ -23,7 +23,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mind_care_app/core/service_locator.dart';
-import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/features/motivational/data/quotes_data.dart';
 import 'package:mind_care_app/features/motivational/screens/motivational_screen.dart';
 import 'package:mind_care_app/services/sync/write_queue.dart';
@@ -125,8 +124,11 @@ void main() {
         final box = await Hive.openBox<WriteQueueEntry>('write_queue');
 
         // Verify the box is open before ServiceLocator.init() runs
-        expect(Hive.isBoxOpen('write_queue'), isTrue,
-            reason: 'Box should be open after HiveService.init()');
+        expect(
+          Hive.isBoxOpen('write_queue'),
+          isTrue,
+          reason: 'Box should be open after HiveService.init()',
+        );
 
         // Call ServiceLocator.init() with the pre-opened box.
         // On FIXED code: uses WriteQueue.fromBox(HiveService.writeQueue) — no second open.
@@ -138,14 +140,20 @@ void main() {
         ServiceLocator.writeQueue = wq;
 
         // Verify the box is still open and the same instance
-        expect(Hive.isBoxOpen('write_queue'), isTrue,
-            reason: 'Box should still be open after ServiceLocator.init()');
+        expect(
+          Hive.isBoxOpen('write_queue'),
+          isTrue,
+          reason: 'Box should still be open after ServiceLocator.init()',
+        );
         expect(ServiceLocator.writeQueue, isNotNull);
-        expect(box.isOpen, isTrue,
-            reason:
-                'Counterexample: the original box was closed/replaced by a second '
-                'Hive.openBox() call from WriteQueue.open(). '
-                'Fix: use WriteQueue.fromBox(HiveService.writeQueue) instead.');
+        expect(
+          box.isOpen,
+          isTrue,
+          reason:
+              'Counterexample: the original box was closed/replaced by a second '
+              'Hive.openBox() call from WriteQueue.open(). '
+              'Fix: use WriteQueue.fromBox(HiveService.writeQueue) instead.',
+        );
       },
     );
 
@@ -165,10 +173,16 @@ void main() {
         final boxIsOpenAfter = Hive.isBoxOpen('write_queue');
 
         expect(boxWasOpenBefore, isTrue);
-        expect(boxIsOpenAfter, isTrue,
-            reason: 'Box must remain open after WriteQueue.fromBox()');
-        expect(wq, isNotNull,
-            reason: 'WriteQueue.fromBox() must return a valid WriteQueue');
+        expect(
+          boxIsOpenAfter,
+          isTrue,
+          reason: 'Box must remain open after WriteQueue.fromBox()',
+        );
+        expect(
+          wq,
+          isNotNull,
+          reason: 'WriteQueue.fromBox() must return a valid WriteQueue',
+        );
 
         // Verify the WriteQueue works correctly with the provided box
         final entry = WriteQueueEntry(
@@ -270,9 +284,11 @@ void main() {
         }
 
         // Firebase runs fire-and-forget (unawaited) — does NOT block
-        unawaited(Future.delayed(const Duration(seconds: 8)).then((_) {
-          events.add('firebase_done');
-        }));
+        unawaited(
+          Future.delayed(const Duration(seconds: 8)).then((_) {
+            events.add('firebase_done');
+          }),
+        );
         events.add('firebase_started_unawaited');
 
         // Wait for hiveReadyCompleter (should be instant since we already completed it)
@@ -282,7 +298,9 @@ void main() {
 
         // Assert: hiveReadyCompleter was completed before Firebase started
         final hiveReadyIndex = events.indexOf('hive_ready_completed');
-        final firebaseStartedIndex = events.indexOf('firebase_started_unawaited');
+        final firebaseStartedIndex = events.indexOf(
+          'firebase_started_unawaited',
+        );
 
         expect(
           hiveReadyIndex,
@@ -349,15 +367,18 @@ void main() {
 
   group('Sub-condition C — Synchronous GlobalKey mass-creation', () {
     /// Verifies that kQuotes has 130+ entries (confirming the scale of the problem).
-    test('kQuotes contains 130+ entries that would cause mass GlobalKey allocation', () {
-      expect(
-        kQuotes.length,
-        greaterThanOrEqualTo(130),
-        reason:
-            'kQuotes must have 130+ entries. Current count: ${kQuotes.length}. '
-            'This confirms the scale of the synchronous GlobalKey allocation bug.',
-      );
-    });
+    test(
+      'kQuotes contains 130+ entries that would cause mass GlobalKey allocation',
+      () {
+        expect(
+          kQuotes.length,
+          greaterThanOrEqualTo(130),
+          reason:
+              'kQuotes must have 130+ entries. Current count: ${kQuotes.length}. '
+              'This confirms the scale of the synchronous GlobalKey allocation bug.',
+        );
+      },
+    );
 
     /// **Bug Condition**: ALL kQuotes GlobalKeys created synchronously in one
     /// build frame during MotivationalScreen initialization.
@@ -374,11 +395,7 @@ void main() {
       'MotivationalScreen does not create more GlobalKeys than visible items in first frame',
       (WidgetTester tester) async {
         // Render MotivationalScreen in a constrained viewport
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: MotivationalScreen(),
-          ),
-        );
+        await tester.pumpWidget(const MaterialApp(home: MotivationalScreen()));
 
         // Pump one frame to trigger the initial build
         await tester.pump();
@@ -386,9 +403,9 @@ void main() {
         // Count RepaintBoundary widgets with GlobalKeys in the widget tree.
         // On unfixed code: all 130+ quotes have GlobalKeys created eagerly.
         // On fixed code: only visible items (those built by itemBuilder) have keys.
-        final repaintBoundaries = tester.widgetList<RepaintBoundary>(
-          find.byType(RepaintBoundary),
-        ).toList();
+        final repaintBoundaries = tester
+            .widgetList<RepaintBoundary>(find.byType(RepaintBoundary))
+            .toList();
 
         // Count those with non-null keys (GlobalKey instances)
         final globalKeyedBoundaries = repaintBoundaries
@@ -425,18 +442,14 @@ void main() {
     testWidgets(
       'MotivationalScreen GlobalKey count equals visible item count, not total quote count',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: MotivationalScreen(),
-          ),
-        );
+        await tester.pumpWidget(const MaterialApp(home: MotivationalScreen()));
 
         await tester.pump();
 
         // Count all GlobalKey-keyed RepaintBoundary widgets in the tree
-        final allRepaintBoundaries = tester.widgetList<RepaintBoundary>(
-          find.byType(RepaintBoundary),
-        ).toList();
+        final allRepaintBoundaries = tester
+            .widgetList<RepaintBoundary>(find.byType(RepaintBoundary))
+            .toList();
 
         final globalKeyCount = allRepaintBoundaries
             .where((rb) => rb.key is GlobalKey)

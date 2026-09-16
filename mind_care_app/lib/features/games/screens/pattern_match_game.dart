@@ -20,7 +20,20 @@ class _PatternMatchGameState extends State<PatternMatchGame> {
   bool _checking = false;
   int _level = 1;
 
-  static const _emojis = ['🌸', '🌿', '🦋', '🌈', '⭐', '🍀', '🌙', '🌺', '🐢', '🦄', '🎵', '💎'];
+  static const _emojis = [
+    '🌸',
+    '🌿',
+    '🦋',
+    '🌈',
+    '⭐',
+    '🍀',
+    '🌙',
+    '🌺',
+    '🐢',
+    '🦄',
+    '🎵',
+    '💎',
+  ];
 
   void _initLevel(int lvl) {
     _level = lvl;
@@ -93,20 +106,27 @@ class _PatternMatchGameState extends State<PatternMatchGame> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF5BA8A0),
           foregroundColor: Colors.white,
-          title: Text('🧩 Pattern Match  Lv.$_level',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            '🧩 Pattern Match  Lv.$_level',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Center(child: Text('Score: $_score',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              child: Center(
+                child: Text(
+                  'Score: $_score',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
         body: LeafBackground(
-          child: SafeArea(
-            child: _started ? _buildGame(cols) : _buildIntro(),
-          ),
+          child: SafeArea(child: _started ? _buildGame(cols) : _buildIntro()),
         ),
       ),
     );
@@ -122,20 +142,48 @@ class _PatternMatchGameState extends State<PatternMatchGame> {
           children: [
             const Text('🧩', style: TextStyle(fontSize: 90)),
             const SizedBox(height: 16),
-            Text(s.gamePatternTitle, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+            Text(
+              s.gamePatternTitle,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
             const SizedBox(height: 12),
-            Text(s.patternInstructions,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF388E3C), height: 1.6)),
+            Text(
+              s.patternInstructions,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF388E3C),
+                height: 1.6,
+              ),
+            ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () => setState(() { _started = true; _initLevel(1); }),
+              onPressed: () => setState(() {
+                _started = true;
+                _initLevel(1);
+              }),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5BA8A0), foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                backgroundColor: const Color(0xFF5BA8A0),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 14,
+                ),
               ),
-              child: Text('${s.play} 🧩', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(
+                '${s.play} 🧩',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -151,9 +199,20 @@ class _PatternMatchGameState extends State<PatternMatchGame> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${LanguageProvider.of(context).moves}: $_moves', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
-              Text('${LanguageProvider.of(context).pairs}: ${_cards.where((c) => c.matched).length ~/ 2} / ${_cards.length ~/ 2}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+              Text(
+                '${LanguageProvider.of(context).moves}: $_moves',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+              Text(
+                '${LanguageProvider.of(context).pairs}: ${_cards.where((c) => c.matched).length ~/ 2} / ${_cards.length ~/ 2}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
             ],
           ),
         ),
@@ -185,10 +244,15 @@ class _PatternMatchGameState extends State<PatternMatchGame> {
           color: card.matched
               ? const Color(0xFFA5D6A7)
               : card.flipped
-                  ? Colors.white
-                  : const Color(0xFF5BA8A0),
+              ? Colors.white
+              : const Color(0xFF5BA8A0),
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 4,
+            ),
+          ],
           border: card.matched
               ? Border.all(color: const Color(0xFF43A047), width: 2)
               : null,
@@ -196,7 +260,14 @@ class _PatternMatchGameState extends State<PatternMatchGame> {
         child: Center(
           child: card.flipped || card.matched
               ? Text(card.emoji, style: const TextStyle(fontSize: 32))
-              : const Text('?', style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+              : const Text(
+                  '?',
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
       ),
     );
@@ -208,5 +279,5 @@ class _Card {
   final String emoji;
   bool flipped;
   bool matched;
-  _Card(this.id, this.emoji, {this.flipped = false, this.matched = false});
+  _Card(this.id, this.emoji, {this.matched = false}) : flipped = false;
 }

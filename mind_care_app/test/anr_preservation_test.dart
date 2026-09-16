@@ -46,8 +46,10 @@ class _StubAuthService implements AuthService {
   Future<AuthUser> signInWithGoogle() async =>
       const AuthUser(uid: 'stub', isAnonymous: false);
   @override
-  Future<AuthUser> createAccountWithEmail(String email, String password) async =>
-      const AuthUser(uid: 'stub', isAnonymous: false);
+  Future<AuthUser> createAccountWithEmail(
+    String email,
+    String password,
+  ) async => const AuthUser(uid: 'stub', isAnonymous: false);
   @override
   Future<void> sendPasswordResetEmail(String email) async {}
   @override
@@ -79,9 +81,11 @@ class _StubSyncService implements SyncService {
 /// Used to compute expected results independently of the widget.
 List<Quote> filteredQuotes(String searchQuery, String selectedCategory) {
   return kQuotes.where((q) {
-    final matchesCategory = selectedCategory == 'All' ||
+    final matchesCategory =
+        selectedCategory == 'All' ||
         q.category.toLowerCase() == selectedCategory.toLowerCase();
-    final matchesSearch = searchQuery.isEmpty ||
+    final matchesSearch =
+        searchQuery.isEmpty ||
         q.text.toLowerCase().contains(searchQuery.toLowerCase()) ||
         q.author.toLowerCase().contains(searchQuery.toLowerCase()) ||
         q.category.toLowerCase().contains(searchQuery.toLowerCase());
@@ -132,10 +136,16 @@ void main() {
         final wqBox = await Hive.openBox<WriteQueueEntry>('write_queue');
 
         // Verify write_queue box is open
-        expect(Hive.isBoxOpen('write_queue'), isTrue,
-            reason: 'write_queue box must be open');
-        expect(wqBox.isOpen, isTrue,
-            reason: 'write_queue box instance must be open');
+        expect(
+          Hive.isBoxOpen('write_queue'),
+          isTrue,
+          reason: 'write_queue box must be open',
+        );
+        expect(
+          wqBox.isOpen,
+          isTrue,
+          reason: 'write_queue box instance must be open',
+        );
       },
     );
 
@@ -170,8 +180,11 @@ void main() {
         }
 
         final all = wq.getAll();
-        expect(all.length, equals(5),
-            reason: 'All 5 entries must be retrievable after enqueue');
+        expect(
+          all.length,
+          equals(5),
+          reason: 'All 5 entries must be retrievable after enqueue',
+        );
 
         // Property: entries are sorted by enqueuedAt
         for (int i = 0; i < all.length - 1; i++) {
@@ -187,8 +200,11 @@ void main() {
         await wq.dequeue('entry-2');
         final afterDequeue = wq.getAll();
         expect(afterDequeue.length, equals(4));
-        expect(afterDequeue.any((e) => e.id == 'entry-2'), isFalse,
-            reason: 'Dequeued entry must not appear in getAll()');
+        expect(
+          afterDequeue.any((e) => e.id == 'entry-2'),
+          isFalse,
+          reason: 'Dequeued entry must not appear in getAll()',
+        );
 
         // Property: remaining entries are intact
         expect(afterDequeue.any((e) => e.id == 'entry-0'), isTrue);
@@ -222,8 +238,11 @@ void main() {
 
         // wq2 must see the entry written by wq1 (same underlying box)
         final fromWq2 = wq2.getAll();
-        expect(fromWq2.length, equals(1),
-            reason: 'Both WriteQueue wrappers share the same box');
+        expect(
+          fromWq2.length,
+          equals(1),
+          reason: 'Both WriteQueue wrappers share the same box',
+        );
         expect(fromWq2.first.id, equals('shared-entry'));
       },
     );
@@ -272,19 +291,33 @@ void main() {
         final stubAuth = _StubAuthService();
 
         // First init — sets writeQueue to wq1
-        await ServiceLocator.init(auth: stubAuth, queue: wq1, sync: _StubSyncService());
+        await ServiceLocator.init(
+          auth: stubAuth,
+          queue: wq1,
+          sync: _StubSyncService(),
+        );
         final afterFirst = ServiceLocator.writeQueue;
 
         // Second init — must NOT overwrite with wq2
-        await ServiceLocator.init(auth: stubAuth, queue: wq2, sync: _StubSyncService());
+        await ServiceLocator.init(
+          auth: stubAuth,
+          queue: wq2,
+          sync: _StubSyncService(),
+        );
         final afterSecond = ServiceLocator.writeQueue;
 
-        expect(afterFirst, isNotNull,
-            reason: 'writeQueue must be set after first init');
-        expect(afterSecond, same(afterFirst),
-            reason:
-                'Second ServiceLocator.init() must not overwrite the already-set '
-                'writeQueue singleton. Requirement 3.6: init() must be idempotent.');
+        expect(
+          afterFirst,
+          isNotNull,
+          reason: 'writeQueue must be set after first init',
+        );
+        expect(
+          afterSecond,
+          same(afterFirst),
+          reason:
+              'Second ServiceLocator.init() must not overwrite the already-set '
+              'writeQueue singleton. Requirement 3.6: init() must be idempotent.',
+        );
       },
     );
 
@@ -302,13 +335,21 @@ void main() {
         final stubAuth = _StubAuthService();
 
         // First call sets the singleton
-        await ServiceLocator.init(auth: stubAuth, queue: originalWq, sync: _StubSyncService());
+        await ServiceLocator.init(
+          auth: stubAuth,
+          queue: originalWq,
+          sync: _StubSyncService(),
+        );
         final firstValue = ServiceLocator.writeQueue;
 
         // Subsequent calls with different queue instances must be no-ops
         for (int i = 0; i < 4; i++) {
           final differentWq = WriteQueue.fromBox(box);
-          await ServiceLocator.init(auth: stubAuth, queue: differentWq, sync: _StubSyncService());
+          await ServiceLocator.init(
+            auth: stubAuth,
+            queue: differentWq,
+            sync: _StubSyncService(),
+          );
           expect(
             ServiceLocator.writeQueue,
             same(firstValue),
@@ -333,16 +374,30 @@ void main() {
         final wq2 = WriteQueue.fromBox(box);
         final stubAuth = _StubAuthService();
 
-        await ServiceLocator.init(auth: stubAuth, queue: wq1, sync: _StubSyncService());
+        await ServiceLocator.init(
+          auth: stubAuth,
+          queue: wq1,
+          sync: _StubSyncService(),
+        );
         expect(ServiceLocator.writeQueue, same(wq1));
 
         ServiceLocator.reset();
-        expect(ServiceLocator.writeQueue, isNull,
-            reason: 'reset() must clear the writeQueue singleton');
+        expect(
+          ServiceLocator.writeQueue,
+          isNull,
+          reason: 'reset() must clear the writeQueue singleton',
+        );
 
-        await ServiceLocator.init(auth: stubAuth, queue: wq2, sync: _StubSyncService());
-        expect(ServiceLocator.writeQueue, same(wq2),
-            reason: 'After reset(), init() must accept the new value');
+        await ServiceLocator.init(
+          auth: stubAuth,
+          queue: wq2,
+          sync: _StubSyncService(),
+        );
+        expect(
+          ServiceLocator.writeQueue,
+          same(wq2),
+          reason: 'After reset(), init() must accept the new value',
+        );
       },
     );
   });
@@ -361,13 +416,24 @@ void main() {
       () {
         // Property: empty query + 'All' category → all quotes
         final allQuotes = filteredQuotes('', 'All');
-        expect(allQuotes.length, equals(kQuotes.length),
-            reason: 'Empty query + All category must return all quotes');
+        expect(
+          allQuotes.length,
+          equals(kQuotes.length),
+          reason: 'Empty query + All category must return all quotes',
+        );
 
         // Property: specific category → only quotes in that category
         for (final category in [
-          'Love', 'Strength', 'Success', 'Mindfulness',
-          'Courage', 'Happiness', 'Growth', 'Caring', 'Resilience', 'Peace',
+          'Love',
+          'Strength',
+          'Success',
+          'Mindfulness',
+          'Courage',
+          'Happiness',
+          'Growth',
+          'Caring',
+          'Resilience',
+          'Peace',
         ]) {
           final result = filteredQuotes('', category);
           for (final q in result) {
@@ -381,12 +447,14 @@ void main() {
           }
           // Verify count matches manual count
           final expected = kQuotes
-              .where((q) =>
-                  q.category.toLowerCase() == category.toLowerCase())
+              .where((q) => q.category.toLowerCase() == category.toLowerCase())
               .length;
-          expect(result.length, equals(expected),
-              reason:
-                  'Category "$category" filter must return exactly $expected quotes');
+          expect(
+            result.length,
+            equals(expected),
+            reason:
+                'Category "$category" filter must return exactly $expected quotes',
+          );
         }
       },
     );
@@ -399,12 +467,15 @@ void main() {
         final result = filteredQuotes(query, 'All');
 
         for (final q in result) {
-          final matchesText =
-              q.text.toLowerCase().contains(query.toLowerCase());
-          final matchesAuthor =
-              q.author.toLowerCase().contains(query.toLowerCase());
-          final matchesCategory =
-              q.category.toLowerCase().contains(query.toLowerCase());
+          final matchesText = q.text.toLowerCase().contains(
+            query.toLowerCase(),
+          );
+          final matchesAuthor = q.author.toLowerCase().contains(
+            query.toLowerCase(),
+          );
+          final matchesCategory = q.category.toLowerCase().contains(
+            query.toLowerCase(),
+          );
           expect(
             matchesText || matchesAuthor || matchesCategory,
             isTrue,
@@ -415,14 +486,18 @@ void main() {
 
         // Verify no matching quotes are excluded
         final expectedCount = kQuotes
-            .where((q) =>
-                q.text.toLowerCase().contains(query.toLowerCase()) ||
-                q.author.toLowerCase().contains(query.toLowerCase()) ||
-                q.category.toLowerCase().contains(query.toLowerCase()))
+            .where(
+              (q) =>
+                  q.text.toLowerCase().contains(query.toLowerCase()) ||
+                  q.author.toLowerCase().contains(query.toLowerCase()) ||
+                  q.category.toLowerCase().contains(query.toLowerCase()),
+            )
             .length;
-        expect(result.length, equals(expectedCount),
-            reason:
-                'filteredQuotes must include ALL quotes matching "$query"');
+        expect(
+          result.length,
+          equals(expectedCount),
+          reason: 'filteredQuotes must include ALL quotes matching "$query"',
+        );
       },
     );
 
@@ -444,8 +519,8 @@ void main() {
           // Must match search
           final matchesSearch =
               q.text.toLowerCase().contains(query.toLowerCase()) ||
-                  q.author.toLowerCase().contains(query.toLowerCase()) ||
-                  q.category.toLowerCase().contains(query.toLowerCase());
+              q.author.toLowerCase().contains(query.toLowerCase()) ||
+              q.category.toLowerCase().contains(query.toLowerCase());
           expect(
             matchesSearch,
             isTrue,
@@ -455,16 +530,21 @@ void main() {
 
         // Verify completeness — no matching quote is excluded
         final expected = kQuotes
-            .where((q) =>
-                q.category.toLowerCase() == category.toLowerCase() &&
-                (q.text.toLowerCase().contains(query.toLowerCase()) ||
-                    q.author.toLowerCase().contains(query.toLowerCase()) ||
-                    q.category.toLowerCase().contains(query.toLowerCase())))
+            .where(
+              (q) =>
+                  q.category.toLowerCase() == category.toLowerCase() &&
+                  (q.text.toLowerCase().contains(query.toLowerCase()) ||
+                      q.author.toLowerCase().contains(query.toLowerCase()) ||
+                      q.category.toLowerCase().contains(query.toLowerCase())),
+            )
             .length;
-        expect(result.length, equals(expected),
-            reason:
-                'Combined filter must return exactly $expected quotes for '
-                'query="$query" category="$category"');
+        expect(
+          result.length,
+          equals(expected),
+          reason:
+              'Combined filter must return exactly $expected quotes for '
+              'query="$query" category="$category"',
+        );
       },
     );
 
@@ -479,26 +559,31 @@ void main() {
         final result1 = filteredQuotes(query, category);
         final result2 = filteredQuotes(query, category);
 
-        expect(result1.length, equals(result2.length),
-            reason: 'filteredQuotes must be deterministic');
+        expect(
+          result1.length,
+          equals(result2.length),
+          reason: 'filteredQuotes must be deterministic',
+        );
         for (int i = 0; i < result1.length; i++) {
-          expect(result1[i].id, equals(result2[i].id),
-              reason: 'Quote at index $i must be the same in both calls');
+          expect(
+            result1[i].id,
+            equals(result2[i].id),
+            reason: 'Quote at index $i must be the same in both calls',
+          );
         }
       },
     );
 
-    test(
-      'filteredQuotes with non-matching query returns empty list',
-      () {
-        // Property: a query that matches nothing returns empty
-        const query = 'xyzzy_no_match_12345';
-        final result = filteredQuotes(query, 'All');
-        expect(result, isEmpty,
-            reason:
-                'A query with no matches must return an empty list, not throw');
-      },
-    );
+    test('filteredQuotes with non-matching query returns empty list', () {
+      // Property: a query that matches nothing returns empty
+      const query = 'xyzzy_no_match_12345';
+      final result = filteredQuotes(query, 'All');
+      expect(
+        result,
+        isEmpty,
+        reason: 'A query with no matches must return an empty list, not throw',
+      );
+    });
 
     test(
       'filteredQuotes covers all categories in kQuotes — no category is lost',
@@ -523,7 +608,7 @@ void main() {
 
   group('Sub-property D — Quote card tap and download', () {
     /// Helper: finds the first GlobalKey used by a quote card RepaintBoundary.
-    GlobalKey? _findFirstQuoteCardKey(WidgetTester tester) {
+    GlobalKey? findFirstQuoteCardKey(WidgetTester tester) {
       final allRepaintBoundaries = tester
           .widgetList<RepaintBoundary>(find.byType(RepaintBoundary))
           .toList();
@@ -539,100 +624,101 @@ void main() {
     ///
     /// Property: for any quote in kQuotes, tapping its card opens the detail
     /// bottom sheet with the correct quote data.
-    testWidgets(
-      'tapping a quote card opens the detail bottom sheet',
-      (WidgetTester tester) async {
-        // Use a larger viewport to avoid overflow in the bottom sheet
-        tester.view.physicalSize = const Size(1080, 1920);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets('tapping a quote card opens the detail bottom sheet', (
+      WidgetTester tester,
+    ) async {
+      // Use a larger viewport to avoid overflow in the bottom sheet
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: MotivationalScreen(),
-          ),
-        );
-        await tester.pump();
+      await tester.pumpWidget(const MaterialApp(home: MotivationalScreen()));
+      await tester.pump();
 
-        // Tap in the grid area (below header, search bar, and category chips)
-        // The grid starts at approximately y=150 in a 1920-height viewport
-        await tester.tapAt(const Offset(270, 400));
-        await tester.pumpAndSettle();
+      // Tap in the grid area (below header, search bar, and category chips)
+      // The grid starts at approximately y=150 in a 1920-height viewport
+      await tester.tapAt(const Offset(270, 400));
+      await tester.pumpAndSettle();
 
-        // The detail bottom sheet must appear with a 'Save Quote' button
-        expect(
-          find.text('Save Quote'),
-          findsOneWidget,
-          reason:
-              'Tapping a quote card must open the detail bottom sheet with '
-              'a "Save Quote" download button. Requirement 3.5.',
-        );
-      },
-    );
+      // The detail bottom sheet must appear with a 'Save Quote' button
+      expect(
+        find.text('Save Quote'),
+        findsOneWidget,
+        reason:
+            'Tapping a quote card must open the detail bottom sheet with '
+            'a "Save Quote" download button. Requirement 3.5.',
+      );
+    });
 
-    testWidgets(
-      'detail bottom sheet contains the correct quote text',
-      (WidgetTester tester) async {
-        tester.view.physicalSize = const Size(1080, 1920);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets('detail bottom sheet contains the correct quote text', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: MotivationalScreen(),
-          ),
-        );
-        await tester.pump();
+      await tester.pumpWidget(const MaterialApp(home: MotivationalScreen()));
+      await tester.pump();
 
-        await tester.tapAt(const Offset(270, 400));
-        await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(270, 400));
+      await tester.pumpAndSettle();
 
-        // The bottom sheet must be visible
-        expect(find.text('Save Quote'), findsOneWidget,
-            reason: 'Bottom sheet must show Save Quote button');
+      // The bottom sheet must be visible
+      expect(
+        find.text('Save Quote'),
+        findsOneWidget,
+        reason: 'Bottom sheet must show Save Quote button',
+      );
 
-        // The bottom sheet must contain quote text from kQuotes
-        final filtered = filteredQuotes('', 'All');
-        bool foundQuoteText = false;
-        for (final q in filtered.take(5)) {
-          if (tester.any(find.text(q.text))) {
-            foundQuoteText = true;
-            break;
-          }
+      // The bottom sheet must contain quote text from kQuotes
+      final filtered = filteredQuotes('', 'All');
+      bool foundQuoteText = false;
+      for (final q in filtered.take(5)) {
+        if (tester.any(find.text(q.text))) {
+          foundQuoteText = true;
+          break;
         }
-        expect(foundQuoteText, isTrue,
-            reason:
-                'The detail bottom sheet must display the quote text. '
-                'Requirement 3.5: tapping a card shows the detail sheet with '
-                'the correct quote data.');
-      },
-    );
+      }
+      expect(
+        foundQuoteText,
+        isTrue,
+        reason:
+            'The detail bottom sheet must display the quote text. '
+            'Requirement 3.5: tapping a card shows the detail sheet with '
+            'the correct quote data.',
+      );
+    });
 
     testWidgets(
       'MotivationalScreen renders quote cards for all filtered quotes',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: MotivationalScreen(),
-          ),
-        );
+        await tester.pumpWidget(const MaterialApp(home: MotivationalScreen()));
         await tester.pump();
 
         // The masonry grid must be present
-        expect(find.byType(GestureDetector), findsWidgets,
-            reason: 'Quote cards must be rendered as GestureDetectors');
+        expect(
+          find.byType(GestureDetector),
+          findsWidgets,
+          reason: 'Quote cards must be rendered as GestureDetectors',
+        );
 
         // RepaintBoundary widgets must be present (used for download)
-        expect(find.byType(RepaintBoundary), findsWidgets,
-            reason:
-                'RepaintBoundary widgets must be present for download functionality');
+        expect(
+          find.byType(RepaintBoundary),
+          findsWidgets,
+          reason:
+              'RepaintBoundary widgets must be present for download functionality',
+        );
 
         // At least one RepaintBoundary must have a GlobalKey (quote card)
-        final cardKey = _findFirstQuoteCardKey(tester);
-        expect(cardKey, isNotNull,
-            reason: 'Quote cards must use GlobalKey for RepaintBoundary');
+        final cardKey = findFirstQuoteCardKey(tester);
+        expect(
+          cardKey,
+          isNotNull,
+          reason: 'Quote cards must use GlobalKey for RepaintBoundary',
+        );
       },
     );
 
@@ -644,11 +730,7 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: MotivationalScreen(),
-          ),
-        );
+        await tester.pumpWidget(const MaterialApp(home: MotivationalScreen()));
         await tester.pump();
 
         await tester.tapAt(const Offset(270, 400));
@@ -677,23 +759,23 @@ void main() {
     /// The SplashScreen uses PreferencesService.getUserName() to determine
     /// routing: non-null/non-empty name → moodCheckin, null/empty → onboarding.
     /// We test the routing decision logic directly.
-    test(
-      'routing logic: null/empty userName routes to onboarding',
-      () {
-        // Simulate the routing decision from SplashScreen._SplashScreenState.initState
-        String? savedName;
+    test('routing logic: null/empty userName routes to onboarding', () {
+      // Simulate the routing decision from SplashScreen._SplashScreenState.initState
+      String? savedName;
 
-        // Decision: if savedName is null or empty → onboarding
-        final route = (savedName != null && savedName.isNotEmpty)
-            ? '/mood-checkin'
-            : '/onboarding';
+      // Decision: if savedName is null or empty → onboarding
+      final route = (savedName != null && savedName.isNotEmpty)
+          ? '/mood-checkin'
+          : '/onboarding';
 
-        expect(route, equals('/onboarding'),
-            reason:
-                'When userName is null (new user), routing must go to /onboarding. '
-                'Requirement 3.1: onboarding flow must be determined correctly.');
-      },
-    );
+      expect(
+        route,
+        equals('/onboarding'),
+        reason:
+            'When userName is null (new user), routing must go to /onboarding. '
+            'Requirement 3.1: onboarding flow must be determined correctly.',
+      );
+    });
 
     test(
       'routing logic: non-empty userName routes to mood-checkin (returning user)',
@@ -702,26 +784,29 @@ void main() {
 
         final route = (savedName.isNotEmpty) ? '/mood-checkin' : '/onboarding';
 
-        expect(route, equals('/mood-checkin'),
-            reason:
-                'When userName is set (returning user), routing must go to /mood-checkin. '
-                'Requirement 3.1: returning user skips onboarding.');
+        expect(
+          route,
+          equals('/mood-checkin'),
+          reason:
+              'When userName is set (returning user), routing must go to /mood-checkin. '
+              'Requirement 3.1: returning user skips onboarding.',
+        );
       },
     );
 
-    test(
-      'routing logic: empty string userName routes to onboarding',
-      () {
-        const savedName = '';
+    test('routing logic: empty string userName routes to onboarding', () {
+      const savedName = '';
 
-        final route = (savedName.isNotEmpty) ? '/mood-checkin' : '/onboarding';
+      final route = (savedName.isNotEmpty) ? '/mood-checkin' : '/onboarding';
 
-        expect(route, equals('/onboarding'),
-            reason:
-                'When userName is empty string, routing must go to /onboarding '
-                '(treated as new user). Requirement 3.1.');
-      },
-    );
+      expect(
+        route,
+        equals('/onboarding'),
+        reason:
+            'When userName is empty string, routing must go to /onboarding '
+            '(treated as new user). Requirement 3.1.',
+      );
+    });
 
     test(
       'routing property: for any non-null non-empty name, route is mood-checkin',
@@ -729,12 +814,14 @@ void main() {
         // Property: for any valid name string, route is always mood-checkin
         final names = ['Alice', 'Bob', 'User123', 'A', 'Test User'];
         for (final name in names) {
-          final route =
-              (name.isNotEmpty) ? '/mood-checkin' : '/onboarding';
-          expect(route, equals('/mood-checkin'),
-              reason:
-                  'Name "$name" must route to /mood-checkin. '
-                  'Requirement 3.1: all returning users go to mood-checkin.');
+          final route = (name.isNotEmpty) ? '/mood-checkin' : '/onboarding';
+          expect(
+            route,
+            equals('/mood-checkin'),
+            reason:
+                'Name "$name" must route to /mood-checkin. '
+                'Requirement 3.1: all returning users go to mood-checkin.',
+          );
         }
       },
     );
@@ -748,10 +835,13 @@ void main() {
           final route = (name != null && name.isNotEmpty)
               ? '/mood-checkin'
               : '/onboarding';
-          expect(route, equals('/onboarding'),
-              reason:
-                  'Name "$name" must route to /onboarding. '
-                  'Requirement 3.1: new users always see onboarding.');
+          expect(
+            route,
+            equals('/onboarding'),
+            reason:
+                'Name "$name" must route to /onboarding. '
+                'Requirement 3.1: new users always see onboarding.',
+          );
         }
       },
     );

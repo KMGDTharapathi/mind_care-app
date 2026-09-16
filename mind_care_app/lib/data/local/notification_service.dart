@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -15,9 +16,20 @@ class NotificationService {
   static Future<void> init({
     required GlobalKey<NavigatorState> navigatorKey,
   }) async {
-    try {
-      tz.initializeTimeZones();
-    } catch (_) {}
+    // Resolve the device timezone so tz.local is NOT left at the UTC default.
+    // Retry a few times: the platform channel may not be ready on cold start.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        tz.initializeTimeZones();
+        final tzName = await FlutterTimezone.getLocalTimezone();
+        tz.setLocalLocation(tz.getLocation(tzName));
+        break;
+      } catch (e) {
+        debugPrint('Timezone init failed: $e');
+        if (attempt == 2) break;
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+    }
 
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -51,7 +63,17 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
-      return await androidPlugin.requestNotificationsPermission() ?? false;
+      final granted =
+          await androidPlugin.requestNotificationsPermission() ?? false;
+      if (!granted) return false;
+
+      // Android 12+ requires a separate exact-alarm permission. On Android 14+
+      // it is denied by default, so scheduling with exactAllowWhileIdle without
+      // it throws. Request it here so reminders actually fire on time.
+      if (!(await androidPlugin.canScheduleExactNotifications() ?? false)) {
+        await androidPlugin.requestExactAlarmsPermission();
+      }
+      return true;
     }
     final iosPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -73,6 +95,18 @@ class NotificationService {
   }) async {
     await cancelAll();
 
+    // Choose scheduling mode up front: exact alarms need a separate permission
+    // (denied by default since Android 14). Fall back to inexact if unavailable
+    // so reminders still fire — just possibly a few minutes late.
+    final androidPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    final canScheduleExact =
+        await androidPlugin?.canScheduleExactNotifications() ?? false;
+    final scheduleMode = canScheduleExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+
     final days = repeatDays.isEmpty ? {1, 2, 3, 4, 5, 6, 7} : repeatDays;
 
     for (final day in days) {
@@ -82,26 +116,30 @@ class NotificationService {
       // Map 1-7 to Day enum
       final dayComponent = _dayComponent(day);
 
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        notifId,
-        'MindCare 🌿',
-        message,
-        scheduledDate,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channelId,
-            _channelName,
-            importance: Importance.high,
-            priority: Priority.high,
-            styleInformation: BigTextStyleInformation(message),
+      try {
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          notifId,
+          'MindCare 🌿',
+          message,
+          scheduledDate,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              importance: Importance.high,
+              priority: Priority.high,
+              styleInformation: BigTextStyleInformation(message),
+            ),
+            iOS: const DarwinNotificationDetails(),
           ),
-          iOS: const DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: dayComponent,
-      );
+          androidScheduleMode: scheduleMode,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: dayComponent,
+        );
+      } catch (e) {
+        debugPrint('Failed to schedule reminder for day $day: $e');
+      }
     }
   }
 

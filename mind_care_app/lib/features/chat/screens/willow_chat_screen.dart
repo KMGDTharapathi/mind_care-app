@@ -43,7 +43,8 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       if (hasText != _hasText) setState(() => _hasText = hasText);
     });
     _scrollController.addListener(() {
-      final atBottom = _scrollController.position.pixels >=
+      final atBottom =
+          _scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 80;
       if (!atBottom && !_showScrollDown) {
         setState(() => _showScrollDown = true);
@@ -128,7 +129,8 @@ class _WillowChatScreenState extends State<WillowChatScreen>
           children: [
             const SizedBox(height: 8),
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
@@ -146,7 +148,10 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Color(0xFFE3F2FD),
-                child: Icon(Icons.attach_file_rounded, color: Color(0xFF1565C0)),
+                child: Icon(
+                  Icons.attach_file_rounded,
+                  color: Color(0xFF1565C0),
+                ),
               ),
               title: Text(isSi ? 'ගොනුව' : 'File'),
               onTap: () => Navigator.pop(context, 'file'),
@@ -160,13 +165,10 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     if (choice == null) return;
 
     if (choice == 'image') {
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.image,
-        allowMultiple: false,
       );
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.first;
-      if (file.path == null) return;
+      if (file == null || file.path == null) return;
 
       final userMsg = ChatMessage.image(
         id: _uuid.v4(),
@@ -183,10 +185,8 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       setState(() => _isTyping = false);
       _addWillowMessage(response);
     } else {
-      final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.first;
-      if (file.path == null) return;
+      final file = await FilePicker.pickFile();
+      if (file == null || file.path == null) return;
 
       final userMsg = ChatMessage.file(
         id: _uuid.v4(),
@@ -219,7 +219,10 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         children: [
           // API config banner — shown when ngrok URL not set
           if (!WillowApiService.isConfigured)
-            _ApiConfigBanner(isSinhala: isSi, onConfigured: () => setState(() {})),
+            _ApiConfigBanner(
+              isSinhala: isSi,
+              onConfigured: () => setState(() {}),
+            ),
           Expanded(
             child: Stack(
               children: [
@@ -244,8 +247,10 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                     child: FloatingActionButton.small(
                       backgroundColor: _kTeal,
                       onPressed: () => _scrollToBottom(),
-                      child: const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Colors.white),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
               ],
@@ -280,11 +285,14 @@ class _WillowChatScreenState extends State<WillowChatScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Willow',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
+              const Text(
+                'Willow',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
               Text(
                 isSi ? 'ඔබේ සෞඛ්‍ය සහකාරිය 🌿' : 'Your wellness companion 🌿',
                 style: const TextStyle(fontSize: 11, color: Colors.white70),
@@ -307,14 +315,15 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 7, height: 7,
+                  width: 7,
+                  height: 7,
                   decoration: BoxDecoration(
                     color: WillowApiService.isConfigured
                         ? const Color(0xFF69F0AE)
@@ -352,7 +361,10 @@ class _WillowAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF4DB6AC),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -374,7 +386,7 @@ class _WillowAvatar extends StatelessWidget {
                 width: size * 0.28,
                 height: size * 0.06,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -383,8 +395,11 @@ class _WillowAvatar extends StatelessWidget {
           Positioned(
             top: -size * 0.08,
             right: size * 0.1,
-            child: Icon(Icons.eco_rounded,
-                color: const Color(0xFF2E7D32), size: size * 0.3),
+            child: Icon(
+              Icons.eco_rounded,
+              color: const Color(0xFF2E7D32),
+              size: size * 0.3,
+            ),
           ),
         ],
       ),
@@ -392,13 +407,13 @@ class _WillowAvatar extends StatelessWidget {
   }
 
   Widget _dot(double s) => Container(
-        width: s,
-        height: s,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-      );
+    width: s,
+    height: s,
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      shape: BoxShape.circle,
+    ),
+  );
 }
 
 // ── Message Bubble ────────────────────────────────────────────────────────────
@@ -420,14 +435,12 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (!isUser) ...[
-            _WillowAvatar(size: 28),
-            const SizedBox(width: 6),
-          ],
+          if (!isUser) ...[_WillowAvatar(size: 28), const SizedBox(width: 6)],
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -443,7 +456,7 @@ class _MessageBubble extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -466,8 +479,7 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       if (isUser) ...[
                         const SizedBox(width: 3),
-                        Icon(Icons.done_all_rounded,
-                            size: 13, color: _kTeal),
+                        Icon(Icons.done_all_rounded, size: 13, color: _kTeal),
                       ],
                     ],
                   ),
@@ -496,10 +508,13 @@ class _MessageBubble extends StatelessWidget {
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               height: 100,
               color: Colors.grey.shade200,
-              child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+              child: const Icon(
+                Icons.broken_image_outlined,
+                color: Colors.grey,
+              ),
             ),
           ),
         );
@@ -510,20 +525,24 @@ class _MessageBubble extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _kTeal.withOpacity(0.15),
+                color: _kTeal.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.insert_drive_file_outlined,
-                  color: _kTeal, size: 22),
+              child: const Icon(
+                Icons.insert_drive_file_outlined,
+                color: _kTeal,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
                 message.fileName ?? 'File',
                 style: TextStyle(
-                    fontSize: 13,
-                    color: textColor,
-                    fontWeight: FontWeight.w500),
+                  fontSize: 13,
+                  color: textColor,
+                  fontWeight: FontWeight.w500,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -562,12 +581,12 @@ class _VoiceBubble extends StatelessWidget {
         Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(
-            color: _kTeal,
-            shape: BoxShape.circle,
+          decoration: BoxDecoration(color: _kTeal, shape: BoxShape.circle),
+          child: const Icon(
+            Icons.play_arrow_rounded,
+            color: Colors.white,
+            size: 20,
           ),
-          child: const Icon(Icons.play_arrow_rounded,
-              color: Colors.white, size: 20),
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -583,7 +602,7 @@ class _VoiceBubble extends StatelessWidget {
                     height: (4 + (i % 5) * 4).toDouble(),
                     margin: const EdgeInsets.symmetric(horizontal: 1),
                     decoration: BoxDecoration(
-                      color: _kTeal.withOpacity(0.6),
+                      color: _kTeal.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -592,7 +611,10 @@ class _VoiceBubble extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 _formatDuration(message.durationSeconds),
-                style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.6)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textColor.withValues(alpha: 0.6),
+                ),
               ),
             ],
           ),
@@ -650,7 +672,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -658,7 +680,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
             ),
             child: AnimatedBuilder(
               animation: _ctrl,
-              builder: (_, __) {
+              builder: (_, _) {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(3, (i) {
@@ -670,7 +692,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
                       height: 7,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: _kTeal.withOpacity(opacity),
+                        color: _kTeal.withValues(alpha: opacity),
                         shape: BoxShape.circle,
                       ),
                     );
@@ -746,7 +768,10 @@ class _InputBar extends StatelessWidget {
                   color: fieldBg,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 2,
+                ),
                 child: TextField(
                   controller: controller,
                   maxLines: null,
@@ -786,7 +811,11 @@ class _IconBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _IconBtn({required this.icon, required this.color, required this.onTap});
+  const _IconBtn({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -796,7 +825,7 @@ class _IconBtn extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: color, size: 20),
@@ -816,10 +845,7 @@ class _SendBtn extends StatelessWidget {
       child: Container(
         width: 44,
         height: 44,
-        decoration: const BoxDecoration(
-          color: _kTeal,
-          shape: BoxShape.circle,
-        ),
+        decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
         child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
       ),
     );
@@ -834,10 +860,7 @@ class _MicBtn extends StatelessWidget {
     return Container(
       width: 44,
       height: 44,
-      decoration: const BoxDecoration(
-        color: _kTeal,
-        shape: BoxShape.circle,
-      ),
+      decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
       child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
     );
   }
@@ -860,20 +883,25 @@ class _ApiConfigBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: Row(
           children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 16, color: Color(0xFF795548)),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: Color(0xFF795548),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 isSinhala
                     ? 'AI model URL සකසන්න — ස්පර්ශ කරන්න'
                     : 'Tap to connect your LLaMA model',
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF795548)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF795548)),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                size: 16, color: Color(0xFF795548)),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: Color(0xFF795548),
+            ),
           ],
         ),
       ),
@@ -885,8 +913,10 @@ class _ApiConfigBanner extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Connect Willow AI',
-            style: TextStyle(color: _kDarkTeal, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Connect Willow AI',
+          style: TextStyle(color: _kDarkTeal, fontWeight: FontWeight.w700),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -903,13 +933,16 @@ class _ApiConfigBanner extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'https://xxxx.ngrok-free.app',
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: _kTeal, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
               style: const TextStyle(fontSize: 13),
             ),
@@ -925,7 +958,8 @@ class _ApiConfigBanner extends StatelessWidget {
               backgroundColor: _kTeal,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               final url = ctrl.text.trim();

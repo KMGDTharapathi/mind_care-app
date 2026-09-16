@@ -26,28 +26,25 @@ class MoodTrackerScreen extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'How are you feeling?',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Select the mood that best describes you right now.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
+                          style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.6),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                         ),
                         const SizedBox(height: 24),
@@ -87,10 +84,9 @@ class _AppBar extends StatelessWidget {
           ),
           Text(
             'Mood Tracker',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -132,12 +128,14 @@ class _MoodGrid extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: _moodOptions
-              .map((opt) => _MoodOptionCard(
-                    option: opt,
-                    isSelected: state.selectedMood == opt.type,
-                    onTap: () =>
-                        context.read<MoodBloc>().add(MoodSelected(opt.type)),
-                  ))
+              .map(
+                (opt) => _MoodOptionCard(
+                  option: opt,
+                  isSelected: state.selectedMood == opt.type,
+                  onTap: () =>
+                      context.read<MoodBloc>().add(MoodSelected(opt.type)),
+                ),
+              )
               .toList(),
         );
       },
@@ -167,13 +165,13 @@ class _MoodOptionCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primary.withOpacity(0.15)
-              : colorScheme.primaryContainer.withOpacity(0.4),
+              ? colorScheme.primary.withValues(alpha: 0.15)
+              : colorScheme.primaryContainer.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.primary.withOpacity(0.2),
+                : colorScheme.primary.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -185,12 +183,9 @@ class _MoodOptionCard extends StatelessWidget {
             Text(
               option.label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.normal,
-                    color: isSelected
-                        ? colorScheme.primary
-                        : colorScheme.onSurface,
-                  ),
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+              ),
             ),
           ],
         ),
@@ -214,14 +209,17 @@ class _ValidationError extends StatelessWidget {
           padding: const EdgeInsets.only(top: 8),
           child: Row(
             children: [
-              Icon(Icons.error_outline,
-                  size: 16, color: Theme.of(context).colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 16,
+                color: Theme.of(context).colorScheme.error,
+              ),
               const SizedBox(width: 6),
               Text(
                 state.validationError!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ],
           ),
@@ -259,10 +257,9 @@ class _NoteInputState extends State<_NoteInput> {
           children: [
             Text(
               'Add a note (optional)',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -276,19 +273,17 @@ class _NoteInputState extends State<_NoteInput> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withOpacity(0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withOpacity(0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -323,8 +318,7 @@ class _SubmitButton extends StatelessWidget {
           child: FilledButton(
             onPressed: state.isSubmitting
                 ? null
-                : () =>
-                    context.read<MoodBloc>().add(const MoodSubmitted()),
+                : () => context.read<MoodBloc>().add(const MoodSubmitted()),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -339,8 +333,7 @@ class _SubmitButton extends StatelessWidget {
                   )
                 : const Text(
                     'Log Mood',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         );

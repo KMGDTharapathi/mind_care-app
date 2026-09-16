@@ -1,5 +1,4 @@
 import '../services/auth/auth_service.dart';
-import '../services/auth/firebase_auth_service.dart';
 import '../services/analytics/analytics_service.dart';
 import '../services/crashlytics/crashlytics_service.dart';
 import '../services/sync/sync_service.dart';
@@ -8,9 +7,7 @@ import '../services/remote_config/remote_config_service.dart';
 import '../data/local/hive_service.dart';
 
 /// Simple static service locator that holds singleton instances of
-/// Firebase-backed services. Populated once in [main] after Firebase is
-/// initialised; all fields are nullable so the app degrades gracefully when
-/// Firebase is unavailable.
+/// services. Populated once in [main] after init; all fields are nullable.
 class ServiceLocator {
   ServiceLocator._();
 
@@ -21,7 +18,7 @@ class ServiceLocator {
   static AnalyticsService? analyticsService;
   static CrashlyticsService? crashlyticsService;
 
-  /// Initialises the core Firebase services and stores them as singletons.
+  /// Initialises the core services and stores them as singletons.
   ///
   /// Safe to call multiple times — subsequent calls are no-ops if the services
   /// are already set.
@@ -33,17 +30,12 @@ class ServiceLocator {
     AnalyticsService? analytics,
     CrashlyticsService? crashlytics,
   }) async {
-    authService ??= auth ?? FirebaseAuthService();
+    authService ??= auth;
     // Reuse the already-open Hive box from HiveService instead of opening it again.
     // Opening the same box twice can deadlock the main isolate and cause ANR.
     writeQueue ??= queue ?? WriteQueue.fromBox(HiveService.writeQueue);
     crashlyticsService ??= crashlytics;
-    syncService ??= sync ??
-        FirestoreSyncService(
-          authService: authService!,
-          writeQueue: writeQueue!,
-          crashlyticsService: crashlyticsService,
-        );
+    syncService ??= sync;
     remoteConfigService ??= remoteConfig;
     analyticsService ??= analytics;
   }

@@ -3,4 +3,5 @@ abstract class RemoteConfigService {
   bool getBool(String key);
   int getInt(String key);
   String getString(String key);
+  double getDouble(String key);
 }

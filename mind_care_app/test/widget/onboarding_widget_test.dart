@@ -16,11 +16,11 @@ void main() {
       routes: [
         GoRoute(
           path: '/onboarding',
-          builder: (_, __) => const OnboardingScreen(),
+          builder: (_, _) => const OnboardingScreen(),
         ),
         GoRoute(
           path: '/home',
-          builder: (_, __) => const Scaffold(body: Text('Home')),
+          builder: (_, _) => const Scaffold(body: Text('Home')),
         ),
       ],
     );
@@ -64,7 +64,9 @@ void main() {
       expect(find.text('Find Your Calm'), findsOneWidget);
     });
 
-    testWidgets('"Get Started" button calls setOnboardingComplete', (tester) async {
+    testWidgets('"Get Started" button calls setOnboardingComplete', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildOnboardingScreen());
       await tester.pumpAndSettle();
 

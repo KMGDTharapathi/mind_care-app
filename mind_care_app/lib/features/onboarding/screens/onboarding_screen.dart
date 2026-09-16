@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uuid/uuid.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/gradient_scaffold.dart';
@@ -32,11 +30,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     if (widget.returning) {
       return GradientScaffold(
-        body: LeafBackground(
-          child: SafeArea(
-            child: const _WelcomeBackPage(),
-          ),
-        ),
+        body: LeafBackground(child: SafeArea(child: const _WelcomeBackPage())),
       );
     }
 
@@ -54,8 +48,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         controller: _pageController,
                         // Disable swipe — navigation is button-driven
                         physics: const NeverScrollableScrollPhysics(),
-                        onPageChanged: (index) =>
-                            context.read<OnboardingCubit>().onPageChanged(index),
+                        onPageChanged: (index) => context
+                            .read<OnboardingCubit>()
+                            .onPageChanged(index),
                         children: [
                           const _WelcomePage(),
                           _NameInputPage(pageController: _pageController),
@@ -94,11 +89,11 @@ class _WelcomePage extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryLight.withOpacity(0.3),
+                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -183,33 +178,10 @@ class _NameInputPageState extends State<_NameInputPage> {
     // Keep global notifier in sync so returning-user detection works immediately
     appUserName.value = name;
 
-    // Save to Firestore with a random user ID
-    _saveUserToFirestore(name);
-
     widget.pageController.nextPage(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
-  }
-
-  Future<void> _saveUserToFirestore(String name) async {
-    try {
-      // Generate a random user ID and persist it locally
-      String? userId = await PreferencesService.getUserId();
-      if (userId == null || userId.isEmpty) {
-        userId = const Uuid().v4();
-        await PreferencesService.setUserId(userId);
-      }
-
-      await FirebaseFirestore.instance.collection('users').doc(userId).set({
-        'name': name,
-        'userId': userId,
-        'createdAt': FieldValue.serverTimestamp(),
-        'platform': 'android',
-      }, SetOptions(merge: true));
-    } catch (e) {
-      debugPrint('Firestore save error: $e');
-    }
   }
 
   @override
@@ -223,11 +195,11 @@ class _NameInputPageState extends State<_NameInputPage> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryLight.withOpacity(0.3),
+                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -266,11 +238,11 @@ class _NameInputPageState extends State<_NameInputPage> {
             decoration: InputDecoration(
               hintText: 'Type your name here...',
               hintStyle: TextStyle(
-                color: AppColors.textSecondaryDark.withOpacity(0.6),
+                color: AppColors.textSecondaryDark.withValues(alpha: 0.6),
                 fontSize: 16,
               ),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.9),
+              fillColor: Colors.white.withValues(alpha: 0.9),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,
@@ -315,7 +287,7 @@ class _NameInputPageState extends State<_NameInputPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _hasName
                     ? AppColors.primaryDark
-                    : AppColors.primaryDark.withOpacity(0.35),
+                    : AppColors.primaryDark.withValues(alpha: 0.35),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(26),
@@ -350,11 +322,11 @@ class _FindCalmPage extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryLight.withOpacity(0.3),
+                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -430,7 +402,7 @@ class _BottomSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isActive
                       ? AppColors.textDark
-                      : AppColors.textDark.withOpacity(0.25),
+                      : AppColors.textDark.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(4),
                 ),
               );
@@ -468,8 +440,10 @@ class _BottomSection extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                        child: Divider(
-                            color: AppColors.textDark.withOpacity(0.2))),
+                      child: Divider(
+                        color: AppColors.textDark.withValues(alpha: 0.2),
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
@@ -481,8 +455,10 @@ class _BottomSection extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                        child: Divider(
-                            color: AppColors.textDark.withOpacity(0.2))),
+                      child: Divider(
+                        color: AppColors.textDark.withValues(alpha: 0.2),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -502,7 +478,9 @@ class _BottomSection extends StatelessWidget {
                     child: const Text(
                       'Get Started',
                       style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w600),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -541,8 +519,9 @@ class _WelcomeBackPageState extends State<_WelcomeBackPage> {
     if (_name == null || _name!.isEmpty) {
       Future.microtask(() async {
         try {
-          final n = await PreferencesService.getUserName()
-              .timeout(const Duration(seconds: 2));
+          final n = await PreferencesService.getUserName().timeout(
+            const Duration(seconds: 2),
+          );
           if (mounted && n != null && n.isNotEmpty) {
             setState(() => _name = n);
           }
@@ -552,8 +531,9 @@ class _WelcomeBackPageState extends State<_WelcomeBackPage> {
     if (_lang == 'en') {
       Future.microtask(() async {
         try {
-          final l = await PreferencesService.getAppLanguage()
-              .timeout(const Duration(seconds: 2));
+          final l = await PreferencesService.getAppLanguage().timeout(
+            const Duration(seconds: 2),
+          );
           if (mounted && l != null && l.isNotEmpty) {
             setState(() => _lang = l);
           }
@@ -578,11 +558,11 @@ class _WelcomeBackPageState extends State<_WelcomeBackPage> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryLight.withOpacity(0.3),
+                  color: AppColors.primaryLight.withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),

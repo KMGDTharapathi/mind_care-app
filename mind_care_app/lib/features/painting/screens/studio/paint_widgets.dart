@@ -16,16 +16,37 @@ class _TopBar extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onBack,
-            child: const Row(children: [
-              Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Color(0xFF1A1A2E)),
-              SizedBox(width: 4),
-              Text('Canvas', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E))),
-            ]),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: Color(0xFF1A1A2E),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Canvas',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                ),
+              ],
+            ),
           ),
           const Spacer(),
-          _TBtn(icon: Icons.undo_rounded, enabled: onUndo != null, onTap: onUndo ?? () {}),
+          _TBtn(
+            icon: Icons.undo_rounded,
+            enabled: onUndo != null,
+            onTap: onUndo ?? () {},
+          ),
           _TBtn(icon: Icons.redo_rounded, enabled: false, onTap: () {}),
-          _TBtn(icon: Icons.delete_outline_rounded, enabled: true, onTap: onClear),
+          _TBtn(
+            icon: Icons.delete_outline_rounded,
+            enabled: true,
+            onTap: onClear,
+          ),
           _TBtn(icon: Icons.download_rounded, enabled: true, onTap: () {}),
         ],
       ),
@@ -51,7 +72,11 @@ class _TBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.grey.shade200),
         ),
-        child: Icon(icon, size: 17, color: enabled ? Colors.black87 : Colors.grey.shade400),
+        child: Icon(
+          icon,
+          size: 17,
+          color: enabled ? Colors.black87 : Colors.grey.shade400,
+        ),
       ),
     );
   }
@@ -148,11 +173,14 @@ class _BrushChip extends StatelessWidget {
           children: [
             Text(emoji, style: const TextStyle(fontSize: 14)),
             const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    color: selected ? Colors.white : Colors.black87,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black87,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -199,7 +227,11 @@ class _PaletteRow extends StatelessWidget {
                   width: tool == ToolMode.eraser ? 2.5 : 1.5,
                 ),
               ),
-              child: const Icon(Icons.auto_fix_normal_rounded, size: 15, color: Colors.black54),
+              child: const Icon(
+                Icons.auto_fix_normal_rounded,
+                size: 15,
+                color: Colors.black54,
+              ),
             ),
           ),
           ...kPalette.map((c) {
@@ -218,7 +250,12 @@ class _PaletteRow extends StatelessWidget {
                     width: sel ? 2.5 : 1,
                   ),
                   boxShadow: sel
-                      ? [BoxShadow(color: c.withValues(alpha: 0.5), blurRadius: 6)]
+                      ? [
+                          BoxShadow(
+                            color: c.withValues(alpha: 0.5),
+                            blurRadius: 6,
+                          ),
+                        ]
                       : null,
                 ),
               ),
@@ -249,15 +286,36 @@ class _SizeOpacityRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: Row(
         children: [
-          const Text('Size', style: TextStyle(fontSize: 11, color: Colors.black54)),
+          const Text(
+            'Size',
+            style: TextStyle(fontSize: 11, color: Colors.black54),
+          ),
           const SizedBox(width: 4),
-          Expanded(child: _Slider(value: size, min: 1, max: 60, onChanged: onSize)),
-          Text('${size.round()}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+          Expanded(
+            child: _Slider(value: size, min: 1, max: 60, onChanged: onSize),
+          ),
+          Text(
+            '${size.round()}',
+            style: const TextStyle(fontSize: 11, color: Colors.black54),
+          ),
           const SizedBox(width: 12),
-          const Text('Opacity', style: TextStyle(fontSize: 11, color: Colors.black54)),
+          const Text(
+            'Opacity',
+            style: TextStyle(fontSize: 11, color: Colors.black54),
+          ),
           const SizedBox(width: 4),
-          Expanded(child: _Slider(value: opacity, min: 0.05, max: 1.0, onChanged: onOpacity)),
-          Text('${(opacity * 100).round()}%', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+          Expanded(
+            child: _Slider(
+              value: opacity,
+              min: 0.05,
+              max: 1.0,
+              onChanged: onOpacity,
+            ),
+          ),
+          Text(
+            '${(opacity * 100).round()}%',
+            style: const TextStyle(fontSize: 11, color: Colors.black54),
+          ),
         ],
       ),
     );
@@ -267,7 +325,12 @@ class _SizeOpacityRow extends StatelessWidget {
 class _Slider extends StatelessWidget {
   final double value, min, max;
   final void Function(double) onChanged;
-  const _Slider({required this.value, required this.min, required this.max, required this.onChanged});
+  const _Slider({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -326,11 +389,14 @@ class _BottomTabBar extends StatelessWidget {
                 children: [
                   Text(t.$2, style: const TextStyle(fontSize: 18)),
                   const SizedBox(height: 2),
-                  Text(t.$3,
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: sel ? t.$4 : Colors.black54)),
+                  Text(
+                    t.$3,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: sel ? t.$4 : Colors.black54,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -348,7 +414,11 @@ class _MandalaPanel extends StatelessWidget {
   final ColoringPage? active;
   final void Function(ColoringPage) onSelect;
 
-  const _MandalaPanel({required this.mandalas, required this.active, required this.onSelect});
+  const _MandalaPanel({
+    required this.mandalas,
+    required this.active,
+    required this.onSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +428,7 @@ class _MandalaPanel extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
         itemCount: mandalas.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (ctx, i) {
           final m = mandalas[i];
           final sel = active?.id == m.id;
@@ -374,7 +444,12 @@ class _MandalaPanel extends StatelessWidget {
                   color: sel ? const Color(0xFF2979FF) : Colors.grey.shade200,
                   width: sel ? 2.5 : 1,
                 ),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -386,11 +461,14 @@ class _MandalaPanel extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 5),
-                    child: Text(m.title,
-                        style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: sel ? const Color(0xFF2979FF) : Colors.black54)),
+                    child: Text(
+                      m.title,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: sel ? const Color(0xFF2979FF) : Colors.black54,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -454,7 +532,7 @@ class _BackgroundPanel extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: kBgOptions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (ctx, i) {
           final opt = kBgOptions[i];
           return GestureDetector(
@@ -481,8 +559,10 @@ class _BackgroundPanel extends StatelessWidget {
                       : null,
                 ),
                 const SizedBox(height: 4),
-                Text(opt.label ?? '',
-                    style: const TextStyle(fontSize: 9, color: Colors.black54)),
+                Text(
+                  opt.label ?? '',
+                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                ),
               ],
             ),
           );
@@ -537,7 +617,7 @@ class _ShapesPanel extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: shapes.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (ctx, i) {
           final s = shapes[i];
           final sel = pending == s.$1;
@@ -561,11 +641,14 @@ class _ShapesPanel extends StatelessWidget {
                 children: [
                   Text(s.$2, style: const TextStyle(fontSize: 24)),
                   const SizedBox(height: 4),
-                  Text(s.$3,
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: sel ? const Color(0xFF9C27B0) : Colors.black54)),
+                  Text(
+                    s.$3,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: sel ? const Color(0xFF9C27B0) : Colors.black54,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -598,7 +681,9 @@ class _ExportPanel extends StatelessWidget {
               backgroundColor: const Color(0xFF2196F3),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],

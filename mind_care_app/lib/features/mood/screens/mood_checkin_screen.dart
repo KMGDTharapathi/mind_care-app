@@ -20,19 +20,21 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
 
   bool get _isSinhala => appLanguage.value.isSinhala;
 
-  List<_MoodOption> get _moods => _isSinhala ? const [
-    _MoodOption('😄', 'අපූරුයි', MoodType.excited, Color(0xFFFFE066)),
-    _MoodOption('😊', 'හොඳයි', MoodType.happy, Color(0xFFA8E6CF)),
-    _MoodOption('😌', 'සාමාන්‍යයි', MoodType.calm, Color(0xFFB8D4E8)),
-    _MoodOption('😔', 'අඩුයි', MoodType.sad, Color(0xFFD4B8E8)),
-    _MoodOption('😰', 'කනස්සල්ලෙන්', MoodType.anxious, Color(0xFFFFB8B8)),
-  ] : const [
-    _MoodOption('😄', 'Amazing', MoodType.excited, Color(0xFFFFE066)),
-    _MoodOption('😊', 'Good', MoodType.happy, Color(0xFFA8E6CF)),
-    _MoodOption('😌', 'Okay', MoodType.calm, Color(0xFFB8D4E8)),
-    _MoodOption('😔', 'Low', MoodType.sad, Color(0xFFD4B8E8)),
-    _MoodOption('😰', 'Anxious', MoodType.anxious, Color(0xFFFFB8B8)),
-  ];
+  List<_MoodOption> get _moods => _isSinhala
+      ? const [
+          _MoodOption('😄', 'අපූරුයි', MoodType.excited, Color(0xFFFFE066)),
+          _MoodOption('😊', 'හොඳයි', MoodType.happy, Color(0xFFA8E6CF)),
+          _MoodOption('😌', 'සාමාන්‍යයි', MoodType.calm, Color(0xFFB8D4E8)),
+          _MoodOption('😔', 'අඩුයි', MoodType.sad, Color(0xFFD4B8E8)),
+          _MoodOption('😰', 'කනස්සල්ලෙන්', MoodType.anxious, Color(0xFFFFB8B8)),
+        ]
+      : const [
+          _MoodOption('😄', 'Amazing', MoodType.excited, Color(0xFFFFE066)),
+          _MoodOption('😊', 'Good', MoodType.happy, Color(0xFFA8E6CF)),
+          _MoodOption('😌', 'Okay', MoodType.calm, Color(0xFFB8D4E8)),
+          _MoodOption('😔', 'Low', MoodType.sad, Color(0xFFD4B8E8)),
+          _MoodOption('😰', 'Anxious', MoodType.anxious, Color(0xFFFFB8B8)),
+        ];
 
   Future<void> _saveMood(int index) async {
     setState(() => _selectedIndex = index);
@@ -48,16 +50,15 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
     } catch (_) {}
 
     await Future.delayed(const Duration(milliseconds: 600));
-    if (mounted) context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}');
+    if (mounted)
+      context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.onboardingGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.onboardingGradient),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -65,10 +66,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
               children: [
                 const Spacer(),
                 // Gentle greeting
-                const Text(
-                  '✨',
-                  style: TextStyle(fontSize: 48),
-                ),
+                const Text('✨', style: TextStyle(fontSize: 48)),
                 const SizedBox(height: 20),
                 Text(
                   _isSinhala
@@ -90,7 +88,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
-                    color: AppColors.textSecondaryDark.withOpacity(0.8),
+                    color: AppColors.textSecondaryDark.withValues(alpha: 0.8),
                     height: 1.5,
                   ),
                 ),
@@ -110,24 +108,22 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? mood.color
-                              : Colors.white.withOpacity(0.7),
+                              : Colors.white.withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: mood.color.withOpacity(0.5),
+                                    color: mood.color.withValues(alpha: 0.5),
                                     blurRadius: 12,
                                     spreadRadius: 2,
-                                  )
+                                  ),
                                 ]
                               : [],
                         ),
                         child: Center(
                           child: Text(
                             mood.emoji,
-                            style: TextStyle(
-                              fontSize: isSelected ? 32 : 26,
-                            ),
+                            style: TextStyle(fontSize: isSelected ? 32 : 26),
                           ),
                         ),
                       ),
@@ -146,7 +142,9 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textSecondaryDark.withOpacity(0.7),
+                          color: AppColors.textSecondaryDark.withValues(
+                            alpha: 0.7,
+                          ),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -156,12 +154,14 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                 const Spacer(),
                 // Skip option — gentle, not prominent
                 TextButton(
-                  onPressed: () => context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}'),
+                  onPressed: () => context.go(
+                    '${AppRouter.home}?lang=${appLanguage.value.languageCode}',
+                  ),
                   child: Text(
                     _isSinhala ? 'පසුව සමහරවිට' : 'Maybe later',
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondaryDark.withOpacity(0.6),
+                      color: AppColors.textSecondaryDark.withValues(alpha: 0.6),
                     ),
                   ),
                 ),

@@ -51,11 +51,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _Eye(),
-                                SizedBox(width: 16),
-                                _Eye(),
-                              ],
+                              children: [_Eye(), SizedBox(width: 16), _Eye()],
                             ),
                             SizedBox(height: 8),
                             _Smile(),
@@ -97,10 +93,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Please choose your language',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF5A7A7A),
-                    ),
+                    style: TextStyle(fontSize: 15, color: Color(0xFF5A7A7A)),
                   ),
                   const SizedBox(height: 36),
                   // Sinhala option
@@ -162,15 +155,20 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
                   GestureDetector(
                     onTap: _selected == null
                         ? null
-                        : () async {
-                            await PreferencesService.setAppLanguage(_selected!);
+                        : () {
+                            final lang = _selected!;
+                            // Fire and forget — never block navigation on a
+                            // disk write (SharedPreferences can fail on cold
+                            // start before the platform channel is ready).
+                            PreferencesService.setAppLanguage(lang)
+                                .catchError((_) {});
                             // Update global language notifier
-                            appLanguage.value = _selected == 'si'
+                            appLanguage.value = lang == 'si'
                                 ? AppStrings.si
                                 : AppStrings.en;
-                            if (context.mounted) {
-                              context.go('${AppRouter.moodCheckin}?lang=$_selected');
-                            }
+                            context.go(
+                              '${AppRouter.moodCheckin}?lang=$lang',
+                            );
                           },
                     child: Text(
                       'Continue →',
@@ -221,14 +219,12 @@ class _LanguageCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF5BA8A0)
-                : Colors.transparent,
+            color: isSelected ? const Color(0xFF5BA8A0) : Colors.transparent,
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -299,10 +295,7 @@ class _Smile extends StatelessWidget {
   const _Smile();
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(24, 12),
-      painter: _SmilePainter(),
-    );
+    return CustomPaint(size: const Size(24, 12), painter: _SmilePainter());
   }
 }
 

@@ -1,4 +1,3 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 
 class ConsentService {
