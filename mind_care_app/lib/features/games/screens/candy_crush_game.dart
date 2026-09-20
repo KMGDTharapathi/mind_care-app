@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/game_assistant.dart';
 
 /// A polished match-3 game with:
 ///  - multiple levels with target scores & move budgets
@@ -479,6 +480,17 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GameAssistant(
+              emoji: '🧠',
+              title: s.gameCandyCrushTitle,
+              tips: s.candyTips,
+              accentColor: const Color(0xFFEC407A),
+            ),
+          ),
+        ],
       ),
       body: LeafBackground(
         child: SafeArea(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import '../widgets/game_exit_dialog.dart';
+import '../widgets/game_assistant.dart';
 
 enum _Dir { up, down, left, right }
 
@@ -249,6 +250,7 @@ class _SnakeGameState extends State<SnakeGame> {
   }
 
   Widget _buildControls() {
+    final s = LanguageProvider.of(context);
     const btnColor = Color(0xFF5BA8A0);
     return Column(
       children: [
@@ -277,6 +279,13 @@ class _SnakeGameState extends State<SnakeGame> {
           Icons.keyboard_arrow_down_rounded,
           () => _setDir(_Dir.down),
           btnColor,
+        ),
+        const SizedBox(height: 4),
+        GameAssistant(
+          emoji: '🧠',
+          title: s.gameSnakeTitle,
+          tips: s.snakeTips,
+          accentColor: btnColor,
         ),
       ],
     );

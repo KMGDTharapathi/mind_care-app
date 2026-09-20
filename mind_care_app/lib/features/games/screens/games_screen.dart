@@ -6,9 +6,85 @@ import 'package:mind_care_app/features/games/screens/snake_game.dart';
 import 'package:mind_care_app/features/games/screens/candy_crush_game.dart';
 import 'package:mind_care_app/features/games/screens/puzzle_game.dart';
 import 'package:mind_care_app/features/games/screens/word_puzzle_game.dart';
+import 'package:mind_care_app/features/games/widgets/game_instructions_screen.dart';
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({super.key});
+
+  void _openBubble(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    showGameInstructions(
+      context,
+      emoji: '🎯',
+      title: s.gameBubbleTitle,
+      steps: s.bubbleHowTo,
+      accentColor: const Color(0xFF5BA8A0),
+      onStart: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const BubbleBlasterGame()),
+      ),
+    );
+  }
+
+  void _openSnake(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    showGameInstructions(
+      context,
+      emoji: '🐍',
+      title: s.gameSnakeTitle,
+      steps: s.snakeHowTo,
+      accentColor: const Color(0xFF43A047),
+      onStart: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SnakeGame()),
+      ),
+    );
+  }
+
+  void _openCandy(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    showGameInstructions(
+      context,
+      emoji: '🍬',
+      title: s.gameCandyCrushTitle,
+      steps: s.candyHowTo,
+      accentColor: const Color(0xFFEC407A),
+      onStart: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CandyCrushGame()),
+      ),
+    );
+  }
+
+  void _openPuzzle(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    showGameInstructions(
+      context,
+      emoji: '🧩',
+      title: s.gamePuzzleTitle,
+      steps: s.puzzleHowTo,
+      accentColor: const Color(0xFF2196F3),
+      onStart: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PuzzleGame()),
+      ),
+    );
+  }
+
+  void _openWord(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    showGameInstructions(
+      context,
+      emoji: '🔤',
+      title: s.gameWordPuzzleTitle,
+      steps: s.wordHowTo,
+      accentColor: const Color(0xFF8BC34A),
+      onStart: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const WordPuzzleGame()),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +99,7 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameBubbleMood,
         color: isDark ? const Color(0xFF002A2E) : const Color(0xFFE0F7FA),
         accentColor: const Color(0xFF5BA8A0),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const BubbleBlasterGame()),
-        ),
+        onTap: () => _openBubble(context),
       ),
       _GameInfo(
         emoji: '🐍',
@@ -35,10 +108,7 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameSnakeMood,
         color: isDark ? const Color(0xFF0D1F0D) : const Color(0xFFE8F5E9),
         accentColor: const Color(0xFF43A047),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SnakeGame()),
-        ),
+        onTap: () => _openSnake(context),
       ),
       _GameInfo(
         emoji: '🍬',
@@ -47,10 +117,7 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameCandyCrushMood,
         color: isDark ? const Color(0xFF1A152A) : const Color(0xFFF3E5F5),
         accentColor: const Color(0xFFEC407A),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CandyCrushGame()),
-        ),
+        onTap: () => _openCandy(context),
       ),
       _GameInfo(
         emoji: '🧩',
@@ -59,10 +126,7 @@ class GamesScreen extends StatelessWidget {
         mood: s.gamePuzzleMood,
         color: isDark ? const Color(0xFF0D1A2A) : const Color(0xFFE3F2FD),
         accentColor: const Color(0xFF2196F3),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PuzzleGame()),
-        ),
+        onTap: () => _openPuzzle(context),
       ),
       _GameInfo(
         emoji: '🔤',
@@ -71,10 +135,7 @@ class GamesScreen extends StatelessWidget {
         mood: s.gameWordPuzzleMood,
         color: isDark ? const Color(0xFF1A2A0A) : const Color(0xFFF1F8E9),
         accentColor: const Color(0xFF8BC34A),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const WordPuzzleGame()),
-        ),
+        onTap: () => _openWord(context),
       ),
     ];
 

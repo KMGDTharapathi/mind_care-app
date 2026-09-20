@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
+import '../widgets/game_assistant.dart';
 
 class WordPuzzleGame extends StatefulWidget {
   const WordPuzzleGame({super.key});
@@ -139,6 +140,17 @@ class _WordPuzzleGameState extends State<WordPuzzleGame>
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GameAssistant(
+              emoji: '🧠',
+              title: s.gameWordPuzzleTitle,
+              tips: s.wordTips,
+              accentColor: const Color(0xFF8BC34A),
+            ),
+          ),
+        ],
       ),
       body: LeafBackground(
         child: SafeArea(

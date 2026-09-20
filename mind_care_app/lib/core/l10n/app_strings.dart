@@ -268,6 +268,134 @@ class AppStrings {
   );
   String get snakeHint => _s('💡 සර්පයා ගෙන යාමට පහළ ඊතල භාවිතා කරන්න!', '💡 Use the arrows below to move the snake!');
 
+  // ── Game how-to-play & assistant ───────────────────────────────────────────
+  String get howToPlay => _s('ක්‍රීඩා කරන ආකාරය', 'How to Play');
+  String get gameAssistantTitle => _s('ක්‍රීඩා සහකාර', 'Game Assistant');
+  String get gameAssistantTipLabel => _s('ඉඟිය', 'Tip');
+  String get gameAssistantGotIt => _s('හරි, තේරුණා!', 'Got it!');
+
+  List<String> get bubbleHowTo => isSinhala
+      ? [
+          'ඉහළට ඇද හෝ තට්ටු කර ඉලක්ක කරන්න.',
+          'එකම වර්ණයේ බුබුළු 3ක් ස්පර්ශ වන සේ වෙඩි තබන්න.',
+          'වර්ණ 3ක් එකට ගැලපීමෙන් බුබුළු පිපිරේ.',
+          'සියලු බුබුළු ඉවත් කර මට්ටම දිනන්න!',
+        ]
+      : [
+          'Aim by dragging or tapping above the bubbles.',
+          'Shoot to touch 3 same-colored bubbles together.',
+          'Bubbles pop when 3+ of the same color connect.',
+          'Clear ALL bubbles to win the level!',
+        ];
+  List<String> get snakeHowTo => isSinhala
+      ? [
+          'සර්පයා ගෙන යාමට ඊතල භාවිතා කරන්න.',
+          'ඵල කා වර්ධනය වන්න.',
+          'බිත්ති හෝ ඔබටම නොගැටෙන්න.',
+          'සෑම ඵලයක්ම ලකුණු 10කි!',
+        ]
+      : [
+          'Use the arrows to move the snake.',
+          'Eat the fruit to grow longer.',
+          'Avoid the walls and yourself.',
+          'Every fruit is worth 10 points!',
+        ];
+  List<String> get candyHowTo => isSinhala
+      ? [
+          'යාබද කැන්ඩි දෙකක් මාරු කරන්න.',
+          'එකම ඒවා 3ක් පෙළගස්වා ගන්න.',
+          '4+ක් ගැලපුවොත් විශේෂ කැන්ඩි සෑදේ!',
+          'ගමන් අවසන් වන තුළ ඉලක්ක ලකුණු ලබා ගන්න.',
+        ]
+      : [
+          'Swap two adjacent candies.',
+          'Line up 3 of the same type.',
+          'Match 4+ to create special candies!',
+          'Reach the target score before the moves run out.',
+        ];
+  List<String> get puzzleHowTo => isSinhala
+      ? [
+          'හිස් තැනට යාබද උළුවල් ස්පර්ශ කරන්න.',
+          'සංඛ්‍යා 1–15 නිවැරදි පිළිවෙළට සකසන්න.',
+          'හැකි තරම් අඩු ගමන් වලින් විසඳන්න!',
+          'සියල්ල පිළිවෙළට විට ඔබ දිනනවා!',
+        ]
+      : [
+          'Tap tiles next to the empty space.',
+          'Arrange tiles 1 to 15 in order.',
+          'Solve it in as few moves as possible!',
+          'You win when every number is in place!',
+        ];
+  List<String> get wordHowTo => isSinhala
+      ? [
+          'අකුරු තේරීමෙන් වචනය තනන්න.',
+          'ආපසු තැබීමට තෝරාගත් අකුරක් ස්පර්ශ කරන්න.',
+          'වැරදි නම් අකුරු නැවත මුසු වේ.',
+          'අඛණ්ඩව නිවැරදි වීමෙන් ලකුණු උපයන්න!',
+        ]
+      : [
+          'Tap letters in the pool to build the word.',
+          'Tap a chosen letter to return it.',
+          'A wrong guess reshuffles the letters.',
+          'Keep a streak of correct words for bonus points!',
+        ];
+
+  List<String> get bubbleTips => isSinhala
+      ? [
+          'ඉලක්කය පැත්තේ බිත්තියෙන් පැනිය හැක — කෝණික වෙඩි බොහෝ විට වඩා හොඳයි!',
+          'වර්ණ 2 වත් ඇති මට්ටම්වලදී බිත්ති පැනීමෙන් පහසුවෙන් ගැලපිය හැක.',
+          'වෙඩි තැබීමට පෙර මීළඟ බුබුළු වර්ණය බලන්න — ඊළඟට එන්නේ එයයි.',
+        ]
+      : [
+          'Shots can bounce off the side walls — angled shots often line up better!',
+          'In 2-color levels, a wall bounce can help you reach tough spots.',
+          'Watch the NEXT bubble color — that\'s what you\'ll shoot right after.',
+        ];
+  List<String> get snakeTips => isSinhala
+      ? [
+          'ක්‍රීඩාව ආරම්භයේ උපදෙස් මතක තබා ගන්න — දිශා අතරට විරුද්ධ පැත්තට හැරවීම වළක්වන්න.',
+          'බිත්තියට ආසන්නව යන විට දිශාව කලින්ම හරවන්න.',
+          'ලකුණු 50කට වරක් වේගය ඉහළ යයි — සූදානම් වන්න!',
+        ]
+      : [
+          'You can\'t reverse directly backwards — plan your turns.',
+          'When close to a wall, change direction early.',
+          'Every 50 points the speed increases — stay sharp!',
+        ];
+  List<String> get candyTips => isSinhala
+      ? [
+          'කැන්ඩි 4ක් හෝ 5ක් පෙළගැස්වීමෙන් විශේෂ කැන්ඩි සෑදේ — ඒවා මාරු කිරීමෙන් පිපිරවිය හැක!',
+          'කොම්බෝ පිපිරුම් වැඩි ලකුණු ගෙන දේ — ගැලපීම් දාමයක් තැනීමට උත්සාහ කරන්න.',
+          'ඉලක්ක ලකුණු වෙත අවධානය යොමු කරන්න — ගමන් ඉතිරි කර ගන්න.',
+        ]
+      : [
+          'Matching 4 or 5 candies creates specials — swap them to detonate!',
+          'Combos score extra — try to chain matches together.',
+          'Keep your eye on the target score and save your moves.',
+        ];
+  List<String> get puzzleTips => isSinhala
+      ? [
+          'පළමුව ඉහළම පේළිය නිවැරදි කරන්න, පසුව ඉදිරියට යන්න.',
+          'ඉහළ පේළි සවි කළ පසු ඒවා යළි නොකැඩෙන සේ වැඩ කරන්න.',
+          'හොඳම කාලය ගණන අඩු කිරීමට හිස් තැන ආසන්නයේම තබා ගන්න.',
+        ]
+      : [
+          'Fix the top row first, then work your way down.',
+          'Once the top rows are set, avoid disturbing them.',
+          'Keep the empty space near the tiles you\'re arranging.',
+        ];
+  List<String> get wordTips => isSinhala
+      ? [
+          'තේරීමෙන් පෙර වචනයේ අකුරු ගණන බලන්න.',
+          'ස්වර සහ ව්‍යාංජන එකිනෙක අසල තබා උත්සාහ කරන්න.',
+          'අඛණ්ඩ නිවැරදි වචන ස්ට්‍රීක් බෝනස් ලකුණු දෙයි!',
+        ]
+      : [
+          'Check the letter count before you start choosing.',
+          'Look for common patterns — vowels beside consonants.',
+          'A correct-word streak earns bonus points each time!',
+        ];
+
   // Pattern Match
   String get patternInstructions => _s(
     'ගැලපෙන යුගල සොයා ගැනීමට කාඩ් පෙරළන්න!\nකාඩ් දෙකක් ස්පර්ශ කරන්න — ගැලපෙන්නේ නම්, ඒවා විවෘතව රැඳේ.\nසියලු යුගල ඉවත් කිරීමට ඉදිරියට යන්න!',

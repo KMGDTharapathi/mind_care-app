@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
+import '../widgets/game_assistant.dart';
 
 class PuzzleGame extends StatefulWidget {
   const PuzzleGame({super.key});
@@ -120,6 +121,17 @@ class _PuzzleGameState extends State<PuzzleGame>
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GameAssistant(
+              emoji: '🧠',
+              title: s.gamePuzzleTitle,
+              tips: s.puzzleTips,
+              accentColor: const Color(0xFF2196F3),
+            ),
+          ),
+        ],
       ),
       body: LeafBackground(
         child: SafeArea(

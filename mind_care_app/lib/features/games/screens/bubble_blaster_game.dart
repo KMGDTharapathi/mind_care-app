@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mind_care_app/core/l10n/language_provider.dart';
 import '../widgets/game_exit_dialog.dart';
+import '../widgets/game_assistant.dart';
 
 void main() => runApp(const BubbleShooterApp());
 
@@ -668,6 +670,17 @@ class _BubbleShooterState extends State<BubbleShooterGame>
                     ),
                   ),
                 ),
+              // In-game assistant
+              Positioned(
+                right: 12,
+                bottom: 16,
+                child: GameAssistant(
+                  emoji: '🧠',
+                  title: 'Bubble Blaster',
+                  tips: LanguageProvider.of(context).bubbleTips,
+                  accentColor: const Color(0xFF69F0AE),
+                ),
+              ),
             ],
           ),
         );

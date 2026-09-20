@@ -73,10 +73,23 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
         t.cancel();
         _secondsLeft.value = 0;
         _running.value = false;
+        _autoAdvanceStep();
       } else {
         _secondsLeft.value--;
       }
     });
+  }
+
+  /// Automatically moves to the next step (or finishes the session) as soon
+  /// as the current step's countdown runs out, and keeps the next step
+  /// running so the whole meditation flows hands-free.
+  void _autoAdvanceStep() {
+    if (_stepIndex < _totalSteps - 1) {
+      _nextStep();
+      _startTimer();
+    } else {
+      _nextStep();
+    }
   }
 
   void _pauseTimer() {
