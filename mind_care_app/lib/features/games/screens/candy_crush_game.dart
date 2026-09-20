@@ -31,7 +31,7 @@ const List<_Level> _levels = [
   _Level(8000, 32),
 ];
 
-enum _SpecialKind { none, row, col, rainbow }
+enum CandySpecialKind { none, row, col, rainbow }
 
 class _CandyCrushGameState extends State<CandyCrushGame> {
   static const int _rows = 8;
@@ -49,13 +49,13 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
   bool _isAnimating = false;
   bool _levelComplete = false;
   final _random = math.Random();
-  bool _bestLoaded = false;
 
   int get _targetScore => _levels[_levelIndex].targetScore;
 
   @override
   void initState() {
     super.initState();
+    _startLevel(_levelIndex);
     _loadBestScore();
   }
 
@@ -63,14 +63,10 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final best = prefs.getInt(_bestKey) ?? 0;
-      if (mounted) setState(() {
-        _bestScore = best;
-        _bestLoaded = true;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _bestLoaded = true);
-    }
-    if (mounted) _startLevel(_levelIndex);
+      if (mounted && best > _bestScore) {
+        setState(() => _bestScore = best);
+      }
+    } catch (_) {}
   }
 
   void _startLevel(int index) {
@@ -233,16 +229,17 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
     return result;
   }
 
-  _SpecialKind _newSpecialKind(Set<Candy> group) {
-    if (group.length >= 5) return _SpecialKind.rainbow;
+  CandySpecialKind _newSpecialKind(Set<Candy> group) {
+    if (group.length >= 5) return CandySpecialKind.rainbow;
+    if (group.length < 4) return CandySpecialKind.none;
     final rows = group.map((e) => e.row).toSet();
     final cols = group.map((e) => e.col).toSet();
-    if (rows.length == 1) return _SpecialKind.row;
-    if (cols.length == 1) return _SpecialKind.col;
-    return _SpecialKind.none;
+    if (rows.length == 1) return CandySpecialKind.row;
+    if (cols.length == 1) return CandySpecialKind.col;
+    return CandySpecialKind.none;
   }
 
-  Candy _anchorOf(Set<Candy> group) {
+  Candy _anchorOf(Iterable<Candy> group) {
     return group.reduce(
       (a, b) =>
           (a.row < b.row || (a.row == b.row && a.col < b.col)) ? a : b,
@@ -252,18 +249,20 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
   /// Cells cleared by activating a special candy (line / column / color).
   Set<Candy> _clearCellsFor(Candy special) {
     final cleared = <Candy>{};
-    switch (special.kind) {
-      case _SpecialKind.row:
+    switch (special.specialKind) {
+      case CandySpecialKind.row:
         for (var c = 0; c < _cols; c++) {
           final candy = _board[special.row][c];
           if (candy != null) cleared.add(candy);
         }
-      case _SpecialKind.col:
+        break;
+      case CandySpecialKind.col:
         for (var r = 0; r < _rows; r++) {
           final candy = _board[r][special.col];
           if (candy != null) cleared.add(candy);
         }
-      case _SpecialKind.rainbow:
+        break;
+      case CandySpecialKind.rainbow:
         for (var r = 0; r < _rows; r++) {
           for (var c = 0; c < _cols; c++) {
             final candy = _board[r][c];
@@ -272,7 +271,8 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
             }
           }
         }
-      case _SpecialKind.none:
+        break;
+      case CandySpecialKind.none:
         break;
     }
     // The special itself is always cleared too.
@@ -357,7 +357,10 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
     if (groups.isEmpty) {
       if (!_hasPossibleMoves()) {
         // Deadlock — regenerate the board so the game stays playable.
-        setState(_initBoard);
+        setState(() {
+          _isAnimating = false;
+          _initBoard();
+        });
       } else {
         setState(() => _isAnimating = false);
       }
@@ -377,23 +380,13 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
       }
       final kind = _newSpecialKind(group);
       final plain = group.where((c) => !c.isSpecial).toList();
-      if (kind == _SpecialKind.none || group.length < 4) {
+      if (kind == CandySpecialKind.none || plain.isEmpty) {
         toClear.addAll(plain);
-      } else if (plain.length >= 2) {
-        final anchor = _anchorOf(group);
+      } else {
+        // Re-purpose one plain candy of the group as the new special candy.
+        final anchor = _anchorOf(plain);
         toClear.addAll(plain.where((c) => c != anchor));
-        // Re-purpose the anchor cell as the new special candy.
-        anchor.makeSpecial(kind);
-      } else if (plain.length == 1) {
-        // Only one "plain" candy remains in the group — it becomes the special.
-        toClear.addAll(plain);
-        final anchor = group.firstWhere(
-          (c) => !c.isSpecial,
-          orElse: () => group.first,
-        );
-        // The group already has a special being cleared; nothing else to create.
-        anchor.makeSpecial =
-            null; // placeholder for clarity
+        anchor.specialKind = kind;
       }
     }
 
@@ -441,10 +434,11 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
   }
 
   void _checkEndConditions() {
-    if (_moves > 0) return;
     if (_levelComplete) return;
+    final reachedTarget = _score >= _targetScore;
+    if (!reachedTarget && _moves > 0) return;
     setState(() {
-      if (_score >= _targetScore) {
+      if (reachedTarget) {
         _levelComplete = true;
       }
       if (_score > _bestScore) {
@@ -642,9 +636,7 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
                             : 'Game Over'),
                   isLastLevel: _levelIndex == _levels.length - 1,
                   onPlayAgain: () => setState(() {
-                    _startLevel(levelComplete && _isLastLevel()
-                        ? math.max(0, _levelIndex - 1)
-                        : _levelIndex);
+                    _startLevel(_levelIndex);
                   }),
                   onNextLevel: () => setState(() {
                     _startLevel(
@@ -662,15 +654,6 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
       ),
     );
   }
-
-  bool _isLastLevel() => _levelIndex >= _levels.length - 1;
-}
-
-/// Lightweight helper so [Candy] stays a plain mutable model.
-extension on Candy {
-  void makeSpecial(_SpecialKind kind) {
-    specialKind = kind;
-  }
 }
 
 enum CandyType {
@@ -686,11 +669,11 @@ class Candy {
   final CandyType type;
   int row;
   int col;
-  _SpecialKind specialKind = _SpecialKind.none;
+  CandySpecialKind specialKind = CandySpecialKind.none;
 
   Candy({required this.type, required this.row, required this.col});
 
-  bool get isSpecial => specialKind != _SpecialKind.none;
+  bool get isSpecial => specialKind != CandySpecialKind.none;
 
   Color get color {
     switch (type) {
@@ -777,7 +760,7 @@ class _CandyWidget extends StatelessWidget {
         child: Center(
           child: c.isSpecial
               ? Icon(
-                  c.specialKind == _SpecialKind.rainbow
+                  c.specialKind == CandySpecialKind.rainbow
                       ? Icons.auto_awesome_rounded
                       : Icons.bolt_rounded,
                   color: Colors.white,
