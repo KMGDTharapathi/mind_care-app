@@ -1,17 +1,49 @@
-# mind_care_app
+# MindCare 🌿
 
-A new Flutter project.
+A bilingual (English & Sinhala) mental-wellness Flutter app.
 
-## Getting Started
+## Features
+- Guided meditations (8 types) with step auto-advance & audio chimes
+- Breathing exercises
+- Mood check-in & history
+- Mini-games, coloring/painting studio, calm music
+- Journal, motivational quotes, daily reminders
+- Resource library & find-a-doctor/counsellor
+- Sinhala chat assistant
 
-This project is a starting point for a Flutter application.
+## Run the project
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter pub get
+flutter run                # auto-selects a connected device
+flutter run -d windows     # or: android/ios/chrome
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Prerequisites
+- Flutter SDK (stable) & Dart ≥ 3.11.4
+- A device or emulator (or use Windows/Chrome)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tests
+
+```bash
+flutter test
+flutter analyze
+```
+
+## Optional: regenerate meditation chimes
+
+```bash
+python generate_audio.py
+```
+
+## Structure
+
+```
+lib/
+├── core/        # theme, l10n, router, service locator
+├── data/        # Hive, prefs, repositories
+├── features/    # mood, meditation, breathing, games, etc.
+└── services/    # chat, sync, notifications, analytics stubs
+```
+
+> Note: Firebase/analytics/FCM use no-op stubs — no Firebase config needed to run. Meant for mental wellness support, not a substitute for professional care.
