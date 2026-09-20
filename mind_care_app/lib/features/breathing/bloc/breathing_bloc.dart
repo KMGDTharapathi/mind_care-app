@@ -14,6 +14,10 @@ class StartSession extends BreathingEvent {
 
 class Tick extends BreathingEvent {}
 
+class PauseSession extends BreathingEvent {}
+
+class ResumeSession extends BreathingEvent {}
+
 class CompleteSession extends BreathingEvent {}
 
 class ResetSession extends BreathingEvent {}
@@ -69,6 +73,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   BreathingBloc({this.analyticsService}) : super(const BreathingState()) {
     on<StartSession>(_onStartSession);
     on<Tick>(_onTick);
+    on<PauseSession>(_onPauseSession);
+    on<ResumeSession>(_onResumeSession);
     on<CompleteSession>(_onCompleteSession);
     on<ResetSession>(_onResetSession);
   }
@@ -143,6 +149,18 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         ));
       }
     }
+  }
+
+  void _onPauseSession(PauseSession event, Emitter<BreathingState> emit) {
+    if (!state.isRunning || state.isCompleted) return;
+    _cancelTimer();
+    emit(state.copyWith(isRunning: false));
+  }
+
+  void _onResumeSession(ResumeSession event, Emitter<BreathingState> emit) {
+    if (state.isRunning || state.isCompleted || state.pattern == null) return;
+    emit(state.copyWith(isRunning: true));
+    _startTimer();
   }
 
   void _onCompleteSession(CompleteSession event, Emitter<BreathingState> emit) {

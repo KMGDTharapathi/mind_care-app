@@ -3,9 +3,9 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/features/games/screens/bubble_blaster_game.dart';
 import 'package:mind_care_app/features/games/screens/snake_game.dart';
-import 'package:mind_care_app/features/games/screens/pattern_match_game.dart';
-import 'package:mind_care_app/features/games/screens/aim_drop_game.dart';
-import 'package:mind_care_app/features/games/screens/stack_builder_game.dart';
+import 'package:mind_care_app/features/games/screens/candy_crush_game.dart';
+import 'package:mind_care_app/features/games/screens/puzzle_game.dart';
+import 'package:mind_care_app/features/games/screens/word_puzzle_game.dart';
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({super.key});
@@ -41,39 +41,39 @@ class GamesScreen extends StatelessWidget {
         ),
       ),
       _GameInfo(
+        emoji: '🍬',
+        title: s.gameCandyCrushTitle,
+        description: s.gameCandyCrushDesc,
+        mood: s.gameCandyCrushMood,
+        color: isDark ? const Color(0xFF1A152A) : const Color(0xFFF3E5F5),
+        accentColor: const Color(0xFFEC407A),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CandyCrushGame()),
+        ),
+      ),
+      _GameInfo(
         emoji: '🧩',
-        title: s.gamePatternTitle,
-        description: s.gamePatternDesc,
-        mood: s.gamePatternMood,
-        color: isDark ? const Color(0xFF1A1535) : const Color(0xFFEDE7F6),
-        accentColor: const Color(0xFF7986CB),
+        title: s.gamePuzzleTitle,
+        description: s.gamePuzzleDesc,
+        mood: s.gamePuzzleMood,
+        color: isDark ? const Color(0xFF0D1A2A) : const Color(0xFFE3F2FD),
+        accentColor: const Color(0xFF2196F3),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const PatternMatchGame()),
+          MaterialPageRoute(builder: (_) => const PuzzleGame()),
         ),
       ),
       _GameInfo(
-        emoji: '🎯',
-        title: s.gameAimTitle,
-        description: s.gameAimDesc,
-        mood: s.gameAimMood,
-        color: isDark ? const Color(0xFF2A1A00) : const Color(0xFFFFF8E1),
-        accentColor: const Color(0xFFFFA000),
+        emoji: '🔤',
+        title: s.gameWordPuzzleTitle,
+        description: s.gameWordPuzzleDesc,
+        mood: s.gameWordPuzzleMood,
+        color: isDark ? const Color(0xFF1A2A0A) : const Color(0xFFF1F8E9),
+        accentColor: const Color(0xFF8BC34A),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AimDropGame()),
-        ),
-      ),
-      _GameInfo(
-        emoji: '🏗️',
-        title: s.gameStackTitle,
-        description: s.gameStackDesc,
-        mood: s.gameStackMood,
-        color: isDark ? const Color(0xFF1A0A2A) : const Color(0xFFF3E5F5),
-        accentColor: const Color(0xFF7B1FA2),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const StackBuilderGame()),
+          MaterialPageRoute(builder: (_) => const WordPuzzleGame()),
         ),
       ),
     ];

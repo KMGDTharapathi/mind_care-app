@@ -319,21 +319,28 @@ class _HomeScreenState extends State<HomeScreen> {
                         final availableHeight = constraints.maxHeight - 12;
                         final cardHeight = (availableHeight - (3 * 10)) / 4;
                         final cardWidth = (constraints.maxWidth - 10) / 2;
-                        final ratio = cardWidth / cardHeight;
                         return GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
+                          // Never clamp the top of the aspect ratio: card sizes
+                          // are derived from the available space, so an upper
+                          // clamp used to make the last row taller than the
+                          // viewport and hid the bottom buttons on smaller
+                          // screens. Only a lower floor avoids degenerate cells.
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.only(bottom: 12),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 10,
                                 mainAxisSpacing: 10,
-                                childAspectRatio: ratio.clamp(0.9, 1.4),
+                                childAspectRatio:
+                                    (cardWidth / cardHeight).clamp(
+                                      0.7,
+                                      double.infinity,
+                                    ),
                               ),
                           itemCount: features.length,
                           itemBuilder: (context, i) => _FeatureCard(
                             feature: features[i],
-                            isDark: isDark,
                           ),
                         );
                       },
@@ -389,18 +396,14 @@ class _Feature {
 
 class _FeatureCard extends StatelessWidget {
   final _Feature feature;
-  final bool isDark;
 
-  const _FeatureCard({required this.feature, required this.isDark});
+  const _FeatureCard({required this.feature});
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark
-        ? Colors.white
-        : (feature.color == Colors.white.withValues(alpha: 0.85) ||
-              feature.color == const Color(0xFFFFF8E1) ||
-              feature.color == const Color(0xFFD4EAD0) ||
-              feature.color.alpha < 230)
+    // Card colors stay fixed per (light/dark) theme; base the title color on
+    // the card's own luminance so text is always readable in BOTH themes.
+    final textColor = feature.color.computeLuminance() > 0.5
         ? const Color(0xFF1A4A4A)
         : Colors.white;
 

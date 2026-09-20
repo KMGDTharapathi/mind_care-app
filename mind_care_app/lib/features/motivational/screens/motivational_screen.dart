@@ -463,13 +463,14 @@ class _QuoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (quote.imageUrl != null)
+    if (quote.imageUrl != null) {
       return _ImageCard(
         quote: quote,
         displayText: displayText,
         displayAuthor: displayAuthor,
         onDownload: onDownload,
       );
+    }
     switch (quote.style) {
       case QuoteStyle.colored:
       case QuoteStyle.dark:

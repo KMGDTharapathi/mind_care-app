@@ -54,11 +54,6 @@ class InMemoryResourceRepository {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-String _randomString(Random rng, int length) {
-  const chars = 'abcdefghijklmnopqrstuvwxyz';
-  return List.generate(length, (_) => chars[rng.nextInt(chars.length)]).join();
-}
-
 List<Resource> _buildTestResources() {
   return [
     Resource(

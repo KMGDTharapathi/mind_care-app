@@ -2,6 +2,7 @@ import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
@@ -369,15 +370,9 @@ class _CalendarTabState extends State<_CalendarTab> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
   int _selectedTypeIndex = 0;
+  int _selectedProviderIndex = 0;
   bool _isRecurring = false;
 
-  static const _typeKeys = [
-    'moodCheckin',
-    'breathing',
-    'meditation',
-    'journal',
-    'custom',
-  ];
   static const _typeIcons = [
     Icons.favorite_border_rounded,
     Icons.air_rounded,
@@ -393,13 +388,36 @@ class _CalendarTabState extends State<_CalendarTab> {
     Color(0xFF78909C),
   ];
 
-  List<String> _typeLabels(s) => [
-    s.typeMoodCheckin,
-    s.typeBreathing,
-    s.typeMeditation,
-    s.typeJournal,
-    s.typeCustom,
+  static const _providerIcons = [
+    Icons.calendar_month_rounded,
+    Icons.apple,
+    Icons.email_outlined,
+    Icons.calendar_view_month_rounded,
+    Icons.more_horiz_rounded,
   ];
+  static const _providerColors = [
+    Color(0xFF4285F4),
+    Color(0xFF9E9E9E),
+    Color(0xFF0072C6),
+    Color(0xFF5BA8A0),
+    Color(0xFF78909C),
+  ];
+
+  List<String> _typeLabels(s) => [
+        s.typeMoodCheckin,
+        s.typeBreathing,
+        s.typeMeditation,
+        s.typeJournal,
+        s.typeCustom,
+      ];
+
+  List<String> _providerLabels(s) => [
+        s.providerGoogle,
+        s.providerApple,
+        s.providerOutlook,
+        s.providerSamsung,
+        s.providerOther,
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -485,6 +503,106 @@ class _CalendarTabState extends State<_CalendarTab> {
                                   ? FontWeight.w600
                                   : FontWeight.w400,
                               color: isSelected ? color : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Calendar provider selector
+        _ReminderCard(
+          isDark: isDark,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const _IconCircle(
+                    icon: Icons.cloud_outlined,
+                    color: Color(0xFF4285F4),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.calendarProviderLabel,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : _kDark,
+                          ),
+                        ),
+                        Text(
+                          s.calendarProviderHint,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(
+                  _providerLabels(s).length,
+                  (i) {
+                    final label = _providerLabels(s)[i];
+                    final isSelected = _selectedProviderIndex == i;
+                    final color = _providerColors[i];
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedProviderIndex = i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? color.withValues(alpha: 0.15)
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.grey.shade100),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? color : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _providerIcons[i],
+                            size: 16,
+                            color: isSelected ? color : Colors.grey,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isSelected
+                                  ? color
+                                  : Colors.grey.shade600,
                             ),
                           ),
                         ],
@@ -707,8 +825,10 @@ class _CalendarTabState extends State<_CalendarTab> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
-  void _addToCalendar(List<String> typeLabels) {
+  Future<void> _addToCalendar(List<String> typeLabels) async {
     final selectedType = typeLabels[_selectedTypeIndex];
+    final s = LanguageProvider.of(context);
+    final provider = _providerLabels(s)[_selectedProviderIndex];
     final start = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -729,7 +849,28 @@ class _CalendarTabState extends State<_CalendarTab> {
       allDay: false,
     );
 
-    Add2Calendar.addEvent2Cal(event);
+    // The OS sheet lets the user confirm inside their chosen calendar app.
+    final added = await Add2Calendar.addEvent2Cal(event);
+
+    if (!mounted) return;
+    if (!added) return;
+
+    // Local confirmation so the user knows exactly where it was added.
+    await NotificationService.showEventAddedNotification(
+      eventTitle: 'MindCare — $selectedType',
+      provider: provider,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${s.calendarAddedSnack}: $provider'),
+        backgroundColor: const Color(0xFF7986CB),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
   }
 }
 

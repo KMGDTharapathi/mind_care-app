@@ -201,7 +201,7 @@ class _MindCareAppState extends State<MindCareApp> {
               ),
             ),
             BlocProvider<SettingsCubit>(
-              lazy: true,
+              lazy: false,
               create: (_) {
                 final cubit = SettingsCubit();
                 WidgetsBinding.instance.addPostFrameCallback(

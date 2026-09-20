@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,12 +37,20 @@ class MusicTrack {
 // ─────────────────────────────────────────────────────────────────────────────
 final List<MusicTrack> kDefaultTracks = [
   const MusicTrack(
-    id: 'rain',
-    title: 'Gentle Rain',
-    artist: 'Nature Sounds',
-    emoji: '🌧️',
-    color: Color(0xFF4A90D9),
+    id: 'high_calm',
+    title: 'High Calm',
+    artist: 'Peaceful Ambient',
+    emoji: '☁️',
+    color: Color(0xFF64B5F6),
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  ),
+  const MusicTrack(
+    id: 'peace',
+    title: 'Peace',
+    artist: 'Serene Melodies',
+    emoji: '🕊️',
+    color: Color(0xFF81C784),
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   ),
   const MusicTrack(
     id: 'forest',
@@ -50,7 +58,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Nature Sounds',
     emoji: '🌲',
     color: Color(0xFF43A047),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   ),
   const MusicTrack(
     id: 'ocean',
@@ -58,7 +66,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Nature Sounds',
     emoji: '🌊',
     color: Color(0xFF0288D1),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
   ),
   const MusicTrack(
     id: 'piano',
@@ -66,7 +74,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Calm Melodies',
     emoji: '🎹',
     color: Color(0xFF7B1FA2),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
   ),
   const MusicTrack(
     id: 'lofi',
@@ -74,7 +82,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Calm Melodies',
     emoji: '🎧',
     color: Color(0xFFE65100),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
   ),
   const MusicTrack(
     id: 'birds',
@@ -82,7 +90,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Nature Sounds',
     emoji: '🐦',
     color: Color(0xFFF9A825),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
   ),
 ];
 
@@ -270,11 +278,23 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       }
     });
     _player.onPlayerComplete.listen((_) => _playNext());
+
+    // Wire up now-playing notification media controls
+    mediaPlayerHooks.onPlayPause = _togglePlay;
+    mediaPlayerHooks.onNext = _playNext;
+    mediaPlayerHooks.onPrevious = _playPrev;
+
     _loadUserTracks();
   }
 
   @override
   void dispose() {
+    // Clean up now-playing notification
+    NotificationService.cancelNowPlaying();
+    mediaPlayerHooks.onPlayPause = null;
+    mediaPlayerHooks.onNext = null;
+    mediaPlayerHooks.onPrevious = null;
+
     _player.dispose();
     _pulseCtrl.dispose();
     _position.dispose();
@@ -339,6 +359,13 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           ? DeviceFileSource(all[index].url)
           : UrlSource(all[index].url) as Source;
       await _player.play(source);
+      // Show now-playing notification
+      final track = all[index];
+      await NotificationService.showNowPlaying(
+        title: track.title,
+        artist: track.artist,
+        isPlaying: true,
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -356,11 +383,25 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   Future<void> _togglePlay() async {
     if (_isPlaying.value) {
       await _player.pause();
+      // Update notification to show paused state
+      final track = _current;
+      await NotificationService.showNowPlaying(
+        title: track.title,
+        artist: track.artist,
+        isPlaying: false,
+      );
     } else {
       if (_position.value == Duration.zero) {
         await _play(_currentIndex);
       } else {
         await _player.resume();
+        // Update notification to show playing state
+        final track = _current;
+        await NotificationService.showNowPlaying(
+          title: track.title,
+          artist: track.artist,
+          isPlaying: true,
+        );
       }
     }
   }
@@ -405,13 +446,6 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   void _editUserTrack(int userIndex, MusicTrack updated) {
     setState(() => _userTracks[userIndex] = updated);
     _saveUserTracks();
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  String _fmt(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
   }
 
   // ── Back navigation ────────────────────────────────────────────────────────

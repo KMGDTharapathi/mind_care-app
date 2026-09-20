@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
-import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
 import 'package:mind_care_app/data/repositories/mood_repository.dart';
@@ -194,11 +193,114 @@ class _HistoryContent extends StatelessWidget {
     final dayMap = _buildDayMap();
     final dayLabels = _buildDayLabels();
 
+    // Determine mood trend for encouragement/appreciation banner
+    String? bannerTitle;
+    String? bannerBody;
+    Gradient? bannerGradient;
+    IconData? bannerIcon;
+
+    if (entries.isNotEmpty) {
+      int positive = 0;
+      int negative = 0;
+      for (final entry in entries) {
+        switch (entry.mood) {
+          case MoodType.happy:
+          case MoodType.calm:
+          case MoodType.excited:
+            positive++;
+            break;
+          case MoodType.sad:
+          case MoodType.anxious:
+          case MoodType.frustrated:
+          case MoodType.tired:
+            negative++;
+            break;
+        }
+      }
+      if (negative > positive) {
+        bannerTitle = s.moodEncouragementTitle;
+        bannerBody = s.moodEncouragementBody;
+        bannerGradient = const LinearGradient(
+          colors: [Color(0xFFE57373), Color(0xFFF06292)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+        bannerIcon = Icons.favorite_rounded;
+      } else if (positive > negative) {
+        bannerTitle = s.moodAppreciationTitle;
+        bannerBody = s.moodAppreciationBody;
+        bannerGradient = const LinearGradient(
+          colors: [Color(0xFF81C784), Color(0xFF64B5F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+        bannerIcon = Icons.star_rounded;
+      }
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Encouragement / Appreciation banner
+          if (bannerTitle != null && bannerBody != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: bannerGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: (bannerGradient!.colors.first).withValues(
+                      alpha: 0.4,
+                    ),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(bannerIcon, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          bannerTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          bannerBody,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.white,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Text(
             s.last7Days,
             style: Theme.of(

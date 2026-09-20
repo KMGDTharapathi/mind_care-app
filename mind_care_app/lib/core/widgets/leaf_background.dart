@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// Wraps [child] in a [Stack] with semi-transparent decorative leaf shapes

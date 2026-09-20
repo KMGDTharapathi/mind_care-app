@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -496,9 +497,11 @@ class _MessageBubble extends StatelessWidget {
   Widget _buildContent(Color textColor) {
     switch (message.type) {
       case MessageType.text:
-        return Text(
-          message.content,
-          style: TextStyle(fontSize: 14, color: textColor, height: 1.4),
+        return _StyledMessageText(
+          text: message.content,
+          textColor: textColor,
+          isUser: message.sender == MessageSender.user,
+          isDark: isDark,
         );
       case MessageType.image:
         return ClipRRect(
@@ -975,4 +978,246 @@ class _ApiConfigBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Styled Message Text with Colorful Formatting ──────────────────────────────
+
+class _StyledMessageText extends StatelessWidget {
+  final String text;
+  final Color textColor;
+  final bool isUser;
+  final bool isDark;
+
+  const _StyledMessageText({
+    required this.text,
+    required this.textColor,
+    required this.isUser,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = const Color(0xFF5BA8A0);
+    final accentColors = [
+      const Color(0xFF5BA8A0),
+      const Color(0xFF4DB6AC),
+      const Color(0xFF00796B),
+      const Color(0xFF26A69A),
+      const Color(0xFF66BB6A),
+      const Color(0xFF42A5F5),
+      const Color(0xFF7E57C2),
+      const Color(0xFFEC407A),
+    ];
+
+    // Parse markdown-like formatting for emphasis
+    final segments = _parseSegments(text);
+
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: 14,
+          color: textColor,
+          height: 1.5,
+        ),
+        children: segments.map((seg) {
+          Color segColor = textColor;
+          FontWeight weight = FontWeight.normal;
+          FontStyle style = FontStyle.normal;
+          double size = 14;
+
+          switch (seg.type) {
+            case _SegmentType.bold:
+              weight = FontWeight.bold;
+              segColor = isUser ? Colors.white : primaryColor;
+              break;
+            case _SegmentType.italic:
+              style = FontStyle.italic;
+              segColor = textColor.withValues(alpha: 0.85);
+              break;
+            case _SegmentType.highlight:
+              return WidgetSpan(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    seg.text,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : primaryColor,
+                    ),
+                  ),
+                ),
+              );
+            case _SegmentType.emoji:
+              size = 18;
+              break;
+            case _SegmentType.quote:
+              return WidgetSpan(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 4, bottom: 4, left: 4),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accentColors[math.Random().nextInt(accentColors.length)].withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: accentColors[math.Random().nextInt(accentColors.length)].withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    seg.text,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: textColor.withValues(alpha: 0.85),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              );
+            case _SegmentType.listItem:
+              return WidgetSpan(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8, top: 2, bottom: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 6, right: 8),
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: accentColors[math.Random().nextInt(accentColors.length)],
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Flexible(
+                        child: Text(
+                          seg.text,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            case _SegmentType.normal:
+              break;
+          }
+
+          return TextSpan(
+            text: seg.text,
+            style: TextStyle(
+              fontSize: size,
+              fontWeight: weight,
+              fontStyle: style,
+              color: segColor,
+              height: 1.5,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  List<_TextSegment> _parseSegments(String input) {
+    final segments = <_TextSegment>[];
+    // Fixed regex: removed invalid emoji range, using separate emoji detection
+    final regex = RegExp(r'(\*\*.*?\*\*|__.*?__|\*.*?\*|_.*?_|`.*?`|>.*?(?=\n|$)|\n[-•]\s.*?(?=\n|$))');
+    int lastEnd = 0;
+
+    for (final match in regex.allMatches(input)) {
+      if (match.start > lastEnd) {
+        segments.add(_TextSegment(
+          text: input.substring(lastEnd, match.start),
+          type: _SegmentType.normal,
+        ));
+      }
+
+      final matched = match.group(0)!;
+      _SegmentType type;
+      String displayText = matched;
+
+      if (matched.startsWith('**') && matched.endsWith('**')) {
+        type = _SegmentType.bold;
+        displayText = matched.substring(2, matched.length - 2);
+      } else if (matched.startsWith('__') && matched.endsWith('__')) {
+        type = _SegmentType.bold;
+        displayText = matched.substring(2, matched.length - 2);
+      } else if (matched.startsWith('*') && matched.endsWith('*') && matched.length > 2) {
+        type = _SegmentType.italic;
+        displayText = matched.substring(1, matched.length - 1);
+      } else if (matched.startsWith('_') && matched.endsWith('_') && matched.length > 2) {
+        type = _SegmentType.italic;
+        displayText = matched.substring(1, matched.length - 1);
+      } else if (matched.startsWith('`') && matched.endsWith('`')) {
+        type = _SegmentType.highlight;
+        displayText = matched.substring(1, matched.length - 1);
+      } else if (matched.startsWith('>')) {
+        type = _SegmentType.quote;
+        displayText = matched.substring(1).trim();
+      } else if (matched.startsWith('\n-') || matched.startsWith('\n•')) {
+        type = _SegmentType.listItem;
+        displayText = matched.substring(2).trim();
+      } else {
+        type = _SegmentType.normal;
+      }
+
+      segments.add(_TextSegment(text: displayText, type: type));
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < input.length) {
+      // Check remaining text for emojis
+      final remaining = input.substring(lastEnd);
+      // Emoji range: \u{1F600}-\u{1F64F} (emoticons)
+      final emojiRegex = RegExp(r'[\uD83D[\uDE00-\uDE4F]]');
+      int emojiLastEnd = 0;
+      for (final emojiMatch in emojiRegex.allMatches(remaining)) {
+        if (emojiMatch.start > emojiLastEnd) {
+          segments.add(_TextSegment(
+            text: remaining.substring(emojiLastEnd, emojiMatch.start),
+            type: _SegmentType.normal,
+          ));
+        }
+        segments.add(_TextSegment(
+          text: emojiMatch.group(0)!,
+          type: _SegmentType.emoji,
+        ));
+        emojiLastEnd = emojiMatch.end;
+      }
+      if (emojiLastEnd < remaining.length) {
+        segments.add(_TextSegment(
+          text: remaining.substring(emojiLastEnd),
+          type: _SegmentType.normal,
+        ));
+      }
+    }
+
+    return segments;
+  }
+}
+
+enum _SegmentType {
+  normal,
+  bold,
+  italic,
+  highlight,
+  emoji,
+  quote,
+  listItem,
+}
+
+class _TextSegment {
+  final String text;
+  final _SegmentType type;
+
+  const _TextSegment({required this.text, required this.type});
 }

@@ -4,7 +4,7 @@ import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/main.dart'
-    show hiveReadyCompleter, appUserName, splashSavedName, splashSavedLang;
+    show hiveReadyCompleter, appUserName, splashSavedName;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -44,7 +44,6 @@ class _SplashScreenState extends State<SplashScreen>
       // on the main thread here. splashSavedName/Lang are set before
       // hiveReadyCompleter.complete() so they are always ready by this point.
       final savedName = splashSavedName;
-      final savedLang = splashSavedLang;
 
       // Sync notifier with fresh value
       appUserName.value = (savedName != null && savedName.isNotEmpty)

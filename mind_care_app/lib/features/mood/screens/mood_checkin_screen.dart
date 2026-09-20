@@ -50,8 +50,9 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
     } catch (_) {}
 
     await Future.delayed(const Duration(milliseconds: 600));
-    if (mounted)
+    if (mounted) {
       context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}');
+    }
   }
 
   @override

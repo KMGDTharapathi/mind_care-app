@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
@@ -15,13 +16,16 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   // Read directly from the global notifier — always in sync with home screen
   String? get _userName => appUserName.value;
 
   @override
   void initState() {
     super.initState();
+    // Re-sync the notification toggle after returning from the OS settings.
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthBloc>().add(AuthStarted());
     });
@@ -34,7 +38,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // The user may have toggled the permission inside the OS settings —
+      // reflect the real state as soon as we come back.
+      context.read<SettingsCubit>().loadSettings();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -97,17 +111,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
-    controller.dispose();
+    // NOTE: the controller is intentionally NOT disposed here — the dialog's
+    // exit animation is still in flight and its TextField still listens to the
+    // controller. Disposing early throws
+    // "TextEditingController used after being disposed" and shows a red error
+    // screen. A short-lived dialog-only controller is garbage-collected safely.
     // Guard: widget may have been disposed while dialog was open
     if (!mounted) return;
     if (result != null && result.isNotEmpty) {
-      await PreferencesService.setUserName(result);
-      if (!mounted) return;
-      // Defer notifier update to next frame to avoid InheritedWidget assertion
-      // when dialog is still in the process of being dismissed
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        appUserName.value = result;
-      });
+      try {
+        await PreferencesService.setUserName(result);
+        if (!mounted) return;
+        // Defer notifier update to next frame to avoid InheritedWidget assertion
+        // when dialog is still in the process of being dismissed
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) appUserName.value = result;
+        });
+        if (!mounted) return;
+        // Show success feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  LanguageProvider.of(context).isSinhala
+                      ? 'නම සාර්ථකව වෙන්විය!'
+                      : 'Name updated successfully!',
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF5BA8A0),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        // Show error feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_rounded, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    LanguageProvider.of(context).isSinhala
+                        ? 'නම සුරකින්න නොහැකි විය. නැවත උත්සාහ කරන්න.'
+                        : 'Failed to save name. Please try again.',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     }
   }
 
@@ -252,7 +315,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await cubit.setNotificationsEnabled(
       true,
       onShowExplanation: () => _showPermissionExplanation(context, s),
+      onPermissionDenied: () => _showOpenSettingsDialog(context, s),
     );
+  }
+
+  Future<void> _showOpenSettingsDialog(
+    BuildContext context,
+    AppStrings s,
+  ) async {
+    if (!mounted) return;
+    final openSettings = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.notificationsDisabledTitle),
+        content: Text(s.notificationsDisabledMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF5BA8A0),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(s.openSettings),
+          ),
+        ],
+      ),
+    );
+    if (openSettings == true && mounted) {
+      await NotificationService.openNotificationsSettings();
+    }
   }
 
   Future<bool> _showPermissionExplanation(

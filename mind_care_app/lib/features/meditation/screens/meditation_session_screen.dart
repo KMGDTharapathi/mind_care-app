@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
@@ -18,6 +19,9 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
   int _stepIndex = 0;
   bool _showIntro = true;
   bool _finished = false;
+
+  // Audio player for step chimes
+  final AudioPlayer _chimePlayer = AudioPlayer();
 
   // ValueNotifiers — only subscribed widgets rebuild, not the whole screen
   final ValueNotifier<int> _secondsLeft = ValueNotifier(0);
@@ -51,6 +55,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
     _slideCtrl.dispose();
     _secondsLeft.dispose();
     _running.dispose();
+    _chimePlayer.dispose();
     super.dispose();
   }
 
@@ -79,14 +84,28 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
     _running.value = false;
   }
 
+  Future<void> _playStepChime() async {
+    try {
+      await _chimePlayer.play(AssetSource('audio/step_chime.wav'), volume: 0.5);
+    } catch (_) {}
+  }
+
+  Future<void> _playFinishChime() async {
+    try {
+      await _chimePlayer.play(AssetSource('audio/finish_chime.wav'), volume: 0.5);
+    } catch (_) {}
+  }
+
   void _nextStep() {
     _timer?.cancel();
     _running.value = false;
     if (_stepIndex < _totalSteps - 1) {
       setState(() => _stepIndex++);
       _loadStep();
+      _playStepChime();
     } else {
       setState(() => _finished = true);
+      _playFinishChime();
     }
   }
 
@@ -96,6 +115,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
       _running.value = false;
       setState(() => _stepIndex--);
       _loadStep();
+      _playStepChime();
     }
   }
 
@@ -219,7 +239,10 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => setState(() => _showIntro = false),
+                    onPressed: () {
+                      setState(() => _showIntro = false);
+                      _playStepChime();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: grad[1],

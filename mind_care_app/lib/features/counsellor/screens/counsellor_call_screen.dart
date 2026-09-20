@@ -436,7 +436,7 @@ class _DoctorListTabState extends State<_DoctorListTab> {
   // Load doctors from local seed data
   List<Doctor> _loadDoctorsFromSeed() {
     return kRealDoctors
-        .where((d) => d['verified'] == true)
+        .where((d) => d['is_verified'] == true)
         .map(
           (data) => Doctor.fromMap(
             data['id'] as String? ?? data['name'] as String? ?? 'unknown',
@@ -481,8 +481,9 @@ class _LocalDoctorList extends StatelessWidget {
   Widget build(BuildContext context) {
     var filtered = doctors.where((d) {
       if (filterSpec != 'All' && d.specialization != filterSpec) return false;
-      if (filterLang != 'All' && !d.languages.contains(filterLang))
+      if (filterLang != 'All' && !d.languages.contains(filterLang)) {
         return false;
+      }
       if (!_matchesProvince(d)) return false;
       return true;
     }).toList();
@@ -866,8 +867,9 @@ class _DoctorProfileSheet extends StatelessWidget {
                 onTap: () async {
                   final encoded = Uri.encodeComponent(doctor.address!);
                   final uri = Uri.parse('https://maps.google.com/?q=$encoded');
-                  if (await canLaunchUrl(uri))
+                  if (await canLaunchUrl(uri)) {
                     launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
                 },
               ),
             if (doctor.clinicHours != null && doctor.clinicHours!.isNotEmpty)
@@ -990,10 +992,19 @@ class _HotlineCard extends StatelessWidget {
   final Color accentColor;
   const _HotlineCard({required this.hotline, required this.accentColor});
 
-  Future<void> _call() async {
-    final uri = Uri(scheme: 'tel', path: hotline.number);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+  Future<void> _call(BuildContext context) async {
+    // Clean the number: remove spaces, dashes, etc.
+    final cleanNumber = hotline.number.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    final uri = Uri(scheme: 'tel', path: cleanNumber);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('Failed to launch dialer: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open dialer: ${hotline.number}')),
+        );
+      }
     }
   }
 
@@ -1078,7 +1089,7 @@ class _HotlineCard extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: _call,
+              onTap: () => _call(context),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -1190,42 +1201,6 @@ class _SectionTitle extends StatelessWidget {
           color: _kDark,
         ),
       ),
-    );
-  }
-}
-
-class _StatBox extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color iconColor;
-  const _StatBox({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: iconColor, size: 22),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-            color: _kDark,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-        ),
-      ],
     );
   }
 }

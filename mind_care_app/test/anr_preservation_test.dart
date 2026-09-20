@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mind_care_app/core/service_locator.dart';
-import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/models/journal_entry.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
 import 'package:mind_care_app/features/motivational/data/quotes_data.dart';
@@ -764,9 +763,7 @@ void main() {
       String? savedName;
 
       // Decision: if savedName is null or empty → onboarding
-      final route = (savedName != null && savedName.isNotEmpty)
-          ? '/mood-checkin'
-          : '/onboarding';
+      final route = _routeForName(savedName);
 
       expect(
         route,
@@ -883,3 +880,9 @@ void _createRouterSafe(bool onboardingComplete) {
   final initialRoute = onboardingComplete ? '/home' : '/onboarding';
   assert(initialRoute.isNotEmpty);
 }
+
+/// Mirrors SplashScreen's routing decision for a saved user name.
+String _routeForName(String? savedName) =>
+    (savedName != null && savedName.isNotEmpty)
+        ? '/mood-checkin'
+        : '/onboarding';

@@ -7,6 +7,7 @@ import 'package:mind_care_app/data/repositories/breathing_repository.dart';
 import 'package:mind_care_app/features/breathing/bloc/breathing_bloc.dart';
 import 'package:mind_care_app/features/breathing/widgets/animated_breath_circle.dart';
 import 'package:mind_care_app/services/analytics/analytics_service.dart';
+import 'breathing_customize_screen.dart';
 
 class BreathingSessionScreen extends StatelessWidget {
   final String patternId;
@@ -68,6 +69,35 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
     super.dispose();
   }
 
+  Future<void> _confirmEnd() async {
+    final s = LanguageProvider.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(s.endSessionTitle),
+        content: Text(s.endSessionContent),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(s.stay),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE57373),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(s.leave),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      context.read<BreathingBloc>().add(ResetSession());
+      context.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,12 +106,7 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
         builder: (context, state) {
           if (state.isCompleted) {
             return _CompletionOverlay(
-              onRepeat: () {
-                final pattern = state.pattern!;
-                context.read<BreathingBloc>()
-                  ..add(ResetSession())
-                  ..add(StartSession(pattern));
-              },
+              patternId: state.pattern!.id,
               onGoHome: () => context.go('/home'),
             );
           }
@@ -115,6 +140,7 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
                   isInhale: isInhale,
                   isHold: isHold,
                   durationSeconds: phase.durationSeconds,
+                  isPaused: !state.isRunning,
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -133,6 +159,60 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
                       : 'Cycle ${state.currentCycle} of ${state.totalCycles}',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
+                if (!state.isRunning) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    s.paused,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF5BA8A0),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => context.read<BreathingBloc>().add(
+                        state.isRunning ? PauseSession() : ResumeSession(),
+                      ),
+                      icon: Icon(
+                        state.isRunning
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      label: Text(
+                        state.isRunning ? s.pause : s.resume,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF5BA8A0),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: _confirmEnd,
+                      icon: const Icon(Icons.stop_rounded),
+                      label: Text(s.endSession),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF5BA8A0),
+                        side: const BorderSide(color: Color(0xFF5BA8A0)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           );
@@ -142,32 +222,124 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
   }
 }
 
-class _CompletionOverlay extends StatelessWidget {
-  final VoidCallback onRepeat;
+class _CompletionOverlay extends StatefulWidget {
+  final String patternId;
   final VoidCallback onGoHome;
 
-  const _CompletionOverlay({required this.onRepeat, required this.onGoHome});
+  const _CompletionOverlay({
+    required this.patternId,
+    required this.onGoHome,
+  });
+
+  @override
+  State<_CompletionOverlay> createState() => _CompletionOverlayState();
+}
+
+class _CompletionOverlayState extends State<_CompletionOverlay> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-navigate to customize screen after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BreathingCustomizeScreen(
+              patternId: widget.patternId,
+              isFirstRun: false,
+            ),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFF5BA8A0);
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(s.wellDone,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: onRepeat,
-            child: Text(s.practiceAgain),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF1A3A3A), const Color(0xFF0D2A2A)]
+                : [Colors.white, const Color(0xFFF0F9F9)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onGoHome,
-            child: Text(s.navHome),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: 0.3),
+            width: 1.5,
           ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withValues(alpha: 0.2),
+              blurRadius: 30,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primaryColor, const Color(0xFF00796B)],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              s.wellDone,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF1A3333),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              s.isSinhala
+                  ? 'ඔබ සාර්ථකව පුරා කළා!'
+                  : 'You\'ve completed the session!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white70 : Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              s.isSinhala
+                  ? 'සංස්කරණ සඳහා යන්න...'
+                  : 'Going to customization...',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white54 : Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5BA8A0)),
+            ),
+          ],
+        ),
       ),
     );
   }

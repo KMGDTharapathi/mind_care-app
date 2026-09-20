@@ -77,3 +77,5 @@ flutter:
     - assets/coloring/mandala4.svg
     - assets/coloring/mandala5.svg
     - assets/coloring/mandala6.svg
+    - assets/audio/step_chime.wav
+    - assets/audio/finish_chime.wav

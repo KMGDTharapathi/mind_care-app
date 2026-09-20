@@ -14,6 +14,16 @@ class BreathingPhase extends HiveObject {
     required this.label,
     required this.durationSeconds,
   });
+
+  BreathingPhase copyWith({
+    String? label,
+    int? durationSeconds,
+  }) {
+    return BreathingPhase(
+      label: label ?? this.label,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+    );
+  }
 }
 
 @HiveType(typeId: 5)
@@ -30,10 +40,33 @@ class BreathingPattern extends HiveObject {
   @HiveField(3)
   final List<BreathingPhase> phases;
 
+  @HiveField(4)
+  final int cycles;
+
   BreathingPattern({
     required this.id,
     required this.name,
     required this.description,
     required this.phases,
+    this.cycles = 1,
   });
+
+  int get totalDurationSeconds =>
+      phases.fold(0, (sum, p) => sum + p.durationSeconds) * cycles;
+
+  BreathingPattern copyWith({
+    String? id,
+    String? name,
+    String? description,
+    List<BreathingPhase>? phases,
+    int? cycles,
+  }) {
+    return BreathingPattern(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      phases: phases ?? this.phases,
+      cycles: cycles ?? this.cycles,
+    );
+  }
 }

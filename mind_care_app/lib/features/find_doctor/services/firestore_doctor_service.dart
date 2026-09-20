@@ -7,7 +7,7 @@ class FirestoreDoctorService {
   /// Returns all verified doctors from seed data.
   Future<List<NearbyDoctor>> fetchAll() async {
     final doctors = kRealDoctors
-        .where((s) => s['verified'] == true)
+        .where((s) => s['is_verified'] == true)
         .map((data) {
       final specialization = data['specialization'] as String? ?? 'healthcare';
       final type = _specializationToType(specialization);

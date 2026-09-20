@@ -70,6 +70,12 @@ class AppStrings {
   );
   String get notNow => _s('දැන් නොවේ', 'Not Now');
   String get allow => _s('ඉඩ දෙන්න', 'Allow');
+  String get openSettings => _s('සැකසුම් විවෘත කරන්න', 'Open Settings');
+  String get notificationsDisabledTitle => _s('දැනුම්දීම් අහෝසි කිරීම්', 'Notifications Disabled');
+  String get notificationsDisabledMessage => _s(
+    'දැනුම්දීම් සදහා අවශ්‍ය අනුමැතිය නොලැබී ඇත. කරුණු කරන්න උපාංග සැකසුම් වලින් ඉඩ දෙන්න.',
+    'Notification permission was not granted. Please enable it in your device settings.',
+  );
 
   // ── Settings — Language section ───────────────────────────────────────────
   String get sectionLanguage => _s('භාෂාව', 'Language');
@@ -95,6 +101,16 @@ class AppStrings {
   String get startLoggingMood => _s(
     'ඔබේ ඉතිහාසය මෙහි බැලීමට ඔබේ මනෝභාවය ලොග් කිරීම ආරම්භ කරන්න.',
     'Start logging your mood to see your history here.',
+  );
+  String get moodEncouragementTitle => _s('නොගැඹුරුවෙන් ඉන්න — ඔබ විසින් වැඩි බලවත්', 'Don\'t give up — you are stronger than this');
+  String get moodEncouragementBody => _s(
+    'ඔබේ මනෝභාව අඳුරු වූ විටත්, ඔබේ අභ්‍යන්තර සාමය සහ බලවත්කම වැඩි ය. මෙම සතිය නිවැරදි කිරීමට සියලු පුරුදු කර ගන්න.',
+    'Even when things feel dark, your inner strength shines brighter. Take this week one moment at a time.',
+  );
+  String get moodAppreciationTitle => _s('ඔබ හොඳින් කටයුතු කරනවා — ඉතිරියට පැමිණෙන්න', 'You\'re doing great — keep shining');
+  String get moodAppreciationBody => _s(
+    'ඔබේ සතුටු මනෝභාව අවශ්‍යතාව පෙන්වන අතර, ඔබ සියල්ලත් නිසිව කටයුතු කරනවා. මෙම සාමාධිරූප ස්ථාවර රඳවා ගන්න.',
+    'Your positive moods show you\'re on the right path. Keep nurturing your wellbeing with the same care.',
   );
   String get recentEntries => _s('මෑත ඇතුළත් කිරීම්', 'Recent Entries');
   String get yesterdayLabel => _s('ඊයේ', 'Yesterday');
@@ -157,6 +173,11 @@ class AppStrings {
   String get remaining => _s('ඉතිරිව ඇත', 'remaining');
   String get ready => _s('සූදානම්', 'ready');
   String get paused => _s('විරාම', 'paused');
+  String get pause => _s('විරාමය', 'Pause');
+  String get resume => _s('නැවත ආරම්භ කරන්න', 'Resume');
+  String get endSession => _s('අවසන් කරන්න', 'End');
+  String get endSessionTitle => _s('හුස්ම අභ්‍යාසය අවසන් කරන්නද?', 'End breathing session?');
+  String get endSessionContent => _s('ඔබේ ප්‍රගතිය නැති වේ.', 'Your progress will be lost.');
   String get stepLabel => _s('පියවර', 'Step');
   String get beginner => _s('ආරම්භක', 'Beginner');
   String get intermediate => _s('මධ්‍යම', 'Intermediate');
@@ -208,15 +229,15 @@ class AppStrings {
   String get gameSnakeTitle => _s('සර්ප ක්‍රීඩාව', 'Snake Game');
   String get gameSnakeDesc => _s('සම්භාව්‍ය සර්පයා — ඵල කා, දිගු වෙන්න. සරල පාලන, ලිහිල් වේගය.', 'Classic snake — eat fruit, grow longer. Simple controls, relaxing pace.');
   String get gameSnakeMood => _s('😴 කම්මැලිකම', '😴 Lazy');
-  String get gamePatternTitle => _s('රටා ගැලපීම', 'Pattern Match');
-  String get gamePatternDesc => _s('කාඩ් පෙරළා ගැලපෙන emoji යුගල සොයන්න. මනස ක්ෂණිකව සන්සුන් කරයි.', 'Flip cards and find matching emoji pairs. Calms the mind instantly.');
-  String get gamePatternMood => _s('😤 ආතතිය', '😤 Stressed');
-  String get gameAimTitle => _s('ඉලක්ක සහ හෙළීම', 'Aim & Drop');
-  String get gameAimDesc => _s('බෝලය වමට සහ දකුණට ඉදිරියට යයි. ගැලපෙන වර්ණ කලාපයට හෙළීමට ස්පර්ශ කරන්න!', 'A ball swings left and right. Tap to drop it into the matching color zone!');
-  String get gameAimMood => _s('🎯 අවධානය', '🎯 Focus');
-  String get gameStackTitle => _s('ගොඩ ගැසීම', 'Stack Builder');
-  String get gameStackDesc => _s('ගෙවල් ගොඩ ගැසීමට ගමන් කරන කොටස් හෙළන්න. කාර්යය, විවේකය සහ විනෝදය සමතුලිත කරන්න!', 'Drop moving blocks to build a tower. Balance Work, Rest & Fun!');
-  String get gameStackMood => _s('😵 අධික බර', '😵 Overwhelmed');
+  String get gameCandyCrushTitle => _s('කැන්ඩි ක්‍රශ්', 'Candy Crush');
+  String get gameCandyCrushDesc => _s('සමාන කැන්ඩි එකතු කර පිපිරවන්න. ස්වභාවිකව ලිහිල් වේගය.', 'Match same candies to pop them. Naturally relaxing pace.');
+  String get gameCandyCrushMood => _s('🍬 සුන්දර ස්තුති', '🍬 Sweet Joy');
+  String get gamePuzzleTitle => _s('පැසුල් ක්‍රීඩා', 'Puzzle Game');
+  String get gamePuzzleDesc => _s('පැසුල් සකස් කර රූප සකසන්න. නිශ්චල සහ සුන්දර වේගය.', 'Arrange pieces to form pictures. Calm and beautiful pace.');
+  String get gamePuzzleMood => _s('🧩 සන්සුන් පුරුදු', '🧩 Mindful Focus');
+  String get gameWordPuzzleTitle => _s('අකුරු පැසුල්', 'Word Puzzle');
+  String get gameWordPuzzleDesc => _s('අකුරු සකස් කර ශබ්ද සොයන්න. මැදිහත්කරණීය සහ දැනුම් වර්ධනී.', 'Form words by arranging letters. Meditative and vocabulary building.');
+  String get gameWordPuzzleMood => _s('🔤 දැනුම් වර්ධනය', '🔤 Brain Boost');
 
   // ── Game UI strings ────────────────────────────────────────────────────────
   String get gameOver => _s('ක්‍රීඩාව අවසන්!', 'Game Over!');
@@ -329,6 +350,17 @@ class AppStrings {
   String get oneTimeEvent => _s('එක් වරක් සිදුවීම', 'One-time event');
   String get addToCalendarBtn => _s('දිනදර්ශනයට එකතු කරන්න', 'Add to Calendar');
   String get calendarInfoNote => _s('මෙය සිදුවීම තහවුරු කිරීමට ඔබේ උපාංග දිනදර්ශන යෙදුම විවෘත කරයි. MindCare වෙත දත්ත යවන්නේ නැත.', 'This opens your device calendar app to confirm the event. No data is sent to MindCare.');
+  String get calendarProviderLabel => _s('දිනදර්ශනය', 'Calendar');
+  String get calendarProviderHint => _s('එය එකතු කළ යුතු දිනදර්ශනය තෝරන්න', 'Choose which calendar to add it to');
+  String get providerGoogle => _s('Google දිනදර්ශනය', 'Google Calendar');
+  String get providerApple => _s('Apple දිනදර්ශනය', 'Apple Calendar');
+  String get providerOutlook => _s('Outlook', 'Outlook');
+  String get providerSamsung => _s('Samsung දිනදර්ශනය', 'Samsung Calendar');
+  String get providerOther => _s('වෙනත් / පෙරනිමිය', 'Other / Default');
+  String get calendarAddedSnack => _s(
+        'දිනදර්ශනයට එකතු කරන ලදී',
+        'Added to calendar',
+      );
   // Reminder type labels
   String get typeMoodCheckin => _s('මනෝභාව පරීක්ෂාව', 'Mood Check-in');
   String get typeBreathing => _s('හුස්ම ගැනීමේ සැසිය', 'Breathing Session');
