@@ -119,32 +119,32 @@ class WillowEngine {
 
   static const _enRules = [
     _Rule(patterns: ['hello','hi','hey','morning','afternoon','evening'], responses: [
-      "Hey! 😊 **How are you doing?**",
-      "Hi there! 🌿 *What's on your mind?*",
+      "Hey! 😊 How are you doing?",
+      "Hi there! 🌿 What's on your mind?",
     ]),
     _Rule(patterns: ['anxious','anxiety','nervous','panic','worried','fear','scared'], responses: [
-      "That sounds really tough... 💙 **Tell me more** about what's making you feel this way.",
-      "I hear you. Anxiety can feel overwhelming. 🌿 *What's been going on?*",
+      "That sounds really tough... 💙 Tell me more about what's making you feel this way.",
+      "I hear you. Anxiety can feel overwhelming. 🌿 What's been going on?",
     ]),
     _Rule(patterns: ['stress','stressed','overwhelmed','pressure','burnout'], responses: [
-      "That sounds really hard... 😔 You're carrying a lot. **What's weighing on you most?**",
-      "I'm sorry you're feeling this way. 💙 *Tell me more about what's happening.*",
+      "That sounds really hard... 😔 You're carrying a lot. What's weighing on you most?",
+      "I'm sorry you're feeling this way. 💙 Tell me more about what's happening.",
     ]),
     _Rule(patterns: ['sad','sadness','depressed','depression','unhappy','down','cry','tears'], responses: [
-      "I'm sorry you're feeling this way... 💙 **Tell me more** about what's been going on.",
-      "That sounds really tough. 🌿 *What's been weighing on your heart?*",
+      "I'm sorry you're feeling this way... 💙 Tell me more about what's been going on.",
+      "That sounds really tough. 🌿 What's been weighing on your heart?",
     ]),
     _Rule(patterns: ['sleep','insomnia','tired','exhausted','fatigue'], responses: [
-      "That sounds really hard... 😔 Not being able to sleep is tough. **Tell me more about it.**",
-      "I'm sorry you're struggling with sleep. 💙 *How long has this been going on?*",
+      "That sounds really hard... 😔 Not being able to sleep is tough. Tell me more about it.",
+      "I'm sorry you're struggling with sleep. 💙 How long has this been going on?",
     ]),
     _Rule(patterns: ['lonely','alone','isolated'], responses: [
-      "That sounds really painful... 💙 **Loneliness is so hard.** Tell me more.",
-      "I'm sorry you're feeling this way. 🌿 *You're not alone — I'm here.*",
+      "That sounds really painful... 💙 Loneliness is so hard. Tell me more.",
+      "I'm sorry you're feeling this way. 🌿 You're not alone — I'm here.",
     ]),
     _Rule(patterns: ['happy','happiness','joy','great','wonderful','good'], responses: [
-      "That's **wonderful** to hear! 🌟 **Tell me more!**",
-      "I'm so glad! 💚 *What's been making you feel good?*",
+      "That's wonderful to hear! 🌟 Tell me more!",
+      "I'm so glad! 💚 What's been making you feel good?",
     ]),
     _Rule(patterns: ['thank','thanks'], responses: [
       "You're welcome! 🌿",
@@ -153,17 +153,17 @@ class WillowEngine {
   ];
 
   static const _enFallback = [
-    "I hear you... 💙 **Tell me more** about what's going on.",
-    "That sounds really hard. 🌿 *What's been happening?*",
-    "I'm here. 💚 *What's on your mind?*",
-    "Thanks for sharing that with me. 🌱 **How long have you been feeling this way?**",
+    "I hear you... 💙 Tell me more about what's going on.",
+    "That sounds really hard. 🌿 What's been happening?",
+    "I'm here. 💚 What's on your mind?",
+    "Thanks for sharing that with me. 🌱 How long have you been feeling this way?",
   ];
 
   static const _siFallback = [
-    "ඔව්... ඒ ඇසීමට හිත දුකයි. 💙 **ඔබ ගැන ටිකක් කියන්නකෝ.**",
-    "ඒ ඇත්තෙන්ම අමාරු. 🌿 *ඔබ ගැන ටිකක් කතා කරමු.*",
-    "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 💚 **ඔබ ගැන ටිකක් කියන්නකෝ.**",
-    "ඒ ඇසීමට කනගාටුයි... **ඔබ ගැන ටිකක් කතා කරමු.** 💙",
+    "ඔව්... ඒ ඇසීමට හිත දුකයි. 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
+    "ඒ ඇත්තෙන්ම අමාරු. 🌿 ඔබ ගැන ටිකක් කතා කරමු.",
+    "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 💚 ඔබ ගැන ටිකක් කියන්නකෝ.",
+    "ඒ ඇසීමට කනගාටුයි... ඔබ ගැන ටිකක් කතා කරමු. 💙",
   ];
 
   static const _enVoiceAck = [

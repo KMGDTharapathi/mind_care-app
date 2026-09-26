@@ -40,7 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
     appLanguage.addListener(_onLanguageChanged);
     // Load name into global notifier if not already set
     if (appUserName.value == null) {
-      PreferencesService.getUserName().then((name) => appUserName.value = name);
+      PreferencesService.getUserName()
+          .then((name) => appUserName.value = name);
     }
   }
 
@@ -73,151 +74,137 @@ class _HomeScreenState extends State<HomeScreen> {
     const bgLight = Color(0xFF7EC8C8);
     const bgDark = Color(0xFF1A3333);
 
-    final features = isSinhala
-        ? [
-            _Feature(
-              title: 'විලෝ සමග\nකතා කරන්න',
-              icon: Icons.eco_outlined,
-              color: isDark
-                  ? const Color(0xFF2A4040)
-                  : Colors.white.withValues(alpha: 0.85),
-              onTap: (ctx) => ctx.push(
-                '${AppRouter.willowChat}?lang=${appLanguage.value.languageCode}',
-              ),
-              iconColor: const Color(0xFF5BA8A0),
-              layout: _CardLayout.iconLeft,
-            ),
-            _Feature(
-              title: 'ඇමතුම් උපදේශක',
-              icon: Icons.headset_mic_outlined,
-              color: isDark ? const Color(0xFF1E3535) : const Color(0xFF5BA8A0),
-              onTap: (ctx) => ctx.push(AppRouter.counsellorCall),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'සන්සුන් සංගීතය',
-              icon: Icons.headset_outlined,
-              color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
-              onTap: (ctx) => ctx.push(AppRouter.calmMusic),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'මානසික පීඩනය\nදුරු කරන ක්‍රීඩා',
-              icon: null,
-              color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFD4EAD0),
-              onTap: (ctx) => ctx.push(AppRouter.games),
-              iconColor: Colors.transparent,
-              layout: _CardLayout.textOnly,
-            ),
-            _Feature(
-              title: 'මග පෙන්වන භාවනාව',
-              icon: Icons.self_improvement_outlined,
-              color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
-              onTap: (ctx) => ctx.push(AppRouter.breathing),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'දෛනික මතක් කිරීම්',
-              icon: Icons.notifications_outlined,
-              color: isDark
-                  ? const Color(0xFF37474F)
-                  : Colors.white.withValues(alpha: 0.85),
-              onTap: (ctx) => ctx.push(AppRouter.dailyReminders),
-              iconColor: const Color(0xFF5BA8A0),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'ප්‍රබෝධමත්\nදිරිගැන්වීම',
-              icon: null,
-              color: isDark ? const Color(0xFF3D3520) : const Color(0xFFFFF8E1),
-              onTap: (ctx) => ctx.push(AppRouter.motivational),
-              iconColor: Colors.transparent,
-              layout: _CardLayout.textOnly,
-            ),
-            _Feature(
-              title: 'හුස්ම ගැනීමේ\nඅභ්‍යාස',
-              icon: Icons.air_rounded,
-              color: isDark ? const Color(0xFF1A3A3A) : const Color(0xFF4DB6AC),
-              onTap: (ctx) => ctx.push(AppRouter.breathingExercises),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-          ]
-        : [
-            _Feature(
-              title: 'Chat with\nWillow',
-              icon: Icons.eco_outlined,
-              color: isDark
-                  ? const Color(0xFF2A4040)
-                  : Colors.white.withValues(alpha: 0.85),
-              onTap: (ctx) => ctx.push(
-                '${AppRouter.willowChat}?lang=${appLanguage.value.languageCode}',
-              ),
-              iconColor: const Color(0xFF5BA8A0),
-              layout: _CardLayout.iconLeft,
-            ),
-            _Feature(
-              title: 'Counselor\nCall',
-              icon: Icons.headset_mic_outlined,
-              color: isDark ? const Color(0xFF1E3535) : const Color(0xFF5BA8A0),
-              onTap: (ctx) => ctx.push(AppRouter.counsellorCall),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Calm Music',
-              icon: Icons.headset_outlined,
-              color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
-              onTap: (ctx) => ctx.push(AppRouter.calmMusic),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Stress-Relief\nGames',
-              icon: null,
-              color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFD4EAD0),
-              onTap: (ctx) => ctx.push(AppRouter.games),
-              iconColor: Colors.transparent,
-              layout: _CardLayout.textOnly,
-            ),
-            _Feature(
-              title: 'Guided\nMeditation',
-              icon: Icons.self_improvement_outlined,
-              color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
-              onTap: (ctx) => ctx.push(AppRouter.meditation),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Daily\nReminders',
-              icon: Icons.notifications_outlined,
-              color: isDark
-                  ? const Color(0xFF37474F)
-                  : Colors.white.withValues(alpha: 0.85),
-              onTap: (ctx) => ctx.push(AppRouter.dailyReminders),
-              iconColor: const Color(0xFF5BA8A0),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Motivational\nBoost',
-              icon: null,
-              color: isDark ? const Color(0xFF3D3520) : const Color(0xFFFFF8E1),
-              onTap: (ctx) => ctx.push(AppRouter.motivational),
-              iconColor: Colors.transparent,
-              layout: _CardLayout.textOnly,
-            ),
-            _Feature(
-              title: 'Breathing\nExercises',
-              icon: Icons.air_rounded,
-              color: isDark ? const Color(0xFF1A3A3A) : const Color(0xFF4DB6AC),
-              onTap: (ctx) => ctx.push(AppRouter.breathingExercises),
-              iconColor: isDark ? Colors.white70 : Colors.white,
-              layout: _CardLayout.iconTop,
-            ),
-          ];
+    final features = isSinhala ? [
+      _Feature(
+        title: 'විලෝ සමග\nකතා කරන්න',
+        icon: Icons.eco_outlined,
+        color: isDark ? const Color(0xFF2A4040) : Colors.white.withOpacity(0.85),
+        onTap: (ctx) => ctx.push('${AppRouter.willowChat}?lang=${appLanguage.value.languageCode}'),
+        iconColor: const Color(0xFF5BA8A0),
+        layout: _CardLayout.iconLeft,
+      ),
+      _Feature(
+        title: 'ඇමතුම් උපදේශක',
+        icon: Icons.headset_mic_outlined,
+        color: isDark ? const Color(0xFF1E3535) : const Color(0xFF5BA8A0),
+        onTap: (ctx) => ctx.push(AppRouter.counsellorCall),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'සන්සුන් සංගීතය',
+        icon: Icons.headset_outlined,
+        color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
+        onTap: (ctx) => ctx.push(AppRouter.calmMusic),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'මානසික පීඩනය\nදුරු කරන ක්‍රීඩා',
+        icon: null,
+        color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFD4EAD0),
+        onTap: (ctx) => ctx.push(AppRouter.games),
+        iconColor: Colors.transparent,
+        layout: _CardLayout.textOnly,
+      ),
+      _Feature(
+        title: 'මග පෙන්වන භාවනාව',
+        icon: Icons.self_improvement_outlined,
+        color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
+        onTap: (ctx) => ctx.push(AppRouter.breathing),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'දෛනික මතක් කිරීම්',
+        icon: Icons.notifications_outlined,
+        color: isDark ? const Color(0xFF37474F) : Colors.white.withOpacity(0.85),
+        onTap: (ctx) => ctx.push(AppRouter.dailyReminders),
+        iconColor: const Color(0xFF5BA8A0),
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'ප්‍රබෝධමත්\nදිරිගැන්වීම',
+        icon: null,
+        color: isDark ? const Color(0xFF3D3520) : const Color(0xFFFFF8E1),
+        onTap: (ctx) => ctx.push(AppRouter.motivational),
+        iconColor: Colors.transparent,
+        layout: _CardLayout.textOnly,
+      ),
+      _Feature(
+        title: 'හුස්ම ගැනීමේ\nඅභ්‍යාස',
+        icon: Icons.air_rounded,
+        color: isDark ? const Color(0xFF1A3A3A) : const Color(0xFF4DB6AC),
+        onTap: (ctx) => ctx.push(AppRouter.breathingExercises),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+    ] : [
+      _Feature(
+        title: 'Chat with\nWillow',
+        icon: Icons.eco_outlined,
+        color: isDark ? const Color(0xFF2A4040) : Colors.white.withOpacity(0.85),
+        onTap: (ctx) => ctx.push('${AppRouter.willowChat}?lang=${appLanguage.value.languageCode}'),
+        iconColor: const Color(0xFF5BA8A0),
+        layout: _CardLayout.iconLeft,
+      ),
+      _Feature(
+        title: 'Counselor\nCall',
+        icon: Icons.headset_mic_outlined,
+        color: isDark ? const Color(0xFF1E3535) : const Color(0xFF5BA8A0),
+        onTap: (ctx) => ctx.push(AppRouter.counsellorCall),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'Calm Music',
+        icon: Icons.headset_outlined,
+        color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
+        onTap: (ctx) => ctx.push(AppRouter.calmMusic),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'Stress-Relief\nGames',
+        icon: null,
+        color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFD4EAD0),
+        onTap: (ctx) => ctx.push(AppRouter.games),
+        iconColor: Colors.transparent,
+        layout: _CardLayout.textOnly,
+      ),
+      _Feature(
+        title: 'Guided\nMeditation',
+        icon: Icons.self_improvement_outlined,
+        color: isDark ? const Color(0xFF2E4A4A) : const Color(0xFF5BA8A0),
+        onTap: (ctx) => ctx.push(AppRouter.meditation),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'Daily\nReminders',
+        icon: Icons.notifications_outlined,
+        color: isDark ? const Color(0xFF37474F) : Colors.white.withOpacity(0.85),
+        onTap: (ctx) => ctx.push(AppRouter.dailyReminders),
+        iconColor: const Color(0xFF5BA8A0),
+        layout: _CardLayout.iconTop,
+      ),
+      _Feature(
+        title: 'Motivational\nBoost',
+        icon: null,
+        color: isDark ? const Color(0xFF3D3520) : const Color(0xFFFFF8E1),
+        onTap: (ctx) => ctx.push(AppRouter.motivational),
+        iconColor: Colors.transparent,
+        layout: _CardLayout.textOnly,
+      ),
+      _Feature(
+        title: 'Breathing\nExercises',
+        icon: Icons.air_rounded,
+        color: isDark ? const Color(0xFF1A3A3A) : const Color(0xFF4DB6AC),
+        onTap: (ctx) => ctx.push(AppRouter.breathingExercises),
+        iconColor: isDark ? Colors.white70 : Colors.white,
+        layout: _CardLayout.iconTop,
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: isDark ? bgDark : bgLight,
@@ -229,11 +216,8 @@ class _HomeScreenState extends State<HomeScreen> {
             right: -20,
             child: Opacity(
               opacity: isDark ? 0.06 : 0.10,
-              child: const Icon(
-                Icons.eco_rounded,
-                size: 180,
-                color: Color(0xFF004D40),
-              ),
+              child: const Icon(Icons.eco_rounded,
+                  size: 180, color: Color(0xFF004D40)),
             ),
           ),
           Positioned(
@@ -241,11 +225,8 @@ class _HomeScreenState extends State<HomeScreen> {
             right: 40,
             child: Opacity(
               opacity: isDark ? 0.05 : 0.08,
-              child: const Icon(
-                Icons.eco_rounded,
-                size: 120,
-                color: Color(0xFF004D40),
-              ),
+              child: const Icon(Icons.eco_rounded,
+                  size: 120, color: Color(0xFF004D40)),
             ),
           ),
           SafeArea(
@@ -259,18 +240,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? const Color(0xFF37474F)
                         : const Color(0xFFFFECB3),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                        horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.wifi_off_rounded,
-                          size: 16,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF795548),
-                        ),
+                        Icon(Icons.wifi_off_rounded,
+                            size: 16,
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF795548)),
                         const SizedBox(width: 8),
                         Text(
                           'You\'re offline — changes will sync when reconnected.',
@@ -291,12 +268,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        appUserName.value != null &&
-                                appUserName.value!.isNotEmpty
+                        appUserName.value != null && appUserName.value!.isNotEmpty
                             ? '${_greeting(isSinhala)},\n${appUserName.value} 👋'
                             : (isSinhala
-                                  ? 'ඔබ ගැන\nසැලකිලිමත් වන්න'
-                                  : 'Take care\nof yourself'),
+                                ? 'ඔබ ගැන\nසැලකිලිමත් වන්න'
+                                : 'Take care\nof yourself'),
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -319,29 +295,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         final availableHeight = constraints.maxHeight - 12;
                         final cardHeight = (availableHeight - (3 * 10)) / 4;
                         final cardWidth = (constraints.maxWidth - 10) / 2;
+                        final ratio = cardWidth / cardHeight;
                         return GridView.builder(
-                          // Never clamp the top of the aspect ratio: card sizes
-                          // are derived from the available space, so an upper
-                          // clamp used to make the last row taller than the
-                          // viewport and hid the bottom buttons on smaller
-                          // screens. Only a lower floor avoids degenerate cells.
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           padding: const EdgeInsets.only(bottom: 12),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                                childAspectRatio:
-                                    (cardWidth / cardHeight).clamp(
-                                      0.7,
-                                      double.infinity,
-                                    ),
-                              ),
-                          itemCount: features.length,
-                          itemBuilder: (context, i) => _FeatureCard(
-                            feature: features[i],
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: ratio.clamp(0.9, 1.4),
                           ),
+                          itemCount: features.length,
+                          itemBuilder: (context, i) =>
+                              _FeatureCard(feature: features[i], isDark: isDark),
                         );
                       },
                     ),
@@ -396,16 +363,20 @@ class _Feature {
 
 class _FeatureCard extends StatelessWidget {
   final _Feature feature;
+  final bool isDark;
 
-  const _FeatureCard({required this.feature});
+  const _FeatureCard({required this.feature, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    // Card colors stay fixed per (light/dark) theme; base the title color on
-    // the card's own luminance so text is always readable in BOTH themes.
-    final textColor = feature.color.computeLuminance() > 0.5
-        ? const Color(0xFF1A4A4A)
-        : Colors.white;
+    final textColor = isDark
+        ? Colors.white
+        : (feature.color == Colors.white.withOpacity(0.85) ||
+                feature.color == const Color(0xFFFFF8E1) ||
+                feature.color == const Color(0xFFD4EAD0) ||
+                feature.color.alpha < 230)
+            ? const Color(0xFF1A4A4A)
+            : Colors.white;
 
     return Material(
       color: Colors.transparent,
@@ -422,8 +393,8 @@ class _FeatureCard extends StatelessWidget {
           child: feature.layout == _CardLayout.iconLeft
               ? _IconLeftContent(feature: feature, textColor: textColor)
               : feature.layout == _CardLayout.iconTop
-              ? _IconTopContent(feature: feature, textColor: textColor)
-              : _TextOnlyContent(feature: feature, textColor: textColor),
+                  ? _IconTopContent(feature: feature, textColor: textColor)
+                  : _TextOnlyContent(feature: feature, textColor: textColor),
         ),
       ),
     );
@@ -433,7 +404,8 @@ class _FeatureCard extends StatelessWidget {
 class _IconLeftContent extends StatelessWidget {
   final _Feature feature;
   final Color textColor;
-  const _IconLeftContent({required this.feature, required this.textColor});
+  const _IconLeftContent(
+      {required this.feature, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -469,7 +441,8 @@ class _IconLeftContent extends StatelessWidget {
 class _IconTopContent extends StatelessWidget {
   final _Feature feature;
   final Color textColor;
-  const _IconTopContent({required this.feature, required this.textColor});
+  const _IconTopContent(
+      {required this.feature, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -497,7 +470,8 @@ class _IconTopContent extends StatelessWidget {
 class _TextOnlyContent extends StatelessWidget {
   final _Feature feature;
   final Color textColor;
-  const _TextOnlyContent({required this.feature, required this.textColor});
+  const _TextOnlyContent(
+      {required this.feature, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -531,11 +505,11 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = isDark
-        ? const Color(0xFF80CBC4)
-        : const Color(0xFF1A4A4A);
+    final activeColor =
+        isDark ? const Color(0xFF80CBC4) : const Color(0xFF1A4A4A);
     final inactiveColor = isDark ? Colors.white38 : Colors.black45;
-    final activeBg = isDark ? const Color(0xFF2E4A4A) : const Color(0xFF1A4A4A);
+    final activeBg =
+        isDark ? const Color(0xFF2E4A4A) : const Color(0xFF1A4A4A);
 
     final items = isSinhala
         ? [
@@ -554,7 +528,7 @@ class _BottomNav extends StatelessWidget {
         color: isDark ? const Color(0xFF1A2A2A) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),

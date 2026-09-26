@@ -68,8 +68,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     context.read<AuthBloc>().add(
-      AuthCreateAccount(email: email, password: password),
-    );
+          AuthCreateAccount(email: email, password: password),
+        );
   }
 
   void _handleAuthError(AuthError state) {
@@ -98,16 +98,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark),
             onPressed: () => context.pop(),
           ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -176,11 +175,11 @@ class _Header extends StatelessWidget {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.85),
+            color: Colors.white.withOpacity(0.85),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryLight.withValues(alpha: 0.3),
+                color: AppColors.primaryLight.withOpacity(0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -242,12 +241,10 @@ class _EmailField extends StatelessWidget {
         labelText: 'Email',
         hintText: 'you@example.com',
         errorText: errorText,
-        prefixIcon: const Icon(
-          Icons.email_outlined,
-          color: AppColors.primaryDark,
-        ),
+        prefixIcon:
+            const Icon(Icons.email_outlined, color: AppColors.primaryDark),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.9),
+        fillColor: Colors.white.withOpacity(0.9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -266,10 +263,8 @@ class _EmailField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.primaryDark,
-            width: 1.5,
-          ),
+          borderSide:
+              const BorderSide(color: AppColors.primaryDark, width: 1.5),
         ),
       ),
     );
@@ -306,10 +301,8 @@ class _PasswordField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         errorText: errorText,
-        prefixIcon: const Icon(
-          Icons.lock_outline,
-          color: AppColors.primaryDark,
-        ),
+        prefixIcon:
+            const Icon(Icons.lock_outline, color: AppColors.primaryDark),
         suffixIcon: IconButton(
           icon: Icon(
             obscureText
@@ -320,7 +313,7 @@ class _PasswordField extends StatelessWidget {
           onPressed: onToggleVisibility,
         ),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.9),
+        fillColor: Colors.white.withOpacity(0.9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -339,10 +332,8 @@ class _PasswordField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.primaryDark,
-            width: 1.5,
-          ),
+          borderSide:
+              const BorderSide(color: AppColors.primaryDark, width: 1.5),
         ),
       ),
     );
@@ -384,10 +375,8 @@ class _ErrorBanner extends StatelessWidget {
 // ── Create account button ─────────────────────────────────────────────────────
 
 class _CreateAccountButton extends StatelessWidget {
-  const _CreateAccountButton({
-    required this.isLoading,
-    required this.onPressed,
-  });
+  const _CreateAccountButton(
+      {required this.isLoading, required this.onPressed});
 
   final bool isLoading;
   final VoidCallback? onPressed;
@@ -417,7 +406,8 @@ class _CreateAccountButton extends StatelessWidget {
               )
             : const Text(
                 'Create Account',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                style:
+                    TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
               ),
       ),
     );
@@ -434,7 +424,10 @@ class _SignInLink extends StatelessWidget {
       children: [
         const Text(
           'Already have an account?',
-          style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
+          style: TextStyle(
+            color: AppColors.textSecondaryDark,
+            fontSize: 14,
+          ),
         ),
         TextButton(
           onPressed: () => context.pop(),

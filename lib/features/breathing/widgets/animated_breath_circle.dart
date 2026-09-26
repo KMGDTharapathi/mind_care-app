@@ -6,7 +6,6 @@ class AnimatedBreathCircle extends StatefulWidget {
   final bool isInhale;
   final bool isHold;
   final int durationSeconds;
-  final bool isPaused;
 
   const AnimatedBreathCircle({
     super.key,
@@ -14,7 +13,6 @@ class AnimatedBreathCircle extends StatefulWidget {
     required this.isInhale,
     required this.isHold,
     required this.durationSeconds,
-    this.isPaused = false,
   });
 
   @override
@@ -56,8 +54,8 @@ class _AnimatedBreathCircleState extends State<AnimatedBreathCircle>
   }
 
   void _startAnimation() {
-    if (widget.isHold || widget.isPaused) {
-      // no movement for hold or while paused
+    if (widget.isHold) {
+      // no movement for hold
     } else {
       _controller.forward();
     }
@@ -72,14 +70,6 @@ class _AnimatedBreathCircleState extends State<AnimatedBreathCircle>
       _controller.reset();
       _setupAnimation();
       _startAnimation();
-    } else if (oldWidget.isPaused != widget.isPaused) {
-      if (widget.isPaused) {
-        // Freeze the circle exactly where it is
-        _controller.stop();
-      } else {
-        // Resume from the frozen position (hold phase never moves anyway)
-        if (!widget.isHold) _controller.forward();
-      }
     }
   }
 

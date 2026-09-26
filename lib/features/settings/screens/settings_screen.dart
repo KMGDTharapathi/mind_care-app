@@ -3,10 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
-import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mind_care_app/main.dart' show appUserName, appLanguage;
 
 class SettingsScreen extends StatefulWidget {
@@ -16,16 +20,13 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen>
-    with WidgetsBindingObserver {
+class _SettingsScreenState extends State<SettingsScreen> {
   // Read directly from the global notifier — always in sync with home screen
   String? get _userName => appUserName.value;
 
   @override
   void initState() {
     super.initState();
-    // Re-sync the notification toggle after returning from the OS settings.
-    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthBloc>().add(AuthStarted());
     });
@@ -38,17 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      // The user may have toggled the permission inside the OS settings —
-      // reflect the real state as soon as we come back.
-      context.read<SettingsCubit>().loadSettings();
-    }
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -59,20 +50,13 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (ctx) {
         final s = LanguageProvider.read(ctx);
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              const Icon(
-                Icons.person_outline_rounded,
-                color: Color(0xFF5BA8A0),
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Text(s.changeName),
-            ],
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            const Icon(Icons.person_outline_rounded,
+                color: Color(0xFF5BA8A0), size: 22),
+            const SizedBox(width: 10),
+            Text(s.changeName),
+          ]),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -87,10 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFF5BA8A0),
-                  width: 1.5,
-                ),
+                borderSide: const BorderSide(color: Color(0xFF5BA8A0), width: 1.5),
               ),
             ),
             onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
@@ -102,8 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF5BA8A0),
-              ),
+                  backgroundColor: const Color(0xFF5BA8A0)),
               onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
               child: Text(s.save),
             ),
@@ -111,66 +91,17 @@ class _SettingsScreenState extends State<SettingsScreen>
         );
       },
     );
-    // NOTE: the controller is intentionally NOT disposed here — the dialog's
-    // exit animation is still in flight and its TextField still listens to the
-    // controller. Disposing early throws
-    // "TextEditingController used after being disposed" and shows a red error
-    // screen. A short-lived dialog-only controller is garbage-collected safely.
+    controller.dispose();
     // Guard: widget may have been disposed while dialog was open
     if (!mounted) return;
     if (result != null && result.isNotEmpty) {
-      try {
-        await PreferencesService.setUserName(result);
-        if (!mounted) return;
-        // Defer notifier update to next frame to avoid InheritedWidget assertion
-        // when dialog is still in the process of being dismissed
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) appUserName.value = result;
-        });
-        if (!mounted) return;
-        // Show success feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white),
-                const SizedBox(width: 8),
-                Text(
-                  LanguageProvider.of(context).isSinhala
-                      ? 'නම සාර්ථකව වෙන්විය!'
-                      : 'Name updated successfully!',
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF5BA8A0),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      } catch (e) {
-        if (!mounted) return;
-        // Show error feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_rounded, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    LanguageProvider.of(context).isSinhala
-                        ? 'නම සුරකින්න නොහැකි විය. නැවත උත්සාහ කරන්න.'
-                        : 'Failed to save name. Please try again.',
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
+      await PreferencesService.setUserName(result);
+      if (!mounted) return;
+      // Defer notifier update to next frame to avoid InheritedWidget assertion
+      // when dialog is still in the process of being dismissed
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        appUserName.value = result;
+      });
     }
   }
 
@@ -186,17 +117,18 @@ class _SettingsScreenState extends State<SettingsScreen>
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Builder(
-            builder: (ctx) => Text(LanguageProvider.of(ctx).settingsTitle),
-          ),
-        ),
+        appBar: AppBar(title: Builder(
+          builder: (ctx) => Text(LanguageProvider.of(ctx).settingsTitle),
+        )),
         body: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {
             final s = LanguageProvider.of(context);
             final cubit = context.read<SettingsCubit>();
             return ListView(
               children: [
+                const SizedBox(height: 16),
+                const _ProfileAvatarSection(),
+                const SizedBox(height: 16),
                 // ── Profile ────────────────────────────────────────────────
                 _SectionHeader(title: s.sectionProfile),
                 ListTile(
@@ -204,31 +136,22 @@ class _SettingsScreenState extends State<SettingsScreen>
                   title: Text(s.yourName),
                   subtitle: ValueListenableBuilder<String?>(
                     valueListenable: appUserName,
-                    builder: (_, name, _) => Text(
+                    builder: (_, name, __) => Text(
                       name != null && name.isNotEmpty ? name : s.nameNotSet,
                       style: TextStyle(
-                        color: name != null && name.isNotEmpty
-                            ? null
-                            : Colors.grey,
+                        color: name != null && name.isNotEmpty ? null : Colors.grey,
                       ),
                     ),
                   ),
-                  trailing: const Icon(
-                    Icons.edit_outlined,
-                    size: 18,
-                    color: Color(0xFF5BA8A0),
-                  ),
+                  trailing: const Icon(Icons.edit_outlined,
+                      size: 18, color: Color(0xFF5BA8A0)),
                   onTap: () => _changeName(context),
                 ),
                 ListTile(
-                  leading: const Icon(
-                    Icons.person_add_outlined,
-                    color: Color(0xFFE57373),
-                  ),
-                  title: Text(
-                    s.logAsNewUser,
-                    style: const TextStyle(color: Color(0xFFE57373)),
-                  ),
+                  leading: const Icon(Icons.person_add_outlined,
+                      color: Color(0xFFE57373)),
+                  title: Text(s.logAsNewUser,
+                      style: const TextStyle(color: Color(0xFFE57373))),
                   subtitle: Text(s.logAsNewUserSubtitle),
                   onTap: () => _confirmNewUser(context),
                 ),
@@ -315,44 +238,11 @@ class _SettingsScreenState extends State<SettingsScreen>
     await cubit.setNotificationsEnabled(
       true,
       onShowExplanation: () => _showPermissionExplanation(context, s),
-      onPermissionDenied: () => _showOpenSettingsDialog(context, s),
     );
-  }
-
-  Future<void> _showOpenSettingsDialog(
-    BuildContext context,
-    AppStrings s,
-  ) async {
-    if (!mounted) return;
-    final openSettings = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(s.notificationsDisabledTitle),
-        content: Text(s.notificationsDisabledMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(s.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF5BA8A0),
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(s.openSettings),
-          ),
-        ],
-      ),
-    );
-    if (openSettings == true && mounted) {
-      await NotificationService.openNotificationsSettings();
-    }
   }
 
   Future<bool> _showPermissionExplanation(
-    BuildContext context,
-    AppStrings s,
-  ) async {
+      BuildContext context, AppStrings s) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -380,7 +270,10 @@ class _SettingsScreenState extends State<SettingsScreen>
   ) async {
     final initial =
         state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
-    final picked = await showTimePicker(context: context, initialTime: initial);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
     if (picked != null) {
       await cubit.setNotificationTime(picked);
     }
@@ -392,20 +285,12 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (ctx) {
         final s = LanguageProvider.read(ctx);
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              const Icon(
-                Icons.person_add_outlined,
-                color: Color(0xFFE57373),
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Text(s.logAsNewUser),
-            ],
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            const Icon(Icons.person_add_outlined, color: Color(0xFFE57373), size: 22),
+            const SizedBox(width: 10),
+            Text(s.logAsNewUser),
+          ]),
           content: Text(
             s.logAsNewUserContent,
             style: const TextStyle(height: 1.5),
@@ -416,9 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               child: Text(s.cancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE57373),
-              ),
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE57373)),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(s.continueBtn),
             ),
@@ -450,9 +333,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
       ),
     );
   }
@@ -473,9 +356,7 @@ class _LanguageSwitcher extends StatelessWidget {
           leading: const Icon(Icons.language_rounded),
           title: Text(s.sectionLanguage),
           subtitle: Text(
-            strings.languageCode == 'en'
-                ? s.languageEnglish
-                : s.languageSinhala,
+            strings.languageCode == 'en' ? s.languageEnglish : s.languageSinhala,
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _showLanguageSheet(context, strings.languageCode),
@@ -572,8 +453,163 @@ Future<void> _onLanguageSelected(
     appLanguage.value = previousCode == 'si' ? AppStrings.si : AppStrings.en;
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(LanguageProvider.of(context).languageSaveError)),
+        SnackBar(
+          content: Text(LanguageProvider.of(context).languageSaveError),
+        ),
       );
     }
+  }
+}
+
+// ── Profile Picture Avatar Section ───────────────────────────────────────────
+
+class _ProfileAvatarSection extends StatefulWidget {
+  const _ProfileAvatarSection();
+
+  @override
+  State<_ProfileAvatarSection> createState() => _ProfileAvatarSectionState();
+}
+
+class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
+  final _picker = ImagePicker();
+  bool _uploading = false;
+  String? _cachedUrl;
+  Uint8List? _localBytes;
+
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+  Reference get _storageRef =>
+      FirebaseStorage.instance.ref('users/$_uid/profile.jpg');
+
+  Future<String?> _loadProfilePicture() async {
+    if (_cachedUrl != null) return _cachedUrl;
+    try {
+      final url = await _storageRef.getDownloadURL();
+      _cachedUrl = url;
+      return url;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
+      );
+      if (pickedFile == null) return;
+
+      // Read file bytes for cross-platform support (Web & Mobile)
+      final bytes = await pickedFile.readAsBytes();
+
+      setState(() {
+        _localBytes = bytes;
+        _uploading = true;
+      });
+
+      // Upload bytes to storage
+      await _storageRef.putData(bytes);
+
+      // Fetch new download URL
+      final url = await _storageRef.getDownloadURL();
+
+      setState(() {
+        _cachedUrl = url;
+        _uploading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully!')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _uploading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload image: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          FutureBuilder<String?>(
+            future: _loadProfilePicture(),
+            builder: (context, snapshot) {
+              final imageUrl = snapshot.data;
+              final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+              return Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF5BA8A0),
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: _uploading
+                      ? const Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: Color(0xFF5BA8A0),
+                          ),
+                        )
+                      : _localBytes != null
+                          ? Image.memory(
+                              _localBytes!,
+                              fit: BoxFit.cover,
+                            )
+                          : hasImage
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.person, size: 60, color: Colors.grey),
+                                )
+                              : const Icon(Icons.person, size: 60, color: Colors.grey),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: _uploading ? null : _pickAndUploadImage,
+              child: const CircleAvatar(
+                radius: 18,
+                backgroundColor: Color(0xFF5BA8A0),
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

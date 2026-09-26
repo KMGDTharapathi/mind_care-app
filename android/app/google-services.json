@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "384910835517",
+    "project_id": "mine-care",
+    "storage_bucket": "mine-care.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:384910835517:android:3df2d6d3225dd6dd99cf54",
+        "android_client_info": {
+          "package_name": "com.example.mindcare_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "384910835517-ge9peqbi87so7e63nf2jofnueh98g424.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYNJVzAfVul8EAi0Cw8EVp4YUbD8Y7EEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "384910835517-ge9peqbi87so7e63nf2jofnueh98g424.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "384910835517-8inlm7mueqpbtv6v53isj8tltcb3r7hh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mindcare.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

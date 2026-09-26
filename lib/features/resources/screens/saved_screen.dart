@@ -38,30 +38,30 @@ class _SavedScreenState extends State<SavedScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _saved.isEmpty
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text(
-                  'No saved resources yet. Bookmark resources to see them here.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Text(
+                      'No saved resources yet. Bookmark resources to see them here.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _saved.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final resource = _saved[index];
+                    return ListTile(
+                      title: Text(resource.title),
+                      subtitle: Text(resource.category),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/resources/${resource.id}'),
+                    );
+                  },
                 ),
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: _saved.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final resource = _saved[index];
-                return ListTile(
-                  title: Text(resource.title),
-                  subtitle: Text(resource.category),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/resources/${resource.id}'),
-                );
-              },
-            ),
     );
   }
 }

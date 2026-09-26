@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:mind_care_app/firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mind_care_app/core/firebase/firebase_error_screen.dart';
+import 'package:mind_care_app/core/firebase/firebase_initializer.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
@@ -15,13 +18,13 @@ import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
+import 'package:mind_care_app/features/onboarding/screens/consent_prompt_screen.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
-import 'package:mind_care_app/services/auth/auth_service.dart';
+import 'package:mind_care_app/services/auth/firebase_auth_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
-import 'package:mind_care_app/services/analytics/analytics_service.dart';
-import 'package:mind_care_app/services/crashlytics/crashlytics_service.dart';
-import 'package:mind_care_app/services/remote_config/remote_config_service.dart';
-import 'package:mind_care_app/services/auth/auth_service.dart' as auth_models;
+import 'package:mind_care_app/services/analytics/firebase_analytics_service.dart';
+import 'package:mind_care_app/services/crashlytics/firebase_crashlytics_service.dart';
+import 'package:mind_care_app/services/remote_config/firebase_remote_config_service.dart';
 
 /// Global navigator key used by [NotificationService] to navigate on tap.
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -43,81 +46,84 @@ String? splashSavedLang;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  bool firebaseOk = true;
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    firebaseOk = false;
+  }
+
   // Start the app immediately — router shows /splash at once.
-  runApp(
-    MindCareApp(
-      initFuture: Future.value(const _InitResult(onboardingComplete: false)),
-    ),
-  );
+  runApp(MindCareApp(
+    initFuture: Future.value(_InitResult(firebaseOk: firebaseOk)),
+  ));
 
   // Defer heavy init until after the first frame is painted.
   // Using a microtask + Future.delayed ensures the engine has actually
   // rendered before we touch any platform channels (Hive, SharedPreferences).
   WidgetsBinding.instance.addPostFrameCallback((_) {
     Future.delayed(const Duration(milliseconds: 100), () {
-      _heavyInit().catchError((e) {
-        debugPrint('_heavyInit error: $e');
-        return _InitResult(onboardingComplete: false);
-      });
+      _heavyInit(firebaseOk).catchError((e) => debugPrint('_heavyInit error: $e'));
     });
   });
 }
 
 /// All heavy init — called after first frame is painted.
-Future<_InitResult> _heavyInit() async {
+Future<_InitResult> _heavyInit(bool firebaseOk) async {
   // Yield immediately so the first frame renders before any heavy work
   await Future.delayed(const Duration(milliseconds: 50));
 
   final consentService = ConsentService();
-  final crashlyticsService = NoOpCrashlyticsService();
+  final crashlyticsService =
+      FirebaseCrashlyticsService(consentService: consentService);
+
+  bool _firebaseReady = false;
 
   FlutterError.onError = (details) {
-    FlutterError.presentError(details);
+    if (_firebaseReady) {
+      crashlyticsService.recordError(details.exception, details.stack, fatal: true);
+    } else {
+      FlutterError.presentError(details);
+    }
   };
   PlatformDispatcher.instance.onError = (error, stack) {
+    if (_firebaseReady) {
+      crashlyticsService.recordError(error, stack, fatal: true);
+    }
     return true;
   };
 
-  final remoteConfig = NoOpRemoteConfigService();
+  final remoteConfig = FirebaseRemoteConfigService(
+    crashlyticsService: crashlyticsService,
+  );
 
   // Warm up SharedPreferences cache FIRST — single platform channel call that
   // all subsequent reads (PreferencesService, ConsentService, etc.) will reuse
   // as synchronous cache hits, preventing concurrent getInstance() calls that
   // can block the main isolate.
-  // Guarded: a transient channel error here must not abort the rest of init.
-  try {
-    await PreferencesService.warmUp()
-        .timeout(const Duration(seconds: 3));
-  } catch (e) {
-    debugPrint('Prefs warmup failed: $e');
-  }
+  await PreferencesService.warmUp();
 
   // Hive and Preferences run in parallel — both are needed before we can
   // determine onboardingComplete.
   // Yield to the event loop first so the UI stays responsive.
   await Future.delayed(Duration.zero);
   final prefsResult = await Future.wait<dynamic>([
-    HiveService.init().timeout(const Duration(seconds: 4)).catchError((e) {
-      debugPrint('Hive failed: $e');
-    }),
+    HiveService.init()
+        .timeout(const Duration(seconds: 4))
+        .catchError((e) { debugPrint('Hive failed: $e'); }),
     PreferencesService.isOnboardingComplete()
         .timeout(const Duration(seconds: 3))
-        .catchError((e) {
-          debugPrint('Prefs failed: $e');
-          return false;
-        }),
+        .catchError((e) { debugPrint('Prefs failed: $e'); return false; }),
   ]);
 
   // Pre-fetch name + language while still in _heavyInit so the splash screen
   // can read them from globals (zero platform calls on the main thread).
-  // Guarded — if prefs are hard-down, splash falls back to onboarding defaults.
-  final navResults = await Future.wait<String?>([
-    PreferencesService.getUserName()
-        .timeout(const Duration(seconds: 3))
-        .catchError((_) => null),
-    PreferencesService.getAppLanguage()
-        .timeout(const Duration(seconds: 3))
-        .catchError((_) => null),
+  final navResults = await Future.wait([
+    PreferencesService.getUserName(),
+    PreferencesService.getAppLanguage(),
   ]);
   splashSavedName = navResults[0];
   splashSavedLang = navResults[1];
@@ -133,34 +139,29 @@ Future<_InitResult> _heavyInit() async {
 
   final onboardingComplete = (prefsResult[1] as bool?) ?? false;
 
-  // Notifications, ServiceLocator — all fire-and-forget.
-  // They do NOT block the app from starting.
-  unawaited(
-    ServiceLocator.init(
+  // Firebase is already initialized synchronously.
+  if (firebaseOk) {
+    unawaited(ServiceLocator.init(
       remoteConfig: remoteConfig,
-      analytics: NoOpAnalyticsService(consentService: consentService),
+      analytics: FirebaseAnalyticsService(consentService: consentService),
       crashlytics: crashlyticsService,
-    ).catchError((e) => debugPrint('ServiceLocator failed: $e')),
-  );
+    ).catchError((e) => debugPrint('ServiceLocator failed: $e')));
+  }
 
-  unawaited(
-    NotificationService.init(
-      navigatorKey: navigatorKey,
-    ).catchError((e) => debugPrint('Notifications failed: $e')),
-  );
+  unawaited(NotificationService.init(navigatorKey: navigatorKey)
+      .catchError((e) => debugPrint('Notifications failed: $e')));
 
-  unawaited(
-    consentService.hasConsentBeenDecided().then((decided) {
-      if (!decided) consentService.setAnalyticsConsent(true);
-    }),
-  );
+  unawaited(consentService.hasConsentBeenDecided().then((decided) {
+    if (!decided) consentService.setAnalyticsConsent(true);
+  }));
 
-  return _InitResult(onboardingComplete: onboardingComplete);
+  return _InitResult(firebaseOk: firebaseOk, onboardingComplete: onboardingComplete);
 }
 
 class _InitResult {
+  final bool firebaseOk;
   final bool onboardingComplete;
-  const _InitResult({this.onboardingComplete = false});
+  const _InitResult({required this.firebaseOk, this.onboardingComplete = false});
 }
 
 class MindCareApp extends StatefulWidget {
@@ -189,24 +190,26 @@ class _MindCareAppState extends State<MindCareApp> {
         }
 
         final result = snapshot.data!;
+        if (!result.firebaseOk) {
+          return const FirebaseErrorScreen();
+        }
 
         return MultiBlocProvider(
           providers: [
             BlocProvider<AuthBloc>(
               lazy: true,
               create: (_) => AuthBloc(
-                authService: ServiceLocator.authService ?? NoOpAuthService(),
+                authService: ServiceLocator.authService ?? FirebaseAuthService(),
                 analyticsService: ServiceLocator.analyticsService,
                 crashlyticsService: ServiceLocator.crashlyticsService,
               ),
             ),
             BlocProvider<SettingsCubit>(
-              lazy: false,
+              lazy: true,
               create: (_) {
                 final cubit = SettingsCubit();
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => cubit.loadSettings(),
-                );
+                WidgetsBinding.instance
+                    .addPostFrameCallback((_) => cubit.loadSettings());
                 return cubit;
               },
             ),
@@ -225,8 +228,10 @@ class _MindCareAppState extends State<MindCareApp> {
                 builder: (context, child) {
                   return ValueListenableBuilder<AppStrings>(
                     valueListenable: appLanguage,
-                    builder: (context, strings, _) =>
-                        LanguageProvider(strings: strings, child: child!),
+                    builder: (context, strings, _) => LanguageProvider(
+                      strings: strings,
+                      child: child!,
+                    ),
                   );
                 },
               );
@@ -238,7 +243,7 @@ class _MindCareAppState extends State<MindCareApp> {
   }
 }
 
-/// Shown for the brief moment before Hive finish loading.
+/// Shown for the brief moment before Firebase/Hive finish loading.
 /// Identical look to the real SplashScreen but needs zero dependencies.
 class _EarlySplash extends StatelessWidget {
   const _EarlySplash();
@@ -263,23 +268,15 @@ class _EarlySplash extends StatelessWidget {
               children: [
                 Icon(Icons.eco_rounded, size: 72, color: Color(0xFF004D40)),
                 SizedBox(height: 20),
-                Text(
-                  'MindCare',
-                  style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF004D40),
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                Text('MindCare',
+                    style: TextStyle(
+                        fontSize: 34, fontWeight: FontWeight.bold,
+                        color: Color(0xFF004D40), letterSpacing: 0.5)),
                 SizedBox(height: 12),
                 SizedBox(
-                  width: 24,
-                  height: 24,
+                  width: 24, height: 24,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Color(0xFF004D40),
-                  ),
+                      strokeWidth: 2.5, color: Color(0xFF004D40)),
                 ),
               ],
             ),
@@ -288,93 +285,4 @@ class _EarlySplash extends StatelessWidget {
       ),
     );
   }
-}
-
-/// No-op implementations for Firebase services when running without Firebase
-class NoOpCrashlyticsService implements CrashlyticsService {
-  @override
-  Future<void> recordError(Object error, StackTrace? stack, {String? reason, bool fatal = false}) async {
-    debugPrint('NoOpCrashlytics: $error');
-  }
-
-  @override
-  Future<void> setUserId(String? uid) async {}
-}
-
-class NoOpRemoteConfigService implements RemoteConfigService {
-  @override
-  Future<void> fetchAndActivate() async {}
-
-  @override
-  bool getBool(String key) => true;
-
-  @override
-  String getString(String key) => '';
-
-  @override
-  int getInt(String key) => 0;
-
-  @override
-  double getDouble(String key) => 0.0;
-}
-
-class NoOpAnalyticsService implements AnalyticsService {
-  final ConsentService consentService;
-
-  NoOpAnalyticsService({required this.consentService});
-
-  @override
-  Future<void> logEvent(String name, {Map<String, Object>? parameters}) async {}
-
-  @override
-  Future<void> setUserId(String? uid) async {}
-}
-
-class NoOpAuthService implements AuthService {
-  final _controller = StreamController<auth_models.AuthUser?>.broadcast();
-  
-  NoOpAuthService() {
-    // Emit an anonymous user immediately to satisfy the interface contract
-    _controller.add(auth_models.AuthUser(
-      uid: 'anonymous',
-      email: null,
-      isAnonymous: true,
-    ));
-  }
-
-  @override
-  Stream<auth_models.AuthUser?> get authStateChanges => _controller.stream;
-
-  @override
-  auth_models.AuthUser? get currentUser => auth_models.AuthUser(
-    uid: 'anonymous',
-    email: null,
-    isAnonymous: true,
-  );
-
-  @override
-  Future<auth_models.AuthUser> signInAnonymously() async {
-    return currentUser!;
-  }
-
-  @override
-  Future<auth_models.AuthUser> signInWithEmail(String email, String password) async {
-    return currentUser!;
-  }
-
-  @override
-  Future<auth_models.AuthUser> signInWithGoogle() async {
-    return currentUser!;
-  }
-
-  @override
-  Future<auth_models.AuthUser> createAccountWithEmail(String email, String password) async {
-    return currentUser!;
-  }
-
-  @override
-  Future<void> sendPasswordResetEmail(String email) async {}
-
-  @override
-  Future<void> signOut() async {}
 }

@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
-import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,20 +37,12 @@ class MusicTrack {
 // ─────────────────────────────────────────────────────────────────────────────
 final List<MusicTrack> kDefaultTracks = [
   const MusicTrack(
-    id: 'high_calm',
-    title: 'High Calm',
-    artist: 'Peaceful Ambient',
-    emoji: '☁️',
-    color: Color(0xFF64B5F6),
+    id: 'rain',
+    title: 'Gentle Rain',
+    artist: 'Nature Sounds',
+    emoji: '🌧️',
+    color: Color(0xFF4A90D9),
     url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-  ),
-  const MusicTrack(
-    id: 'peace',
-    title: 'Peace',
-    artist: 'Serene Melodies',
-    emoji: '🕊️',
-    color: Color(0xFF81C784),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   ),
   const MusicTrack(
     id: 'forest',
@@ -58,7 +50,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Nature Sounds',
     emoji: '🌲',
     color: Color(0xFF43A047),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   ),
   const MusicTrack(
     id: 'ocean',
@@ -66,7 +58,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Nature Sounds',
     emoji: '🌊',
     color: Color(0xFF0288D1),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   ),
   const MusicTrack(
     id: 'piano',
@@ -74,7 +66,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Calm Melodies',
     emoji: '🎹',
     color: Color(0xFF7B1FA2),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
   ),
   const MusicTrack(
     id: 'lofi',
@@ -82,7 +74,7 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Calm Melodies',
     emoji: '🎧',
     color: Color(0xFFE65100),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
   ),
   const MusicTrack(
     id: 'birds',
@@ -90,100 +82,31 @@ final List<MusicTrack> kDefaultTracks = [
     artist: 'Nature Sounds',
     emoji: '🐦',
     color: Color(0xFFF9A825),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
   ),
 ];
 
 // Emoji options for user tracks — first 16 shown by default, rest on expand
 const List<String> kEmojiOptions = [
-  '🎵',
-  '🎶',
-  '🎸',
-  '🎹',
-  '🎺',
-  '🎻',
-  '🥁',
-  '🎷',
-  '🌙',
-  '⭐',
-  '🌊',
-  '🌿',
-  '🔥',
-  '💫',
-  '🌸',
-  '🎧',
+  '🎵', '🎶', '🎸', '🎹', '🎺', '🎻', '🥁', '🎷',
+  '🌙', '⭐', '🌊', '🌿', '🔥', '💫', '🌸', '🎧',
 ];
 
 const List<String> kEmojiOptionsExtra = [
-  '🎼',
-  '🎤',
-  '🎙️',
-  '📻',
-  '🎚️',
-  '🎛️',
-  '🔔',
-  '🔕',
-  '🎃',
-  '🎄',
-  '🎆',
-  '🎇',
-  '✨',
-  '🌟',
-  '💥',
-  '🌈',
-  '🌺',
-  '🌻',
-  '🌹',
-  '🍀',
-  '🦋',
-  '🐬',
-  '🦜',
-  '🐧',
-  '🌍',
-  '🌙',
-  '☀️',
-  '⛅',
-  '🌊',
-  '🏔️',
-  '🌴',
-  '🌵',
-  '❤️',
-  '💙',
-  '💚',
-  '💛',
-  '💜',
-  '🖤',
-  '🤍',
-  '🧡',
-  '🎯',
-  '🏆',
-  '🎪',
-  '🎭',
-  '🎨',
-  '🖼️',
-  '🎬',
-  '📽️',
-  '🚀',
-  '🛸',
-  '🌌',
-  '🔭',
-  '⚡',
-  '🌀',
-  '💎',
-  '🔮',
+  '🎼', '🎤', '🎙️', '📻', '🎚️', '🎛️', '🔔', '🔕',
+  '🎃', '🎄', '🎆', '🎇', '✨', '🌟', '💥', '🌈',
+  '🌺', '🌻', '🌹', '🍀', '🦋', '🐬', '🦜', '🐧',
+  '🌍', '🌙', '☀️', '⛅', '🌊', '🏔️', '🌴', '🌵',
+  '❤️', '💙', '💚', '💛', '💜', '🖤', '🤍', '🧡',
+  '🎯', '🏆', '🎪', '🎭', '🎨', '🖼️', '🎬', '📽️',
+  '🚀', '🛸', '🌌', '🔭', '⚡', '🌀', '💎', '🔮',
 ];
 
 // Color options — first 10 shown by default
 const List<Color> kColorOptions = [
-  Color(0xFF5BA8A0),
-  Color(0xFF4A90D9),
-  Color(0xFF43A047),
-  Color(0xFF7B1FA2),
-  Color(0xFFE65100),
-  Color(0xFFF9A825),
-  Color(0xFFE91E63),
-  Color(0xFF00BCD4),
-  Color(0xFF795548),
+  Color(0xFF5BA8A0), Color(0xFF4A90D9), Color(0xFF43A047),
+  Color(0xFF7B1FA2), Color(0xFFE65100), Color(0xFFF9A825),
+  Color(0xFFE91E63), Color(0xFF00BCD4), Color(0xFF795548),
   Color(0xFF607D8B),
 ];
 
@@ -240,34 +163,26 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   late Animation<double> _pulseAnim;
 
   List<MusicTrack> get _allTracks => [...kDefaultTracks, ..._userTracks];
-  MusicTrack get _current =>
-      _allTracks[_currentIndex.clamp(0, _allTracks.length - 1)];
+  MusicTrack get _current => _allTracks[_currentIndex.clamp(0, _allTracks.length - 1)];
 
   static const _prefKey = 'calm_music_user_tracks_v2';
 
   @override
   void initState() {
     super.initState();
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _pulseAnim = Tween(
-      begin: 0.95,
-      end: 1.05,
-    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    _pulseAnim = Tween(begin: 0.95, end: 1.05)
+        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     // Throttle position updates to once per second — progress bar shows seconds only
-    Duration lastPos = Duration.zero;
+    Duration _lastPos = Duration.zero;
     _player.onPositionChanged.listen((d) {
-      if ((d.inSeconds - lastPos.inSeconds).abs() >= 1) {
-        lastPos = d;
+      if ((d.inSeconds - _lastPos.inSeconds).abs() >= 1) {
+        _lastPos = d;
         _position.value = d;
       }
     });
-    _player.onDurationChanged.listen((d) {
-      _duration.value = d;
-    });
+    _player.onDurationChanged.listen((d) { _duration.value = d; });
     _player.onPlayerStateChanged.listen((s) {
       _isPlaying.value = s == PlayerState.playing;
       // Pause pulse animation when not playing to save CPU
@@ -278,23 +193,11 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       }
     });
     _player.onPlayerComplete.listen((_) => _playNext());
-
-    // Wire up now-playing notification media controls
-    mediaPlayerHooks.onPlayPause = _togglePlay;
-    mediaPlayerHooks.onNext = _playNext;
-    mediaPlayerHooks.onPrevious = _playPrev;
-
     _loadUserTracks();
   }
 
   @override
   void dispose() {
-    // Clean up now-playing notification
-    NotificationService.cancelNowPlaying();
-    mediaPlayerHooks.onPlayPause = null;
-    mediaPlayerHooks.onNext = null;
-    mediaPlayerHooks.onPrevious = null;
-
     _player.dispose();
     _pulseCtrl.dispose();
     _position.dispose();
@@ -308,23 +211,16 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getStringList(_prefKey) ?? [];
-      final loaded = raw
-          .map((s) {
-            final p = s.split('|||');
-            if (p.length < 6) return null;
-            return MusicTrack(
-              id: p[0],
-              title: p[1],
-              artist: p[2],
-              emoji: p[3],
-              color: Color(int.tryParse(p[4]) ?? 0xFF5BA8A0),
-              url: p[5],
-              isDefault: false,
-              isLocal: p.length > 6 && p[6] == '1',
-            );
-          })
-          .whereType<MusicTrack>()
-          .toList();
+      final loaded = raw.map((s) {
+        final p = s.split('|||');
+        if (p.length < 6) return null;
+        return MusicTrack(
+          id: p[0], title: p[1], artist: p[2], emoji: p[3],
+          color: Color(int.tryParse(p[4]) ?? 0xFF5BA8A0),
+          url: p[5], isDefault: false,
+          isLocal: p.length > 6 && p[6] == '1',
+        );
+      }).whereType<MusicTrack>().toList();
       if (mounted) setState(() => _userTracks = loaded);
     } catch (_) {}
   }
@@ -332,15 +228,9 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   Future<void> _saveUserTracks() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(
-        _prefKey,
-        _userTracks
-            .map(
-              (t) =>
-                  '${t.id}|||${t.title}|||${t.artist}|||${t.emoji}|||${t.color.toARGB32()}|||${t.url}|||${t.isLocal ? '1' : '0'}',
-            )
-            .toList(),
-      );
+      await prefs.setStringList(_prefKey, _userTracks.map((t) =>
+          '${t.id}|||${t.title}|||${t.artist}|||${t.emoji}|||${t.color.value}|||${t.url}|||${t.isLocal ? '1' : '0'}'
+      ).toList());
     } catch (_) {}
   }
 
@@ -348,31 +238,17 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   Future<void> _play(int index) async {
     final all = _allTracks;
     if (index < 0 || index >= all.length) return;
-    setState(() {
-      _currentIndex = index;
-      _isLoading = true;
-      _tab = 1;
-    });
+    setState(() { _currentIndex = index; _isLoading = true; _tab = 1; });
     try {
       await _player.stop();
       final source = all[index].isLocal
           ? DeviceFileSource(all[index].url)
           : UrlSource(all[index].url) as Source;
       await _player.play(source);
-      // Show now-playing notification
-      final track = all[index];
-      await NotificationService.showNowPlaying(
-        title: track.title,
-        artist: track.artist,
-        isPlaying: true,
-      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not play: $e'),
-            backgroundColor: Colors.red.shade700,
-          ),
+          SnackBar(content: Text('Could not play: $e'), backgroundColor: Colors.red.shade700),
         );
       }
     } finally {
@@ -383,25 +259,11 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   Future<void> _togglePlay() async {
     if (_isPlaying.value) {
       await _player.pause();
-      // Update notification to show paused state
-      final track = _current;
-      await NotificationService.showNowPlaying(
-        title: track.title,
-        artist: track.artist,
-        isPlaying: false,
-      );
     } else {
       if (_position.value == Duration.zero) {
         await _play(_currentIndex);
       } else {
         await _player.resume();
-        // Update notification to show playing state
-        final track = _current;
-        await NotificationService.showNowPlaying(
-          title: track.title,
-          artist: track.artist,
-          isPlaying: true,
-        );
       }
     }
   }
@@ -411,10 +273,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   }
 
   void _playPrev() {
-    if (_position.value.inSeconds > 3) {
-      _player.seek(Duration.zero);
-      return;
-    }
+    if (_position.value.inSeconds > 3) { _player.seek(Duration.zero); return; }
     _play((_currentIndex - 1 + _allTracks.length) % _allTracks.length);
   }
 
@@ -446,6 +305,13 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   void _editUserTrack(int userIndex, MusicTrack updated) {
     setState(() => _userTracks[userIndex] = updated);
     _saveUserTracks();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
   // ── Back navigation ────────────────────────────────────────────────────────
@@ -484,13 +350,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
                 onPressed: () => _showAddSheet(context, isDark),
                 backgroundColor: const Color(0xFF5BA8A0),
                 icon: const Icon(Icons.add_rounded, color: Colors.white),
-                label: Text(
-                  LanguageProvider.of(context).addMusic,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                label: Text(LanguageProvider.of(context).addMusic, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               )
             : null,
       ),
@@ -504,24 +364,16 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       child: Row(
         children: [
           IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? Colors.white : const Color(0xFF1A4A4A),
-            ),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? Colors.white : const Color(0xFF1A4A4A)),
             onPressed: _handleBack,
           ),
           const Spacer(),
           Text(
-            _tab == 1
-                ? s.nowPlayingTab
-                : _tab == 2
-                ? s.myPlaylistTab
-                : s.calmMusicTitle,
+            _tab == 1 ? s.nowPlayingTab : _tab == 2 ? s.myPlaylistTab : s.calmMusicTitle,
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF1A4A4A),
-            ),
+                fontSize: 20, fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF1A4A4A)),
           ),
           const Spacer(),
           const SizedBox(width: 48),
@@ -541,11 +393,9 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.07) : Colors.white,
+        color: isDark ? Colors.white.withOpacity(0.07) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8)],
       ),
       child: Row(
         children: tabs.asMap().entries.map((e) {
@@ -557,34 +407,21 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFF5BA8A0)
-                      : Colors.transparent,
+                  color: selected ? const Color(0xFF5BA8A0) : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      e.value.$1,
-                      size: 18,
-                      color: selected
-                          ? Colors.white
-                          : (isDark ? Colors.white38 : Colors.black38),
-                    ),
+                    Icon(e.value.$1,
+                        size: 18,
+                        color: selected ? Colors.white : (isDark ? Colors.white38 : Colors.black38)),
                     const SizedBox(height: 3),
-                    Text(
-                      e.value.$2,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: selected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: selected
-                            ? Colors.white
-                            : (isDark ? Colors.white38 : Colors.black38),
-                      ),
-                    ),
+                    Text(e.value.$2,
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                            color: selected ? Colors.white : (isDark ? Colors.white38 : Colors.black38))),
                   ],
                 ),
               ),
@@ -597,14 +434,10 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
 
   Widget _buildBody(bool isDark) {
     switch (_tab) {
-      case 0:
-        return _buildLibrary(isDark);
-      case 1:
-        return _buildNowPlaying(isDark);
-      case 2:
-        return _buildMyPlaylist(isDark);
-      default:
-        return _buildLibrary(isDark);
+      case 0: return _buildLibrary(isDark);
+      case 1: return _buildNowPlaying(isDark);
+      case 2: return _buildMyPlaylist(isDark);
+      default: return _buildLibrary(isDark);
     }
   }
 
@@ -618,54 +451,38 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
         ValueListenableBuilder2<bool, Duration>(
           first: _isPlaying,
           second: _position,
-          builder: (_, playing, pos, _) => (playing || pos > Duration.zero)
-              ? _buildMiniPlayer(isDark)
-              : const SizedBox.shrink(),
+          builder: (_, playing, pos, __) =>
+              (playing || pos > Duration.zero) ? _buildMiniPlayer(isDark) : const SizedBox.shrink(),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Row(
-            children: [
-              Text(
-                'All Tracks',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF2A5A5A),
-                ),
+          child: Row(children: [
+            Text('All Tracks',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : const Color(0xFF2A5A5A))),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF5BA8A0).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF5BA8A0).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${all.length}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF5BA8A0),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
+              child: Text('${all.length}',
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF5BA8A0), fontWeight: FontWeight.bold)),
+            ),
+          ]),
         ),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             itemCount: all.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final track = all[i];
               return ValueListenableBuilder2<bool, int>(
                 first: _isPlaying,
-                second: ValueNotifier(
-                  _currentIndex,
-                ), // static snapshot is fine here
-                builder: (_, playing, _, _) => _TrackTile(
+                second: ValueNotifier(_currentIndex), // static snapshot is fine here
+                builder: (_, playing, __, ___) => _TrackTile(
                   track: track,
                   isPlaying: playing && _currentIndex == i,
                   isCurrent: _currentIndex == i,
@@ -688,35 +505,20 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 90,
-              height: 90,
+              width: 90, height: 90,
               decoration: BoxDecoration(
-                color: const Color(0xFF5BA8A0).withValues(alpha: 0.1),
+                color: const Color(0xFF5BA8A0).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.music_note_rounded,
-                size: 44,
-                color: Color(0xFF5BA8A0),
-              ),
+              child: const Icon(Icons.music_note_rounded, size: 44, color: Color(0xFF5BA8A0)),
             ),
             const SizedBox(height: 20),
-            Text(
-              'Your playlist is empty',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : const Color(0xFF2A5A5A),
-              ),
-            ),
+            Text('Your playlist is empty',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : const Color(0xFF2A5A5A))),
             const SizedBox(height: 8),
-            Text(
-              'Tap + Add Music to get started',
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white38 : Colors.black38,
-              ),
-            ),
+            Text('Tap + Add Music to get started',
+                style: TextStyle(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38)),
           ],
         ),
       );
@@ -728,48 +530,29 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
         ValueListenableBuilder2<bool, Duration>(
           first: _isPlaying,
           second: _position,
-          builder: (_, playing, pos, _) => (playing || pos > Duration.zero)
-              ? _buildMiniPlayer(isDark)
-              : const SizedBox.shrink(),
+          builder: (_, playing, pos, __) =>
+              (playing || pos > Duration.zero) ? _buildMiniPlayer(isDark) : const SizedBox.shrink(),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-          child: Row(
-            children: [
-              Text(
-                'My Music',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF2A5A5A),
-                ),
+          child: Row(children: [
+            Text('My Music',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : const Color(0xFF2A5A5A))),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF5BA8A0).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF5BA8A0).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${_userTracks.length}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF5BA8A0),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'Hold & drag to reorder',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isDark ? Colors.white30 : Colors.black26,
-                ),
-              ),
-            ],
-          ),
+              child: Text('${_userTracks.length}',
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF5BA8A0), fontWeight: FontWeight.bold)),
+            ),
+            const Spacer(),
+            Text('Hold & drag to reorder',
+                style: TextStyle(fontSize: 10, color: isDark ? Colors.white30 : Colors.black26)),
+          ]),
         ),
         Expanded(
           child: ReorderableListView.builder(
@@ -777,10 +560,8 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
             itemCount: _userTracks.length,
             onReorder: _reorderUserTracks,
             proxyDecorator: (child, index, animation) => Material(
-              color: Colors.transparent,
-              elevation: 8,
-              borderRadius: BorderRadius.circular(16),
-              child: child,
+              color: Colors.transparent, elevation: 8,
+              borderRadius: BorderRadius.circular(16), child: child,
             ),
             itemBuilder: (_, i) {
               final globalIndex = kDefaultTracks.length + i;
@@ -789,7 +570,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
                 padding: const EdgeInsets.only(bottom: 8),
                 child: ValueListenableBuilder<bool>(
                   valueListenable: _isPlaying,
-                  builder: (_, playing, _) => _UserTrackTile(
+                  builder: (_, playing, __) => _UserTrackTile(
                     track: _userTracks[i],
                     isPlaying: playing && _currentIndex == globalIndex,
                     isCurrent: _currentIndex == globalIndex,
@@ -818,55 +599,31 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           // Album art — pulses only when playing
           ValueListenableBuilder<bool>(
             valueListenable: _isPlaying,
-            builder: (_, playing, _) => ScaleTransition(
+            builder: (_, playing, __) => ScaleTransition(
               scale: playing ? _pulseAnim : const AlwaysStoppedAnimation(1.0),
               child: Container(
-                width: 220,
-                height: 220,
+                width: 220, height: 220,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      track.color.withValues(alpha: 0.9),
-                      track.color.withValues(alpha: 0.4),
-                      track.color.withValues(alpha: 0.08),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: track.color.withValues(alpha: 0.45),
-                      blurRadius: 40,
-                      spreadRadius: 6,
-                    ),
-                  ],
+                  gradient: RadialGradient(colors: [
+                    track.color.withOpacity(0.9),
+                    track.color.withOpacity(0.4),
+                    track.color.withOpacity(0.08),
+                  ]),
+                  boxShadow: [BoxShadow(color: track.color.withOpacity(0.45), blurRadius: 40, spreadRadius: 6)],
                 ),
-                child: Center(
-                  child: Text(
-                    track.emoji,
-                    style: const TextStyle(fontSize: 88),
-                  ),
-                ),
+                child: Center(child: Text(track.emoji, style: const TextStyle(fontSize: 88))),
               ),
             ),
           ),
           const SizedBox(height: 28),
-          Text(
-            track.title,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF1A3333),
-            ),
-            textAlign: TextAlign.center,
-          ),
+          Text(track.title,
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF1A3333)),
+              textAlign: TextAlign.center),
           const SizedBox(height: 6),
-          Text(
-            track.artist,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.white54 : const Color(0xFF5BA8A0),
-            ),
-          ),
+          Text(track.artist,
+              style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : const Color(0xFF5BA8A0))),
           const SizedBox(height: 28),
           // Progress bar — only this widget rebuilds on position tick
           _ProgressBar(
@@ -880,7 +637,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           // Play/pause button — only rebuilds on play state change
           ValueListenableBuilder<bool>(
             valueListenable: _isPlaying,
-            builder: (_, playing, _) => Row(
+            builder: (_, playing, __) => Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _ctrlBtn(Icons.skip_previous_rounded, 34, _playPrev, isDark),
@@ -888,34 +645,16 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
                 GestureDetector(
                   onTap: _isLoading ? null : _togglePlay,
                   child: Container(
-                    width: 68,
-                    height: 68,
+                    width: 68, height: 68,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: track.color,
-                      boxShadow: [
-                        BoxShadow(
-                          color: track.color.withValues(alpha: 0.5),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                      shape: BoxShape.circle, color: track.color,
+                      boxShadow: [BoxShadow(color: track.color.withOpacity(0.5), blurRadius: 20, spreadRadius: 2)],
                     ),
                     child: _isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.all(18),
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Icon(
-                            playing
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 38,
-                          ),
+                        ? const Padding(padding: EdgeInsets.all(18),
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                        : Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                            color: Colors.white, size: 38),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -926,48 +665,33 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           const SizedBox(height: 28),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              'Queue',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white54 : const Color(0xFF5BA8A0),
-              ),
-            ),
+            child: Text('Queue',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white54 : const Color(0xFF5BA8A0))),
           ),
           const SizedBox(height: 8),
           // Queue rows — only isPlaying indicator rebuilds
-          ..._allTracks.asMap().entries.map(
-            (e) => ValueListenableBuilder<bool>(
-              valueListenable: _isPlaying,
-              builder: (_, playing, _) => _QueueRow(
-                track: e.value,
-                isCurrent: e.key == _currentIndex,
-                isPlaying: playing && e.key == _currentIndex,
-                isDark: isDark,
-                onTap: () => _play(e.key),
-              ),
-            ),
-          ),
+          ..._allTracks.asMap().entries.map((e) => ValueListenableBuilder<bool>(
+                valueListenable: _isPlaying,
+                builder: (_, playing, __) => _QueueRow(
+                  track: e.value,
+                  isCurrent: e.key == _currentIndex,
+                  isPlaying: playing && e.key == _currentIndex,
+                  isDark: isDark,
+                  onTap: () => _play(e.key),
+                ),
+              )),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _ctrlBtn(
-    IconData icon,
-    double size,
-    VoidCallback onTap,
-    bool isDark,
-  ) => IconButton(
-    icon: Icon(
-      icon,
-      size: size,
-      color: isDark ? Colors.white70 : const Color(0xFF2A5A5A),
-    ),
-    onPressed: onTap,
-  );
+  Widget _ctrlBtn(IconData icon, double size, VoidCallback onTap, bool isDark) =>
+      IconButton(
+        icon: Icon(icon, size: size, color: isDark ? Colors.white70 : const Color(0xFF2A5A5A)),
+        onPressed: onTap,
+      );
 
   // ── Mini player bar ────────────────────────────────────────────────────────
   Widget _buildMiniPlayer(bool isDark) {
@@ -978,55 +702,32 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: track.color.withValues(alpha: isDark ? 0.28 : 0.12),
+          color: track.color.withOpacity(isDark ? 0.28 : 0.12),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: track.color.withValues(alpha: 0.4),
-            width: 1.5,
+          border: Border.all(color: track.color.withOpacity(0.4), width: 1.5),
+        ),
+        child: Row(children: [
+          Text(track.emoji, style: const TextStyle(fontSize: 26)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(track.title,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13,
+                      color: isDark ? Colors.white : const Color(0xFF1A3333))),
+              Text(track.artist,
+                  style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : const Color(0xFF5BA8A0))),
+            ]),
           ),
-        ),
-        child: Row(
-          children: [
-            Text(track.emoji, style: const TextStyle(fontSize: 26)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    track.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: isDark ? Colors.white : const Color(0xFF1A3333),
-                    ),
-                  ),
-                  Text(
-                    track.artist,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white54 : const Color(0xFF5BA8A0),
-                    ),
-                  ),
-                ],
-              ),
+          // Only the icon rebuilds on play state change
+          ValueListenableBuilder<bool>(
+            valueListenable: _isPlaying,
+            builder: (_, playing, __) => IconButton(
+              icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                  color: track.color, size: 34),
+              onPressed: _togglePlay,
             ),
-            // Only the icon rebuilds on play state change
-            ValueListenableBuilder<bool>(
-              valueListenable: _isPlaying,
-              builder: (_, playing, _) => IconButton(
-                icon: Icon(
-                  playing
-                      ? Icons.pause_circle_filled
-                      : Icons.play_circle_filled,
-                  color: track.color,
-                  size: 34,
-                ),
-                onPressed: _togglePlay,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }
@@ -1039,10 +740,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       backgroundColor: Colors.transparent,
       builder: (_) => _TrackFormSheet(
         isDark: isDark,
-        onSave: (track) {
-          _addTrack(track);
-          Navigator.pop(context);
-        },
+        onSave: (track) { _addTrack(track); Navigator.pop(context); },
       ),
     );
   }
@@ -1055,10 +753,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       builder: (_) => _TrackFormSheet(
         isDark: isDark,
         existing: _userTracks[userIndex],
-        onSave: (track) {
-          _editUserTrack(userIndex, track);
-          Navigator.pop(context);
-        },
+        onSave: (track) { _editUserTrack(userIndex, track); Navigator.pop(context); },
       ),
     );
   }
@@ -1069,29 +764,17 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       builder: (_) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1A2A2A) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Remove Track',
-          style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1A3333),
-          ),
-        ),
-        content: Text(
-          'Remove "${_userTracks[userIndex].title}" from your playlist?',
-          style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
-        ),
+        title: Text('Remove Track',
+            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1A3333))),
+        content: Text('Remove "${_userTracks[userIndex].title}" from your playlist?',
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Color(0xFF5BA8A0)),
-            ),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF5BA8A0))),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteUserTrack(userIndex);
-            },
+            onPressed: () { Navigator.pop(context); _deleteUserTrack(userIndex); },
             child: const Text('Remove', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -1109,11 +792,8 @@ class _TrackTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _TrackTile({
-    required this.track,
-    required this.isPlaying,
-    required this.isCurrent,
-    required this.isDark,
-    required this.onTap,
+    required this.track, required this.isPlaying, required this.isCurrent,
+    required this.isDark, required this.onTap,
   });
 
   @override
@@ -1127,104 +807,54 @@ class _TrackTile extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             color: isCurrent
-                ? track.color.withValues(alpha: isDark ? 0.22 : 0.1)
-                : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.white),
+                ? track.color.withOpacity(isDark ? 0.22 : 0.1)
+                : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isCurrent
-                  ? track.color.withValues(alpha: 0.5)
-                  : Colors.transparent,
+              color: isCurrent ? track.color.withOpacity(0.5) : Colors.transparent,
               width: 1.5,
             ),
-            boxShadow: isCurrent
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            boxShadow: isCurrent ? [] : [
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))
+            ],
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 46, height: 46,
                 decoration: BoxDecoration(
-                  color: track.color.withValues(alpha: 0.15),
+                  color: track.color.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Center(
-                  child: Text(
-                    track.emoji,
-                    style: const TextStyle(fontSize: 22),
-                  ),
-                ),
+                child: Center(child: Text(track.emoji, style: const TextStyle(fontSize: 22))),
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      track.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: isDark ? Colors.white : const Color(0xFF1A3333),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Text(
-                          track.artist,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? Colors.white54
-                                : const Color(0xFF5BA8A0),
-                          ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(track.title,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14,
+                          color: isDark ? Colors.white : const Color(0xFF1A3333))),
+                  const SizedBox(height: 2),
+                  Row(children: [
+                    Text(track.artist,
+                        style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : const Color(0xFF5BA8A0))),
+                    if (!track.isDefault) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5BA8A0).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                        if (!track.isDefault) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF5BA8A0,
-                              ).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'My Music',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Color(0xFF5BA8A0),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
+                        child: const Text('My Music', style: TextStyle(fontSize: 9, color: Color(0xFF5BA8A0))),
+                      ),
+                    ],
+                  ]),
+                ]),
               ),
-              if (isPlaying)
-                _WaveIcon(color: track.color)
-              else
-                Icon(
-                  Icons.play_circle_outline_rounded,
-                  color: track.color,
-                  size: 26,
-                ),
+              if (isPlaying) _WaveIcon(color: track.color)
+              else Icon(Icons.play_circle_outline_rounded, color: track.color, size: 26),
             ],
           ),
         ),
@@ -1242,13 +872,8 @@ class _UserTrackTile extends StatelessWidget {
   final VoidCallback onTap, onEdit, onDelete;
 
   const _UserTrackTile({
-    required this.track,
-    required this.isPlaying,
-    required this.isCurrent,
-    required this.isDark,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
+    required this.track, required this.isPlaying, required this.isCurrent,
+    required this.isDark, required this.onTap, required this.onEdit, required this.onDelete,
   });
 
   @override
@@ -1262,76 +887,41 @@ class _UserTrackTile extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             color: isCurrent
-                ? track.color.withValues(alpha: isDark ? 0.22 : 0.1)
-                : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.white),
+                ? track.color.withOpacity(isDark ? 0.22 : 0.1)
+                : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isCurrent
-                  ? track.color.withValues(alpha: 0.5)
-                  : Colors.transparent,
+              color: isCurrent ? track.color.withOpacity(0.5) : Colors.transparent,
               width: 1.5,
             ),
-            boxShadow: isCurrent
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            boxShadow: isCurrent ? [] : [
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))
+            ],
           ),
           padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
           child: Row(
             children: [
               // Drag handle
-              Icon(
-                Icons.drag_handle_rounded,
-                color: isDark ? Colors.white24 : Colors.black12,
-                size: 20,
-              ),
+              Icon(Icons.drag_handle_rounded, color: isDark ? Colors.white24 : Colors.black12, size: 20),
               const SizedBox(width: 8),
               Container(
-                width: 44,
-                height: 44,
+                width: 44, height: 44,
                 decoration: BoxDecoration(
-                  color: track.color.withValues(alpha: 0.15),
+                  color: track.color.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Center(
-                  child: Text(
-                    track.emoji,
-                    style: const TextStyle(fontSize: 22),
-                  ),
-                ),
+                child: Center(child: Text(track.emoji, style: const TextStyle(fontSize: 22))),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      track.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: isDark ? Colors.white : const Color(0xFF1A3333),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      track.artist,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? Colors.white54
-                            : const Color(0xFF5BA8A0),
-                      ),
-                    ),
-                  ],
-                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(track.title,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14,
+                          color: isDark ? Colors.white : const Color(0xFF1A3333))),
+                  const SizedBox(height: 2),
+                  Text(track.artist,
+                      style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : const Color(0xFF5BA8A0))),
+                ]),
               ),
               if (isPlaying) ...[
                 _WaveIcon(color: track.color),
@@ -1339,22 +929,16 @@ class _UserTrackTile extends StatelessWidget {
               ],
               // Edit
               IconButton(
-                icon: Icon(
-                  Icons.edit_outlined,
-                  size: 18,
-                  color: isDark ? Colors.white38 : Colors.black26,
-                ),
+                icon: Icon(Icons.edit_outlined, size: 18,
+                    color: isDark ? Colors.white38 : Colors.black26),
                 onPressed: onEdit,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               ),
               // Delete
               IconButton(
-                icon: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: Colors.red.withValues(alpha: 0.6),
-                ),
+                icon: Icon(Icons.delete_outline_rounded, size: 18,
+                    color: Colors.red.withOpacity(0.6)),
                 onPressed: onDelete,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -1376,11 +960,8 @@ class _QueueRow extends StatelessWidget {
   final VoidCallback onTap;
 
   const _QueueRow({
-    required this.track,
-    required this.isCurrent,
-    required this.isPlaying,
-    required this.isDark,
-    required this.onTap,
+    required this.track, required this.isCurrent, required this.isPlaying,
+    required this.isDark, required this.onTap,
   });
 
   @override
@@ -1389,30 +970,17 @@ class _QueueRow extends StatelessWidget {
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: Text(track.emoji, style: const TextStyle(fontSize: 20)),
-      title: Text(
-        track.title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-          color: isCurrent
-              ? track.color
-              : (isDark ? Colors.white70 : const Color(0xFF1A3333)),
-        ),
-      ),
-      subtitle: Text(
-        track.artist,
-        style: TextStyle(
-          fontSize: 11,
-          color: isDark ? Colors.white38 : Colors.black38,
-        ),
-      ),
+      title: Text(track.title,
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+              color: isCurrent ? track.color : (isDark ? Colors.white70 : const Color(0xFF1A3333)))),
+      subtitle: Text(track.artist,
+          style: TextStyle(fontSize: 11, color: isDark ? Colors.white38 : Colors.black38)),
       trailing: isPlaying
           ? _WaveIcon(color: track.color)
-          : Icon(
-              Icons.play_arrow_rounded,
-              color: isDark ? Colors.white24 : Colors.black12,
-              size: 18,
-            ),
+          : Icon(Icons.play_arrow_rounded,
+              color: isDark ? Colors.white24 : Colors.black12, size: 18),
       onTap: onTap,
     );
   }
@@ -1428,47 +996,36 @@ class _WaveIcon extends StatefulWidget {
   State<_WaveIcon> createState() => _WaveIconState();
 }
 
-class _WaveIconState extends State<_WaveIcon>
-    with SingleTickerProviderStateMixin {
+class _WaveIconState extends State<_WaveIcon> with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))
+      ..repeat(reverse: true);
   }
-
   @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
+  void dispose() { _ctrl.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, _) => Row(
+      builder: (_, __) => Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(3, (i) {
           final h = 6.0 + 10.0 * (((_ctrl.value + i * 0.33) % 1.0));
           return Container(
-            width: 3,
-            height: h,
+            width: 3, height: h,
             margin: const EdgeInsets.symmetric(horizontal: 1),
-            decoration: BoxDecoration(
-              color: widget.color,
-              borderRadius: BorderRadius.circular(2),
-            ),
+            decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(2)),
           );
         }),
       ),
     );
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  PROGRESS BAR — isolated widget so only it rebuilds on position tick
@@ -1499,7 +1056,7 @@ class _ProgressBar extends StatelessWidget {
     return ValueListenableBuilder2<Duration, Duration>(
       first: position,
       second: duration,
-      builder: (_, pos, dur, _) {
+      builder: (_, pos, dur, __) {
         final maxSec = dur.inSeconds > 0 ? dur.inSeconds.toDouble() : 1.0;
         final curSec = pos.inSeconds.toDouble().clamp(0.0, maxSec);
         return Column(
@@ -1510,9 +1067,9 @@ class _ProgressBar extends StatelessWidget {
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
                 activeTrackColor: color,
-                inactiveTrackColor: color.withValues(alpha: 0.2),
+                inactiveTrackColor: color.withOpacity(0.2),
                 thumbColor: color,
-                overlayColor: color.withValues(alpha: 0.2),
+                overlayColor: color.withOpacity(0.2),
               ),
               child: Slider(value: curSec, max: maxSec, onChanged: onSeek),
             ),
@@ -1521,20 +1078,12 @@ class _ProgressBar extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _fmt(pos),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white38 : Colors.black38,
-                    ),
-                  ),
-                  Text(
-                    _fmt(dur),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white38 : Colors.black38,
-                    ),
-                  ),
+                  Text(_fmt(pos),
+                      style: TextStyle(fontSize: 11,
+                          color: isDark ? Colors.white38 : Colors.black38)),
+                  Text(_fmt(dur),
+                      style: TextStyle(fontSize: 11,
+                          color: isDark ? Colors.white38 : Colors.black38)),
                 ],
               ),
             ),
@@ -1569,7 +1118,7 @@ class ValueListenableBuilder2<A, B> extends StatelessWidget {
       valueListenable: first,
       builder: (ctx, a, _) => ValueListenableBuilder<B>(
         valueListenable: second,
-        builder: (ctx2, b, _) => builder(ctx2, a, b, child),
+        builder: (ctx2, b, __) => builder(ctx2, a, b, child),
       ),
     );
   }
@@ -1583,11 +1132,7 @@ class _TrackFormSheet extends StatefulWidget {
   final MusicTrack? existing;
   final void Function(MusicTrack) onSave;
 
-  const _TrackFormSheet({
-    required this.isDark,
-    this.existing,
-    required this.onSave,
-  });
+  const _TrackFormSheet({required this.isDark, this.existing, required this.onSave});
 
   @override
   State<_TrackFormSheet> createState() => _TrackFormSheetState();
@@ -1616,9 +1161,7 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
     final e = widget.existing;
     _titleCtrl = TextEditingController(text: e?.title ?? '');
     _artistCtrl = TextEditingController(text: e?.artist ?? '');
-    _urlCtrl = TextEditingController(
-      text: (e != null && !e.isLocal) ? e.url : '',
-    );
+    _urlCtrl = TextEditingController(text: (e != null && !e.isLocal) ? e.url : '');
     _selectedEmoji = e?.emoji ?? '🎵';
     _selectedColor = e?.color ?? const Color(0xFF5BA8A0);
     if (e != null && e.isLocal) {
@@ -1641,10 +1184,12 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
   Future<void> _pickFile() async {
     setState(() => _isPicking = true);
     try {
-      final file = await FilePicker.pickFile(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.audio,
+        allowMultiple: false,
       );
-      if (file != null && file.path != null) {
+      if (result != null && result.files.single.path != null) {
+        final file = result.files.single;
         final nameWithoutExt = file.name.contains('.')
             ? file.name.substring(0, file.name.lastIndexOf('.'))
             : file.name;
@@ -1656,9 +1201,9 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not pick file: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not pick file: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _isPicking = false);
@@ -1676,22 +1221,16 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
     });
     if (title.isEmpty || !hasSource) return;
 
-    widget.onSave(
-      MusicTrack(
-        id:
-            widget.existing?.id ??
-            'user_${DateTime.now().millisecondsSinceEpoch}',
-        title: title,
-        artist: _artistCtrl.text.trim().isEmpty
-            ? 'My Music'
-            : _artistCtrl.text.trim(),
-        emoji: _selectedEmoji,
-        color: _selectedColor,
-        url: _sourceMode == 0 ? _localFilePath! : _urlCtrl.text.trim(),
-        isDefault: false,
-        isLocal: _sourceMode == 0,
-      ),
-    );
+    widget.onSave(MusicTrack(
+      id: widget.existing?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      artist: _artistCtrl.text.trim().isEmpty ? 'My Music' : _artistCtrl.text.trim(),
+      emoji: _selectedEmoji,
+      color: _selectedColor,
+      url: _sourceMode == 0 ? _localFilePath! : _urlCtrl.text.trim(),
+      isDefault: false,
+      isLocal: _sourceMode == 0,
+    ));
   }
 
   @override
@@ -1700,9 +1239,7 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
     final isEdit = widget.existing != null;
 
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF152525) : Colors.white,
@@ -1717,10 +1254,9 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
               // Handle bar
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
+                  width: 40, height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
+                    color: Colors.grey.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1728,86 +1264,53 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
               const SizedBox(height: 20),
 
               // Header
-              Row(
-                children: [
-                  // Back arrow to close the sheet
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0xFFF0F9F9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                        color: isDark
-                            ? Colors.white70
-                            : const Color(0xFF1A4A4A),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 40,
-                    height: 40,
+              Row(children: [
+                // Back arrow to close the sheet
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 38, height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5BA8A0).withValues(alpha: 0.15),
+                      color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFF0F9F9),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.music_note_rounded,
-                      color: Color(0xFF5BA8A0),
-                      size: 22,
-                    ),
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        size: 16,
+                        color: isDark ? Colors.white70 : const Color(0xFF1A4A4A)),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    isEdit ? 'Edit Track' : 'Add to My Playlist',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF1A3333),
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5BA8A0).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
+                  child: const Icon(Icons.music_note_rounded, color: Color(0xFF5BA8A0), size: 22),
+                ),
+                const SizedBox(width: 10),
+                Text(isEdit ? 'Edit Track' : 'Add to My Playlist',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1A3333))),
+              ]),
               const SizedBox(height: 24),
 
               // ── Source toggle (only on add) ────────────────────────────────
               if (!isEdit) ...[
-                Text(
-                  'Music source',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white54 : Colors.black45,
-                  ),
-                ),
+                Text('Music source',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white54 : Colors.black45)),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.07)
-                        : const Color(0xFFF0F9F9),
+                    color: isDark ? Colors.white.withOpacity(0.07) : const Color(0xFFF0F9F9),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Row(
-                    children: [
-                      _sourceTab(
-                        0,
-                        Icons.phone_android_rounded,
-                        'From Phone',
-                        isDark,
-                      ),
-                      _sourceTab(1, Icons.link_rounded, 'Paste URL', isDark),
-                    ],
-                  ),
+                  child: Row(children: [
+                    _sourceTab(0, Icons.phone_android_rounded, 'From Phone', isDark),
+                    _sourceTab(1, Icons.link_rounded, 'Paste URL', isDark),
+                  ]),
                 ),
                 const SizedBox(height: 20),
               ],
@@ -1819,184 +1322,118 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     decoration: BoxDecoration(
                       color: _localFilePath != null
-                          ? const Color(
-                              0xFF5BA8A0,
-                            ).withValues(alpha: isDark ? 0.18 : 0.07)
-                          : (isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : const Color(0xFFF5FAFA)),
+                          ? const Color(0xFF5BA8A0).withOpacity(isDark ? 0.18 : 0.07)
+                          : (isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF5FAFA)),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: _urlError && _localFilePath == null
                             ? Colors.red
                             : _localFilePath != null
-                            ? const Color(0xFF5BA8A0).withValues(alpha: 0.5)
-                            : (isDark ? Colors.white12 : Colors.black12),
+                                ? const Color(0xFF5BA8A0).withOpacity(0.5)
+                                : (isDark ? Colors.white12 : Colors.black12),
                         width: 1.5,
                       ),
                     ),
                     child: _isPicking
                         ? const Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF5BA8A0),
+                            child: SizedBox(width: 24, height: 24,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Color(0xFF5BA8A0))))
+                        : Row(children: [
+                            Container(
+                              width: 44, height: 44,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF5BA8A0).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                _localFilePath != null
+                                    ? Icons.audio_file_rounded
+                                    : Icons.folder_open_rounded,
+                                color: const Color(0xFF5BA8A0), size: 24,
                               ),
                             ),
-                          )
-                        : Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF5BA8A0,
-                                  ).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(12),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(
+                                  _localFilePath != null ? _localFileName! : 'Browse your phone',
+                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14,
+                                      color: isDark ? Colors.white : const Color(0xFF1A3333)),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis,
                                 ),
-                                child: Icon(
+                                const SizedBox(height: 2),
+                                Text(
                                   _localFilePath != null
-                                      ? Icons.audio_file_rounded
-                                      : Icons.folder_open_rounded,
-                                  color: const Color(0xFF5BA8A0),
-                                  size: 24,
+                                      ? 'Tap to change file'
+                                      : 'MP3 · AAC · OGG · FLAC · WAV',
+                                  style: TextStyle(fontSize: 11,
+                                      color: isDark ? Colors.white38 : Colors.black38),
                                 ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _localFilePath != null
-                                          ? _localFileName!
-                                          : 'Browse your phone',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color: isDark
-                                            ? Colors.white
-                                            : const Color(0xFF1A3333),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      _localFilePath != null
-                                          ? 'Tap to change file'
-                                          : 'MP3 · AAC · OGG · FLAC · WAV',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: isDark
-                                            ? Colors.white38
-                                            : Colors.black38,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: isDark ? Colors.white30 : Colors.black26,
-                              ),
-                            ],
-                          ),
+                              ]),
+                            ),
+                            Icon(Icons.chevron_right_rounded,
+                                color: isDark ? Colors.white30 : Colors.black26),
+                          ]),
                   ),
                 ),
                 if (_urlError && _localFilePath == null)
                   Padding(
                     padding: const EdgeInsets.only(left: 14, top: 4),
-                    child: const Text(
-                      'Please select an audio file',
-                      style: TextStyle(fontSize: 11, color: Colors.red),
-                    ),
+                    child: const Text('Please select an audio file',
+                        style: TextStyle(fontSize: 11, color: Colors.red)),
                   ),
                 const SizedBox(height: 16),
               ],
 
               // ── Paste URL ──────────────────────────────────────────────────
               if (_sourceMode == 1) ...[
-                _field(
-                  _urlCtrl,
-                  'Audio URL (mp3 / ogg / m4a)',
-                  Icons.link_rounded,
-                  isDark,
-                  keyboardType: TextInputType.url,
-                  error: _urlError ? 'URL is required' : null,
-                ),
+                _field(_urlCtrl, 'Audio URL (mp3 / ogg / m4a)', Icons.link_rounded, isDark,
+                    keyboardType: TextInputType.url,
+                    error: _urlError ? 'URL is required' : null),
                 const SizedBox(height: 6),
-                Text(
-                  'Paste a direct link to an audio file',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white30 : Colors.black26,
-                  ),
-                ),
+                Text('Paste a direct link to an audio file',
+                    style: TextStyle(fontSize: 11,
+                        color: isDark ? Colors.white30 : Colors.black26)),
                 const SizedBox(height: 16),
               ],
 
               // ── Emoji picker ───────────────────────────────────────────────
               Row(
                 children: [
-                  Text(
-                    'Pick an icon',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
+                  Text('Pick an icon',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white54 : Colors.black45)),
                   const Spacer(),
                   GestureDetector(
-                    onTap: () =>
-                        setState(() => _showMoreEmojis = !_showMoreEmojis),
+                    onTap: () => setState(() => _showMoreEmojis = !_showMoreEmojis),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: _showMoreEmojis
                             ? const Color(0xFF5BA8A0)
-                            : const Color(0xFF5BA8A0).withValues(alpha: 0.12),
+                            : const Color(0xFF5BA8A0).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _showMoreEmojis
-                                ? Icons.keyboard_hide_rounded
-                                : Icons.add_rounded,
-                            size: 14,
-                            color: _showMoreEmojis
-                                ? Colors.white
-                                : const Color(0xFF5BA8A0),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(
+                          _showMoreEmojis ? Icons.keyboard_hide_rounded : Icons.add_rounded,
+                          size: 14,
+                          color: _showMoreEmojis ? Colors.white : const Color(0xFF5BA8A0),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _showMoreEmojis ? 'Less' : 'More',
+                          style: TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600,
+                            color: _showMoreEmojis ? Colors.white : const Color(0xFF5BA8A0),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _showMoreEmojis ? 'Less' : 'More',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _showMoreEmojis
-                                  ? Colors.white
-                                  : const Color(0xFF5BA8A0),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ]),
                     ),
                   ),
                 ],
@@ -2008,27 +1445,19 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 firstChild: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: kEmojiOptions
-                      .map((e) => _emojiChip(e, isDark))
-                      .toList(),
+                  spacing: 8, runSpacing: 8,
+                  children: kEmojiOptions.map((e) => _emojiChip(e, isDark)).toList(),
                 ),
                 secondChild: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : const Color(0xFFF5FAFA),
+                    color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF5FAFA),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFF5BA8A0).withValues(alpha: 0.2),
-                      width: 1,
-                    ),
+                        color: const Color(0xFF5BA8A0).withOpacity(0.2), width: 1),
                   ),
                   child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 8, runSpacing: 8,
                     children: [
                       ...kEmojiOptions.map((e) => _emojiChip(e, isDark)),
                       ...kEmojiOptionsExtra.map((e) => _emojiChip(e, isDark)),
@@ -2041,53 +1470,36 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
               // ── Color picker ───────────────────────────────────────────────
               Row(
                 children: [
-                  Text(
-                    'Pick a color',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                    ),
-                  ),
+                  Text('Pick a color',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white54 : Colors.black45)),
                   const Spacer(),
                   GestureDetector(
-                    onTap: () =>
-                        setState(() => _showMoreColors = !_showMoreColors),
+                    onTap: () => setState(() => _showMoreColors = !_showMoreColors),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: _showMoreColors
                             ? const Color(0xFF5BA8A0)
-                            : const Color(0xFF5BA8A0).withValues(alpha: 0.12),
+                            : const Color(0xFF5BA8A0).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _showMoreColors ? Icons.palette : Icons.add_rounded,
-                            size: 14,
-                            color: _showMoreColors
-                                ? Colors.white
-                                : const Color(0xFF5BA8A0),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(
+                          _showMoreColors ? Icons.palette : Icons.add_rounded,
+                          size: 14,
+                          color: _showMoreColors ? Colors.white : const Color(0xFF5BA8A0),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _showMoreColors ? 'Less' : 'More',
+                          style: TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600,
+                            color: _showMoreColors ? Colors.white : const Color(0xFF5BA8A0),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _showMoreColors ? 'Less' : 'More',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _showMoreColors
-                                  ? Colors.white
-                                  : const Color(0xFF5BA8A0),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ]),
                     ),
                   ),
                 ],
@@ -2099,32 +1511,24 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 firstChild: Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
+                  spacing: 10, runSpacing: 8,
                   children: kColorOptions.map((c) => _colorDot(c)).toList(),
                 ),
                 secondChild: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : const Color(0xFFF5FAFA),
+                    color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF5FAFA),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFF5BA8A0).withValues(alpha: 0.2),
-                      width: 1,
-                    ),
+                        color: const Color(0xFF5BA8A0).withOpacity(0.2), width: 1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Default row
                       Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: kColorOptions
-                            .map((c) => _colorDot(c))
-                            .toList(),
+                        spacing: 10, runSpacing: 10,
+                        children: kColorOptions.map((c) => _colorDot(c)).toList(),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -2134,29 +1538,17 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
                         ),
                       ),
                       // Extended palette — grouped in rows of 3 (like MS Word)
-                      ...List.generate((kColorOptionsExtra.length / 3).ceil(), (
-                        row,
-                      ) {
+                      ...List.generate((kColorOptionsExtra.length / 3).ceil(), (row) {
                         final start = row * 3;
-                        final end = (start + 3).clamp(
-                          0,
-                          kColorOptionsExtra.length,
-                        );
-                        final rowColors = kColorOptionsExtra.sublist(
-                          start,
-                          end,
-                        );
+                        final end = (start + 3).clamp(0, kColorOptionsExtra.length);
+                        final rowColors = kColorOptionsExtra.sublist(start, end);
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
-                            children: rowColors
-                                .map(
-                                  (c) => Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: _colorDot(c, size: 28),
-                                  ),
-                                )
-                                .toList(),
+                            children: rowColors.map((c) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _colorDot(c, size: 28),
+                            )).toList(),
                           ),
                         );
                       }),
@@ -2167,90 +1559,47 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
               const SizedBox(height: 20),
 
               // ── Song title ─────────────────────────────────────────────────
-              _field(
-                _titleCtrl,
-                'Song Title *',
-                Icons.title_rounded,
-                isDark,
-                error: _titleError ? 'Title is required' : null,
-              ),
+              _field(_titleCtrl, 'Song Title *', Icons.title_rounded, isDark,
+                  error: _titleError ? 'Title is required' : null),
               const SizedBox(height: 12),
 
               // ── Artist ─────────────────────────────────────────────────────
-              _field(
-                _artistCtrl,
-                'Artist name (optional)',
-                Icons.person_outline_rounded,
-                isDark,
-              ),
+              _field(_artistCtrl, 'Artist name (optional)', Icons.person_outline_rounded, isDark),
               const SizedBox(height: 20),
 
               // ── Live preview card ──────────────────────────────────────────
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: _selectedColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                  color: _selectedColor.withOpacity(isDark ? 0.2 : 0.08),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _selectedColor.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: _selectedColor.withOpacity(0.3), width: 1.5),
                 ),
-                child: Row(
-                  children: [
-                    Text(_selectedEmoji, style: const TextStyle(fontSize: 28)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _titleCtrl.text.trim().isEmpty
-                                ? 'Song Title'
-                                : _titleCtrl.text.trim(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1A3333),
-                            ),
-                          ),
-                          Text(
-                            _artistCtrl.text.trim().isEmpty
-                                ? 'My Music'
-                                : _artistCtrl.text.trim(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _selectedColor,
-                            ),
-                          ),
-                        ],
+                child: Row(children: [
+                  Text(_selectedEmoji, style: const TextStyle(fontSize: 28)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(
+                        _titleCtrl.text.trim().isEmpty ? 'Song Title' : _titleCtrl.text.trim(),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,
+                            color: isDark ? Colors.white : const Color(0xFF1A3333)),
                       ),
+                      Text(
+                        _artistCtrl.text.trim().isEmpty ? 'My Music' : _artistCtrl.text.trim(),
+                        style: TextStyle(fontSize: 12, color: _selectedColor),
+                      ),
+                    ]),
+                  ),
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(
+                      _sourceMode == 0 ? Icons.phone_android_rounded : Icons.cloud_rounded,
+                      size: 13, color: isDark ? Colors.white38 : Colors.black26,
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _sourceMode == 0
-                              ? Icons.phone_android_rounded
-                              : Icons.cloud_rounded,
-                          size: 13,
-                          color: isDark ? Colors.white38 : Colors.black26,
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.play_circle_rounded,
-                          color: _selectedColor,
-                          size: 28,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.play_circle_rounded, color: _selectedColor, size: 28),
+                  ]),
+                ]),
               ),
               const SizedBox(height: 20),
 
@@ -2263,18 +1612,11 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
                     backgroundColor: const Color(0xFF5BA8A0),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
-                  child: Text(
-                    isEdit ? 'Save Changes' : 'Add to Playlist',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: Text(isEdit ? 'Save Changes' : 'Add to Playlist',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -2290,19 +1632,13 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
       onTap: () => setState(() => _selectedEmoji = e),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 44,
-        height: 44,
+        width: 44, height: 44,
         decoration: BoxDecoration(
           color: sel
-              ? _selectedColor.withValues(alpha: 0.2)
-              : (isDark
-                    ? Colors.white.withValues(alpha: 0.06)
-                    : const Color(0xFFF5F5F5)),
+              ? _selectedColor.withOpacity(0.2)
+              : (isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF5F5F5)),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: sel ? _selectedColor : Colors.transparent,
-            width: 2,
-          ),
+          border: Border.all(color: sel ? _selectedColor : Colors.transparent, width: 2),
         ),
         child: Center(child: Text(e, style: const TextStyle(fontSize: 22))),
       ),
@@ -2310,33 +1646,20 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
   }
 
   Widget _colorDot(Color c, {double size = 32}) {
-    final sel = c.toARGB32() == _selectedColor.toARGB32();
+    final sel = c.value == _selectedColor.value;
     return GestureDetector(
       onTap: () => setState(() => _selectedColor = c),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: size,
-        height: size,
+        width: size, height: size,
         decoration: BoxDecoration(
-          color: c,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: sel ? Colors.white : Colors.transparent,
-            width: 2.5,
-          ),
+          color: c, shape: BoxShape.circle,
+          border: Border.all(color: sel ? Colors.white : Colors.transparent, width: 2.5),
           boxShadow: sel
-              ? [
-                  BoxShadow(
-                    color: c.withValues(alpha: 0.6),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ]
+              ? [BoxShadow(color: c.withOpacity(0.6), blurRadius: 8, spreadRadius: 1)]
               : [],
         ),
-        child: sel
-            ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
-            : null,
+        child: sel ? const Icon(Icons.check_rounded, color: Colors.white, size: 16) : null,
       ),
     );
   }
@@ -2356,24 +1679,14 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: sel
-                    ? Colors.white
-                    : (isDark ? Colors.white38 : Colors.black38),
-              ),
+              Icon(icon, size: 16,
+                  color: sel ? Colors.white : (isDark ? Colors.white38 : Colors.black38)),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: sel ? FontWeight.bold : FontWeight.normal,
-                  color: sel
-                      ? Colors.white
-                      : (isDark ? Colors.white38 : Colors.black38),
-                ),
-              ),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                      color: sel ? Colors.white : (isDark ? Colors.white38 : Colors.black38))),
             ],
           ),
         ),
@@ -2396,43 +1709,29 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
           controller: ctrl,
           keyboardType: keyboardType,
           onChanged: (_) => setState(() {}),
-          style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1A3333),
-          ),
+          style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1A3333)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: isDark ? Colors.white38 : Colors.black38,
-              fontSize: 13,
-            ),
+                color: isDark ? Colors.white38 : Colors.black38, fontSize: 13),
             prefixIcon: Icon(icon, color: const Color(0xFF5BA8A0), size: 20),
             filled: true,
-            fillColor: isDark
-                ? Colors.white.withValues(alpha: 0.07)
-                : const Color(0xFFF5FAFA),
+            fillColor: isDark ? Colors.white.withOpacity(0.07) : const Color(0xFFF5FAFA),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
-            ),
+                borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: error != null
                   ? const BorderSide(color: Colors.red, width: 1.5)
                   : BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
         if (error != null)
           Padding(
             padding: const EdgeInsets.only(left: 14, top: 4),
-            child: Text(
-              error,
-              style: const TextStyle(fontSize: 11, color: Colors.red),
-            ),
+            child: Text(error, style: const TextStyle(fontSize: 11, color: Colors.red)),
           ),
       ],
     );

@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Manually written Hive TypeAdapters (replaces build_runner output)
 
 part of 'breathing_pattern.dart';
 
@@ -58,14 +59,13 @@ class BreathingPatternAdapter extends TypeAdapter<BreathingPattern> {
       name: fields[1] as String,
       description: fields[2] as String,
       phases: (fields[3] as List).cast<BreathingPhase>(),
-      cycles: fields[4] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, BreathingPattern obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -73,9 +73,7 @@ class BreathingPatternAdapter extends TypeAdapter<BreathingPattern> {
       ..writeByte(2)
       ..write(obj.description)
       ..writeByte(3)
-      ..write(obj.phases)
-      ..writeByte(4)
-      ..write(obj.cycles);
+      ..write(obj.phases);
   }
 
   @override

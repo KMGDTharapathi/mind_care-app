@@ -1,11 +1,13 @@
 import 'dart:io';
-import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
 import '../services/willow_engine.dart';
 import '../services/willow_api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
 
 const _kTeal = Color(0xFF5BA8A0);
@@ -28,12 +30,16 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   final _uuid = const Uuid();
-
   bool _isTyping = false;
   bool _showScrollDown = false;
   bool _hasText = false;
 
   late WillowEngine _engine;
+  StreamSubscription<QuerySnapshot>? _chatSubscription;
+
+  String get _chatId => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+  CollectionReference<Map<String, dynamic>> get _chatCollection =>
+      FirebaseFirestore.instance.collection('chats').doc(_chatId).collection('messages');
 
   @override
   void initState() {
@@ -44,8 +50,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       if (hasText != _hasText) setState(() => _hasText = hasText);
     });
     _scrollController.addListener(() {
-      final atBottom =
-          _scrollController.position.pixels >=
+      final atBottom = _scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 80;
       if (!atBottom && !_showScrollDown) {
         setState(() => _showScrollDown = true);
@@ -53,15 +58,58 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         setState(() => _showScrollDown = false);
       }
     });
-    // Welcome message
-    Future.delayed(const Duration(milliseconds: 400), () {
+
+    // Real-time snapshot listener
+    _chatSubscription = _chatCollection
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .listen((snapshot) {
       if (!mounted) return;
-      _addWillowMessage(_engine.welcomeMessage());
+      final msgs = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return ChatMessage(
+          id: data['id'] as String,
+          senderName: data['senderName'] as String,
+          typeName: data['typeName'] as String? ?? 'text',
+          content: data['content'] as String,
+          fileName: data['fileName'] as String?,
+          durationSeconds: data['durationSeconds'] as int? ?? 0,
+          timestamp: (data['timestamp'] as Timestamp).toDate(),
+        );
+      }).toList();
+
+      setState(() {
+        _messages.clear();
+        _messages.addAll(msgs);
+      });
+
+      _scrollToBottom();
+
+      // If no messages, seed the welcome message in Firestore
+      if (msgs.isEmpty) {
+        _addWillowMessageToFirestore(_engine.welcomeMessage());
+      }
+    }, onError: (error) {
+      debugPrint('Firestore subscription error: $error');
+      // FALLBACK: Load local welcome message if database access fails
+      if (_messages.isEmpty) {
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: 'welcome-local',
+            sender: MessageSender.willow,
+            text: _engine.welcomeMessage(),
+            timestamp: DateTime.now(),
+          ));
+        });
+      }
     });
   }
 
   @override
   void dispose() {
+    if (_chatSubscription != null) {
+      _chatSubscription?.cancel();
+    }
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -82,15 +130,19 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     });
   }
 
-  void _addWillowMessage(String text) {
-    final msg = ChatMessage.text(
-      id: _uuid.v4(),
-      sender: MessageSender.willow,
-      text: text,
-      timestamp: DateTime.now(),
-    );
-    setState(() => _messages.add(msg));
-    _scrollToBottom();
+  Future<void> _addWillowMessageToFirestore(String text) async {
+    try {
+      final id = _uuid.v4();
+      await _chatCollection.doc(id).set({
+        'id': id,
+        'senderName': 'willow',
+        'typeName': 'text',
+        'content': text,
+        'timestamp': Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (e) {
+      debugPrint('Failed to save willow response to Firestore: $e');
+    }
   }
 
   Future<void> _sendText() async {
@@ -98,22 +150,53 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     if (text.isEmpty) return;
     _textController.clear();
 
+    final userMsgId = _uuid.v4();
     final userMsg = ChatMessage.text(
-      id: _uuid.v4(),
+      id: userMsgId,
       sender: MessageSender.user,
       text: text,
       timestamp: DateTime.now(),
     );
-    setState(() {
-      _messages.add(userMsg);
-      _isTyping = true;
-    });
+
+    bool saveSuccess = false;
+    try {
+      // Save to Firestore
+      await _chatCollection.doc(userMsgId).set({
+        'id': userMsgId,
+        'senderName': 'user',
+        'typeName': 'text',
+        'content': text,
+        'timestamp': Timestamp.fromDate(userMsg.timestamp),
+      });
+      saveSuccess = true;
+    } catch (e) {
+      debugPrint('Failed to save user message to Firestore: $e');
+      setState(() {
+        _messages.add(userMsg);
+      });
+    }
+
+    setState(() => _isTyping = true);
     _scrollToBottom();
 
+    // Generate response
     final response = await _engine.respond(userMsg);
-    if (!mounted) return;
-    setState(() => _isTyping = false);
-    _addWillowMessage(response);
+    if (saveSuccess) {
+      await _addWillowMessageToFirestore(response);
+    } else {
+      setState(() {
+        _messages.add(ChatMessage.text(
+          id: _uuid.v4(),
+          sender: MessageSender.willow,
+          text: response,
+          timestamp: DateTime.now(),
+        ));
+      });
+    }
+    
+    if (mounted) {
+      setState(() => _isTyping = false);
+    }
   }
 
   Future<void> _pickAttachment() async {
@@ -130,8 +213,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
           children: [
             const SizedBox(height: 8),
             Container(
-              width: 40,
-              height: 4,
+              width: 40, height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
@@ -149,10 +231,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Color(0xFFE3F2FD),
-                child: Icon(
-                  Icons.attach_file_rounded,
-                  color: Color(0xFF1565C0),
-                ),
+                child: Icon(Icons.attach_file_rounded, color: Color(0xFF1565C0)),
               ),
               title: Text(isSi ? 'ගොනුව' : 'File'),
               onTap: () => Navigator.pop(context, 'file'),
@@ -166,44 +245,104 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     if (choice == null) return;
 
     if (choice == 'image') {
-      final file = await FilePicker.pickFile(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
+        allowMultiple: false,
       );
-      if (file == null || file.path == null) return;
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.first;
+      if (file.path == null) return;
 
+      final userMsgId = _uuid.v4();
       final userMsg = ChatMessage.image(
-        id: _uuid.v4(),
+        id: userMsgId,
         filePath: file.path!,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(userMsg);
-        _isTyping = true;
-      });
-      _scrollToBottom();
-      final response = await _engine.respond(userMsg);
-      if (!mounted) return;
-      setState(() => _isTyping = false);
-      _addWillowMessage(response);
-    } else {
-      final file = await FilePicker.pickFile();
-      if (file == null || file.path == null) return;
 
+      bool saveSuccess = false;
+      try {
+        await _chatCollection.doc(userMsgId).set({
+          'id': userMsgId,
+          'senderName': 'user',
+          'typeName': 'image',
+          'content': file.path!,
+          'timestamp': Timestamp.fromDate(userMsg.timestamp),
+        });
+        saveSuccess = true;
+      } catch (e) {
+        debugPrint('Failed to save image message: $e');
+        setState(() {
+          _messages.add(userMsg);
+        });
+      }
+
+      setState(() => _isTyping = true);
+      _scrollToBottom();
+      
+      final response = await _engine.respond(userMsg);
+      if (saveSuccess) {
+        await _addWillowMessageToFirestore(response);
+      } else {
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: _uuid.v4(),
+            sender: MessageSender.willow,
+            text: response,
+            timestamp: DateTime.now(),
+          ));
+        });
+      }
+      if (mounted) setState(() => _isTyping = false);
+    } else {
+      final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.first;
+      if (file.path == null) return;
+
+      final userMsgId = _uuid.v4();
       final userMsg = ChatMessage.file(
-        id: _uuid.v4(),
+        id: userMsgId,
         filePath: file.path!,
         fileName: file.name,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(userMsg);
-        _isTyping = true;
-      });
+
+      bool saveSuccess = false;
+      try {
+        await _chatCollection.doc(userMsgId).set({
+          'id': userMsgId,
+          'senderName': 'user',
+          'typeName': 'file',
+          'content': file.path!,
+          'fileName': file.name,
+          'timestamp': Timestamp.fromDate(userMsg.timestamp),
+        });
+        saveSuccess = true;
+      } catch (e) {
+        debugPrint('Failed to save file message: $e');
+        setState(() {
+          _messages.add(userMsg);
+        });
+      }
+
+      setState(() => _isTyping = true);
       _scrollToBottom();
+      
       final response = await _engine.respond(userMsg);
-      if (!mounted) return;
-      setState(() => _isTyping = false);
-      _addWillowMessage(response);
+      if (saveSuccess) {
+        await _addWillowMessageToFirestore(response);
+      } else {
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: _uuid.v4(),
+            sender: MessageSender.willow,
+            text: response,
+            timestamp: DateTime.now(),
+          ));
+        });
+      }
+      if (mounted) setState(() => _isTyping = false);
     }
   }
 
@@ -220,10 +359,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         children: [
           // API config banner — shown when ngrok URL not set
           if (!WillowApiService.isConfigured)
-            _ApiConfigBanner(
-              isSinhala: isSi,
-              onConfigured: () => setState(() {}),
-            ),
+            _ApiConfigBanner(isSinhala: isSi, onConfigured: () => setState(() {})),
           Expanded(
             child: Stack(
               children: [
@@ -248,10 +384,8 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                     child: FloatingActionButton.small(
                       backgroundColor: _kTeal,
                       onPressed: () => _scrollToBottom(),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white,
-                      ),
+                      child: const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: Colors.white),
                     ),
                   ),
               ],
@@ -286,14 +420,11 @@ class _WillowChatScreenState extends State<WillowChatScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Willow',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
+              const Text('Willow',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white)),
               Text(
                 isSi ? 'ඔබේ සෞඛ්‍ය සහකාරිය 🌿' : 'Your wellness companion 🌿',
                 style: const TextStyle(fontSize: 11, color: Colors.white70),
@@ -316,15 +447,14 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 7,
-                  height: 7,
+                  width: 7, height: 7,
                   decoration: BoxDecoration(
                     color: WillowApiService.isConfigured
                         ? const Color(0xFF69F0AE)
@@ -362,10 +492,7 @@ class _WillowAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF4DB6AC),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.4),
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -387,7 +514,7 @@ class _WillowAvatar extends StatelessWidget {
                 width: size * 0.28,
                 height: size * 0.06,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: Colors.white.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -396,11 +523,8 @@ class _WillowAvatar extends StatelessWidget {
           Positioned(
             top: -size * 0.08,
             right: size * 0.1,
-            child: Icon(
-              Icons.eco_rounded,
-              color: const Color(0xFF2E7D32),
-              size: size * 0.3,
-            ),
+            child: Icon(Icons.eco_rounded,
+                color: const Color(0xFF2E7D32), size: size * 0.3),
           ),
         ],
       ),
@@ -408,13 +532,13 @@ class _WillowAvatar extends StatelessWidget {
   }
 
   Widget _dot(double s) => Container(
-    width: s,
-    height: s,
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      shape: BoxShape.circle,
-    ),
-  );
+        width: s,
+        height: s,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+      );
 }
 
 // ── Message Bubble ────────────────────────────────────────────────────────────
@@ -436,12 +560,14 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
-        mainAxisAlignment: isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (!isUser) ...[_WillowAvatar(size: 28), const SizedBox(width: 6)],
+          if (!isUser) ...[
+            _WillowAvatar(size: 28),
+            const SizedBox(width: 6),
+          ],
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -457,7 +583,7 @@ class _MessageBubble extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: Colors.black.withOpacity(0.06),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -480,7 +606,8 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       if (isUser) ...[
                         const SizedBox(width: 3),
-                        Icon(Icons.done_all_rounded, size: 13, color: _kTeal),
+                        Icon(Icons.done_all_rounded,
+                            size: 13, color: _kTeal),
                       ],
                     ],
                   ),
@@ -497,11 +624,9 @@ class _MessageBubble extends StatelessWidget {
   Widget _buildContent(Color textColor) {
     switch (message.type) {
       case MessageType.text:
-        return _StyledMessageText(
-          text: message.content,
-          textColor: textColor,
-          isUser: message.sender == MessageSender.user,
-          isDark: isDark,
+        return Text(
+          message.content,
+          style: TextStyle(fontSize: 14, color: textColor, height: 1.4),
         );
       case MessageType.image:
         return ClipRRect(
@@ -511,13 +636,10 @@ class _MessageBubble extends StatelessWidget {
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+            errorBuilder: (_, __, ___) => Container(
               height: 100,
               color: Colors.grey.shade200,
-              child: const Icon(
-                Icons.broken_image_outlined,
-                color: Colors.grey,
-              ),
+              child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
             ),
           ),
         );
@@ -528,24 +650,20 @@ class _MessageBubble extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _kTeal.withValues(alpha: 0.15),
+                color: _kTeal.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.insert_drive_file_outlined,
-                color: _kTeal,
-                size: 22,
-              ),
+              child: const Icon(Icons.insert_drive_file_outlined,
+                  color: _kTeal, size: 22),
             ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
                 message.fileName ?? 'File',
                 style: TextStyle(
-                  fontSize: 13,
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                ),
+                    fontSize: 13,
+                    color: textColor,
+                    fontWeight: FontWeight.w500),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -584,12 +702,12 @@ class _VoiceBubble extends StatelessWidget {
         Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(color: _kTeal, shape: BoxShape.circle),
-          child: const Icon(
-            Icons.play_arrow_rounded,
-            color: Colors.white,
-            size: 20,
+          decoration: BoxDecoration(
+            color: _kTeal,
+            shape: BoxShape.circle,
           ),
+          child: const Icon(Icons.play_arrow_rounded,
+              color: Colors.white, size: 20),
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -605,7 +723,7 @@ class _VoiceBubble extends StatelessWidget {
                     height: (4 + (i % 5) * 4).toDouble(),
                     margin: const EdgeInsets.symmetric(horizontal: 1),
                     decoration: BoxDecoration(
-                      color: _kTeal.withValues(alpha: 0.6),
+                      color: _kTeal.withOpacity(0.6),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -614,10 +732,7 @@ class _VoiceBubble extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 _formatDuration(message.durationSeconds),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: textColor.withValues(alpha: 0.6),
-                ),
+                style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.6)),
               ),
             ],
           ),
@@ -675,7 +790,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: Colors.black.withOpacity(0.06),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -683,7 +798,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
             ),
             child: AnimatedBuilder(
               animation: _ctrl,
-              builder: (_, _) {
+              builder: (_, __) {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(3, (i) {
@@ -695,7 +810,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
                       height: 7,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: _kTeal.withValues(alpha: opacity),
+                        color: _kTeal.withOpacity(opacity),
                         shape: BoxShape.circle,
                       ),
                     );
@@ -771,10 +886,7 @@ class _InputBar extends StatelessWidget {
                   color: fieldBg,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                 child: TextField(
                   controller: controller,
                   maxLines: null,
@@ -814,11 +926,7 @@ class _IconBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _IconBtn({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
+  const _IconBtn({required this.icon, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -828,7 +936,7 @@ class _IconBtn extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: color.withOpacity(0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: color, size: 20),
@@ -848,7 +956,10 @@ class _SendBtn extends StatelessWidget {
       child: Container(
         width: 44,
         height: 44,
-        decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
+        decoration: const BoxDecoration(
+          color: _kTeal,
+          shape: BoxShape.circle,
+        ),
         child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
       ),
     );
@@ -863,7 +974,10 @@ class _MicBtn extends StatelessWidget {
     return Container(
       width: 44,
       height: 44,
-      decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
+      decoration: const BoxDecoration(
+        color: _kTeal,
+        shape: BoxShape.circle,
+      ),
       child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
     );
   }
@@ -886,25 +1000,20 @@ class _ApiConfigBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: Row(
           children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              size: 16,
-              color: Color(0xFF795548),
-            ),
+            const Icon(Icons.info_outline_rounded,
+                size: 16, color: Color(0xFF795548)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 isSinhala
                     ? 'AI model URL සකසන්න — ස්පර්ශ කරන්න'
                     : 'Tap to connect your LLaMA model',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF795548)),
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFF795548)),
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              size: 16,
-              color: Color(0xFF795548),
-            ),
+            const Icon(Icons.chevron_right_rounded,
+                size: 16, color: Color(0xFF795548)),
           ],
         ),
       ),
@@ -916,10 +1025,8 @@ class _ApiConfigBanner extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text(
-          'Connect Willow AI',
-          style: TextStyle(color: _kDarkTeal, fontWeight: FontWeight.w700),
-        ),
+        title: const Text('Connect Willow AI',
+            style: TextStyle(color: _kDarkTeal, fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -936,16 +1043,13 @@ class _ApiConfigBanner extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'https://xxxx.ngrok-free.app',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                    borderRadius: BorderRadius.circular(10)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: _kTeal, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
+                    horizontal: 12, vertical: 10),
               ),
               style: const TextStyle(fontSize: 13),
             ),
@@ -961,8 +1065,7 @@ class _ApiConfigBanner extends StatelessWidget {
               backgroundColor: _kTeal,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               final url = ctrl.text.trim();
@@ -978,246 +1081,4 @@ class _ApiConfigBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Styled Message Text with Colorful Formatting ──────────────────────────────
-
-class _StyledMessageText extends StatelessWidget {
-  final String text;
-  final Color textColor;
-  final bool isUser;
-  final bool isDark;
-
-  const _StyledMessageText({
-    required this.text,
-    required this.textColor,
-    required this.isUser,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF5BA8A0);
-    final accentColors = [
-      const Color(0xFF5BA8A0),
-      const Color(0xFF4DB6AC),
-      const Color(0xFF00796B),
-      const Color(0xFF26A69A),
-      const Color(0xFF66BB6A),
-      const Color(0xFF42A5F5),
-      const Color(0xFF7E57C2),
-      const Color(0xFFEC407A),
-    ];
-
-    // Parse markdown-like formatting for emphasis
-    final segments = _parseSegments(text);
-
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: 14,
-          color: textColor,
-          height: 1.5,
-        ),
-        children: segments.map((seg) {
-          Color segColor = textColor;
-          FontWeight weight = FontWeight.normal;
-          FontStyle style = FontStyle.normal;
-          double size = 14;
-
-          switch (seg.type) {
-            case _SegmentType.bold:
-              weight = FontWeight.bold;
-              segColor = isUser ? Colors.white : primaryColor;
-              break;
-            case _SegmentType.italic:
-              style = FontStyle.italic;
-              segColor = textColor.withValues(alpha: 0.85);
-              break;
-            case _SegmentType.highlight:
-              return WidgetSpan(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    seg.text,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : primaryColor,
-                    ),
-                  ),
-                ),
-              );
-            case _SegmentType.emoji:
-              size = 18;
-              break;
-            case _SegmentType.quote:
-              return WidgetSpan(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 4, bottom: 4, left: 4),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: accentColors[math.Random().nextInt(accentColors.length)].withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: accentColors[math.Random().nextInt(accentColors.length)].withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    seg.text,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: textColor.withValues(alpha: 0.85),
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              );
-            case _SegmentType.listItem:
-              return WidgetSpan(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 2, bottom: 2),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 6, right: 8),
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: accentColors[math.Random().nextInt(accentColors.length)],
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      Flexible(
-                        child: Text(
-                          seg.text,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: textColor,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            case _SegmentType.normal:
-              break;
-          }
-
-          return TextSpan(
-            text: seg.text,
-            style: TextStyle(
-              fontSize: size,
-              fontWeight: weight,
-              fontStyle: style,
-              color: segColor,
-              height: 1.5,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  List<_TextSegment> _parseSegments(String input) {
-    final segments = <_TextSegment>[];
-    // Fixed regex: removed invalid emoji range, using separate emoji detection
-    final regex = RegExp(r'(\*\*.*?\*\*|__.*?__|\*.*?\*|_.*?_|`.*?`|>.*?(?=\n|$)|\n[-•]\s.*?(?=\n|$))');
-    int lastEnd = 0;
-
-    for (final match in regex.allMatches(input)) {
-      if (match.start > lastEnd) {
-        segments.add(_TextSegment(
-          text: input.substring(lastEnd, match.start),
-          type: _SegmentType.normal,
-        ));
-      }
-
-      final matched = match.group(0)!;
-      _SegmentType type;
-      String displayText = matched;
-
-      if (matched.startsWith('**') && matched.endsWith('**')) {
-        type = _SegmentType.bold;
-        displayText = matched.substring(2, matched.length - 2);
-      } else if (matched.startsWith('__') && matched.endsWith('__')) {
-        type = _SegmentType.bold;
-        displayText = matched.substring(2, matched.length - 2);
-      } else if (matched.startsWith('*') && matched.endsWith('*') && matched.length > 2) {
-        type = _SegmentType.italic;
-        displayText = matched.substring(1, matched.length - 1);
-      } else if (matched.startsWith('_') && matched.endsWith('_') && matched.length > 2) {
-        type = _SegmentType.italic;
-        displayText = matched.substring(1, matched.length - 1);
-      } else if (matched.startsWith('`') && matched.endsWith('`')) {
-        type = _SegmentType.highlight;
-        displayText = matched.substring(1, matched.length - 1);
-      } else if (matched.startsWith('>')) {
-        type = _SegmentType.quote;
-        displayText = matched.substring(1).trim();
-      } else if (matched.startsWith('\n-') || matched.startsWith('\n•')) {
-        type = _SegmentType.listItem;
-        displayText = matched.substring(2).trim();
-      } else {
-        type = _SegmentType.normal;
-      }
-
-      segments.add(_TextSegment(text: displayText, type: type));
-      lastEnd = match.end;
-    }
-
-    if (lastEnd < input.length) {
-      // Check remaining text for emojis
-      final remaining = input.substring(lastEnd);
-      // Emoji range: \u{1F600}-\u{1F64F} (emoticons)
-      final emojiRegex = RegExp(r'[\uD83D[\uDE00-\uDE4F]]');
-      int emojiLastEnd = 0;
-      for (final emojiMatch in emojiRegex.allMatches(remaining)) {
-        if (emojiMatch.start > emojiLastEnd) {
-          segments.add(_TextSegment(
-            text: remaining.substring(emojiLastEnd, emojiMatch.start),
-            type: _SegmentType.normal,
-          ));
-        }
-        segments.add(_TextSegment(
-          text: emojiMatch.group(0)!,
-          type: _SegmentType.emoji,
-        ));
-        emojiLastEnd = emojiMatch.end;
-      }
-      if (emojiLastEnd < remaining.length) {
-        segments.add(_TextSegment(
-          text: remaining.substring(emojiLastEnd),
-          type: _SegmentType.normal,
-        ));
-      }
-    }
-
-    return segments;
-  }
-}
-
-enum _SegmentType {
-  normal,
-  bold,
-  italic,
-  highlight,
-  emoji,
-  quote,
-  listItem,
-}
-
-class _TextSegment {
-  final String text;
-  final _SegmentType type;
-
-  const _TextSegment({required this.text, required this.type});
 }

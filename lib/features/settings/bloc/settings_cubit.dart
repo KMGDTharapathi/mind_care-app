@@ -13,12 +13,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> loadSettings() async {
     final prefs = await PreferencesService.getSharedPreferences();
     final themeModeStr = prefs.getString('theme_mode') ?? 'light';
-    // Reconcile the stored preference with the real OS permission so the
-    // toggle never claims notifications are on when the OS has revoked access.
-    final osAllowed = await NotificationService.areNotificationsEnabled();
-    final notificationsEnabled = osAllowed
-        ? (prefs.getBool('notifications_enabled') ?? false)
-        : false;
+    final notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     final timeStr = prefs.getString('notification_time');
     final repeatList = prefs.getStringList('repeat_days') ?? [];
     final message = prefs.getString('reminder_message') ??
@@ -54,41 +49,25 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<bool> setNotificationsEnabled(
     bool enabled, {
     Future<bool> Function()? onShowExplanation,
-    VoidCallback? onPermissionDenied,
   }) async {
-    if (!enabled) {
+    if (enabled) {
+      if (onShowExplanation != null) {
+        final proceed = await onShowExplanation();
+        if (!proceed) return false;
+      }
+      final granted = await NotificationService.requestPermissions();
+      if (!granted) return false;
+
+      await PreferencesService.setNotificationsEnabled(true);
+      emit(state.copyWith(notificationsEnabled: true));
+      await _reschedule();
+      return true;
+    } else {
       await NotificationService.cancelAll();
       await PreferencesService.setNotificationsEnabled(false);
       emit(state.copyWith(notificationsEnabled: false));
       return true;
     }
-
-    // Already granted at the OS level? Enable without prompting the user.
-    if (await NotificationService.areNotificationsEnabled()) {
-      await PreferencesService.setNotificationsEnabled(true);
-      emit(state.copyWith(notificationsEnabled: true));
-      await _reschedule();
-      return true;
-    }
-
-    // Not granted yet — explain why, then ask the OS for permission.
-    if (onShowExplanation != null) {
-      final proceed = await onShowExplanation();
-      if (!proceed) return false;
-    }
-
-    final granted = await NotificationService.requestPermissions();
-    if (!granted) {
-      // The system dialog was dismissed/denied (possibly permanently).
-      // Notify the UI so it can point the user to the OS settings.
-      onPermissionDenied?.call();
-      return false;
-    }
-
-    await PreferencesService.setNotificationsEnabled(true);
-    emit(state.copyWith(notificationsEnabled: true));
-    await _reschedule();
-    return true;
   }
 
   Future<void> setNotificationTime(TimeOfDay time) async {
@@ -115,17 +94,13 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   Future<void> _reschedule() async {
-    try {
-      await NotificationService.cancelAll();
-      final time = state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
-      await NotificationService.scheduleReminder(
-        time: time,
-        repeatDays: state.repeatDays,
-        message: state.reminderMessage,
-      );
-    } catch (e) {
-      debugPrint('Reminder reschedule failed: $e');
-    }
+    await NotificationService.cancelAll();
+    final time = state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
+    await NotificationService.scheduleReminder(
+      time: time,
+      repeatDays: state.repeatDays,
+      message: state.reminderMessage,
+    );
   }
 
   void updateAuthState(AuthUser? user) {

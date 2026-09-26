@@ -70,12 +70,6 @@ class AppStrings {
   );
   String get notNow => _s('දැන් නොවේ', 'Not Now');
   String get allow => _s('ඉඩ දෙන්න', 'Allow');
-  String get openSettings => _s('සැකසුම් විවෘත කරන්න', 'Open Settings');
-  String get notificationsDisabledTitle => _s('දැනුම්දීම් අහෝසි කිරීම්', 'Notifications Disabled');
-  String get notificationsDisabledMessage => _s(
-    'දැනුම්දීම් සදහා අවශ්‍ය අනුමැතිය නොලැබී ඇත. කරුණු කරන්න උපාංග සැකසුම් වලින් ඉඩ දෙන්න.',
-    'Notification permission was not granted. Please enable it in your device settings.',
-  );
 
   // ── Settings — Language section ───────────────────────────────────────────
   String get sectionLanguage => _s('භාෂාව', 'Language');
@@ -101,16 +95,6 @@ class AppStrings {
   String get startLoggingMood => _s(
     'ඔබේ ඉතිහාසය මෙහි බැලීමට ඔබේ මනෝභාවය ලොග් කිරීම ආරම්භ කරන්න.',
     'Start logging your mood to see your history here.',
-  );
-  String get moodEncouragementTitle => _s('නොගැඹුරුවෙන් ඉන්න — ඔබ විසින් වැඩි බලවත්', 'Don\'t give up — you are stronger than this');
-  String get moodEncouragementBody => _s(
-    'ඔබේ මනෝභාව අඳුරු වූ විටත්, ඔබේ අභ්‍යන්තර සාමය සහ බලවත්කම වැඩි ය. මෙම සතිය නිවැරදි කිරීමට සියලු පුරුදු කර ගන්න.',
-    'Even when things feel dark, your inner strength shines brighter. Take this week one moment at a time.',
-  );
-  String get moodAppreciationTitle => _s('ඔබ හොඳින් කටයුතු කරනවා — ඉතිරියට පැමිණෙන්න', 'You\'re doing great — keep shining');
-  String get moodAppreciationBody => _s(
-    'ඔබේ සතුටු මනෝභාව අවශ්‍යතාව පෙන්වන අතර, ඔබ සියල්ලත් නිසිව කටයුතු කරනවා. මෙම සාමාධිරූප ස්ථාවර රඳවා ගන්න.',
-    'Your positive moods show you\'re on the right path. Keep nurturing your wellbeing with the same care.',
   );
   String get recentEntries => _s('මෑත ඇතුළත් කිරීම්', 'Recent Entries');
   String get yesterdayLabel => _s('ඊයේ', 'Yesterday');
@@ -173,11 +157,6 @@ class AppStrings {
   String get remaining => _s('ඉතිරිව ඇත', 'remaining');
   String get ready => _s('සූදානම්', 'ready');
   String get paused => _s('විරාම', 'paused');
-  String get pause => _s('විරාමය', 'Pause');
-  String get resume => _s('නැවත ආරම්භ කරන්න', 'Resume');
-  String get endSession => _s('අවසන් කරන්න', 'End');
-  String get endSessionTitle => _s('හුස්ම අභ්‍යාසය අවසන් කරන්නද?', 'End breathing session?');
-  String get endSessionContent => _s('ඔබේ ප්‍රගතිය නැති වේ.', 'Your progress will be lost.');
   String get stepLabel => _s('පියවර', 'Step');
   String get beginner => _s('ආරම්භක', 'Beginner');
   String get intermediate => _s('මධ්‍යම', 'Intermediate');
@@ -229,15 +208,15 @@ class AppStrings {
   String get gameSnakeTitle => _s('සර්ප ක්‍රීඩාව', 'Snake Game');
   String get gameSnakeDesc => _s('සම්භාව්‍ය සර්පයා — ඵල කා, දිගු වෙන්න. සරල පාලන, ලිහිල් වේගය.', 'Classic snake — eat fruit, grow longer. Simple controls, relaxing pace.');
   String get gameSnakeMood => _s('😴 කම්මැලිකම', '😴 Lazy');
-  String get gameCandyCrushTitle => _s('කැන්ඩි ක්‍රශ්', 'Candy Crush');
-  String get gameCandyCrushDesc => _s('සමාන කැන්ඩි එකතු කර පිපිරවන්න. ස්වභාවිකව ලිහිල් වේගය.', 'Match same candies to pop them. Naturally relaxing pace.');
-  String get gameCandyCrushMood => _s('🍬 සුන්දර ස්තුති', '🍬 Sweet Joy');
-  String get gamePuzzleTitle => _s('පැසුල් ක්‍රීඩා', 'Puzzle Game');
-  String get gamePuzzleDesc => _s('පැසුල් සකස් කර රූප සකසන්න. නිශ්චල සහ සුන්දර වේගය.', 'Arrange pieces to form pictures. Calm and beautiful pace.');
-  String get gamePuzzleMood => _s('🧩 සන්සුන් පුරුදු', '🧩 Mindful Focus');
-  String get gameWordPuzzleTitle => _s('අකුරු පැසුල්', 'Word Puzzle');
-  String get gameWordPuzzleDesc => _s('අකුරු සකස් කර ශබ්ද සොයන්න. මැදිහත්කරණීය සහ දැනුම් වර්ධනී.', 'Form words by arranging letters. Meditative and vocabulary building.');
-  String get gameWordPuzzleMood => _s('🔤 දැනුම් වර්ධනය', '🔤 Brain Boost');
+  String get gamePatternTitle => _s('රටා ගැලපීම', 'Pattern Match');
+  String get gamePatternDesc => _s('කාඩ් පෙරළා ගැලපෙන emoji යුගල සොයන්න. මනස ක්ෂණිකව සන්සුන් කරයි.', 'Flip cards and find matching emoji pairs. Calms the mind instantly.');
+  String get gamePatternMood => _s('😤 ආතතිය', '😤 Stressed');
+  String get gameAimTitle => _s('ඉලක්ක සහ හෙළීම', 'Aim & Drop');
+  String get gameAimDesc => _s('බෝලය වමට සහ දකුණට ඉදිරියට යයි. ගැලපෙන වර්ණ කලාපයට හෙළීමට ස්පර්ශ කරන්න!', 'A ball swings left and right. Tap to drop it into the matching color zone!');
+  String get gameAimMood => _s('🎯 අවධානය', '🎯 Focus');
+  String get gameStackTitle => _s('ගොඩ ගැසීම', 'Stack Builder');
+  String get gameStackDesc => _s('ගෙවල් ගොඩ ගැසීමට ගමන් කරන කොටස් හෙළන්න. කාර්යය, විවේකය සහ විනෝදය සමතුලිත කරන්න!', 'Drop moving blocks to build a tower. Balance Work, Rest & Fun!');
+  String get gameStackMood => _s('😵 අධික බර', '😵 Overwhelmed');
 
   // ── Game UI strings ────────────────────────────────────────────────────────
   String get gameOver => _s('ක්‍රීඩාව අවසන්!', 'Game Over!');
@@ -267,134 +246,6 @@ class AppStrings {
     'Use the arrow buttons to move.\nEat the fruit to grow!\nDon\'t hit the walls or yourself.',
   );
   String get snakeHint => _s('💡 සර්පයා ගෙන යාමට පහළ ඊතල භාවිතා කරන්න!', '💡 Use the arrows below to move the snake!');
-
-  // ── Game how-to-play & assistant ───────────────────────────────────────────
-  String get howToPlay => _s('ක්‍රීඩා කරන ආකාරය', 'How to Play');
-  String get gameAssistantTitle => _s('ක්‍රීඩා සහකාර', 'Game Assistant');
-  String get gameAssistantTipLabel => _s('ඉඟිය', 'Tip');
-  String get gameAssistantGotIt => _s('හරි, තේරුණා!', 'Got it!');
-
-  List<String> get bubbleHowTo => isSinhala
-      ? [
-          'ඉහළට ඇද හෝ තට්ටු කර ඉලක්ක කරන්න.',
-          'එකම වර්ණයේ බුබුළු 3ක් ස්පර්ශ වන සේ වෙඩි තබන්න.',
-          'වර්ණ 3ක් එකට ගැලපීමෙන් බුබුළු පිපිරේ.',
-          'සියලු බුබුළු ඉවත් කර මට්ටම දිනන්න!',
-        ]
-      : [
-          'Aim by dragging or tapping above the bubbles.',
-          'Shoot to touch 3 same-colored bubbles together.',
-          'Bubbles pop when 3+ of the same color connect.',
-          'Clear ALL bubbles to win the level!',
-        ];
-  List<String> get snakeHowTo => isSinhala
-      ? [
-          'සර්පයා ගෙන යාමට ඊතල භාවිතා කරන්න.',
-          'ඵල කා වර්ධනය වන්න.',
-          'බිත්ති හෝ ඔබටම නොගැටෙන්න.',
-          'සෑම ඵලයක්ම ලකුණු 10කි!',
-        ]
-      : [
-          'Use the arrows to move the snake.',
-          'Eat the fruit to grow longer.',
-          'Avoid the walls and yourself.',
-          'Every fruit is worth 10 points!',
-        ];
-  List<String> get candyHowTo => isSinhala
-      ? [
-          'යාබද කැන්ඩි දෙකක් මාරු කරන්න.',
-          'එකම ඒවා 3ක් පෙළගස්වා ගන්න.',
-          '4+ක් ගැලපුවොත් විශේෂ කැන්ඩි සෑදේ!',
-          'ගමන් අවසන් වන තුළ ඉලක්ක ලකුණු ලබා ගන්න.',
-        ]
-      : [
-          'Swap two adjacent candies.',
-          'Line up 3 of the same type.',
-          'Match 4+ to create special candies!',
-          'Reach the target score before the moves run out.',
-        ];
-  List<String> get puzzleHowTo => isSinhala
-      ? [
-          'හිස් තැනට යාබද උළුවල් ස්පර්ශ කරන්න.',
-          'සංඛ්‍යා 1–15 නිවැරදි පිළිවෙළට සකසන්න.',
-          'හැකි තරම් අඩු ගමන් වලින් විසඳන්න!',
-          'සියල්ල පිළිවෙළට විට ඔබ දිනනවා!',
-        ]
-      : [
-          'Tap tiles next to the empty space.',
-          'Arrange tiles 1 to 15 in order.',
-          'Solve it in as few moves as possible!',
-          'You win when every number is in place!',
-        ];
-  List<String> get wordHowTo => isSinhala
-      ? [
-          'අකුරු තේරීමෙන් වචනය තනන්න.',
-          'ආපසු තැබීමට තෝරාගත් අකුරක් ස්පර්ශ කරන්න.',
-          'වැරදි නම් අකුරු නැවත මුසු වේ.',
-          'අඛණ්ඩව නිවැරදි වීමෙන් ලකුණු උපයන්න!',
-        ]
-      : [
-          'Tap letters in the pool to build the word.',
-          'Tap a chosen letter to return it.',
-          'A wrong guess reshuffles the letters.',
-          'Keep a streak of correct words for bonus points!',
-        ];
-
-  List<String> get bubbleTips => isSinhala
-      ? [
-          'ඉලක්කය පැත්තේ බිත්තියෙන් පැනිය හැක — කෝණික වෙඩි බොහෝ විට වඩා හොඳයි!',
-          'වර්ණ 2 වත් ඇති මට්ටම්වලදී බිත්ති පැනීමෙන් පහසුවෙන් ගැලපිය හැක.',
-          'වෙඩි තැබීමට පෙර මීළඟ බුබුළු වර්ණය බලන්න — ඊළඟට එන්නේ එයයි.',
-        ]
-      : [
-          'Shots can bounce off the side walls — angled shots often line up better!',
-          'In 2-color levels, a wall bounce can help you reach tough spots.',
-          'Watch the NEXT bubble color — that\'s what you\'ll shoot right after.',
-        ];
-  List<String> get snakeTips => isSinhala
-      ? [
-          'ක්‍රීඩාව ආරම්භයේ උපදෙස් මතක තබා ගන්න — දිශා අතරට විරුද්ධ පැත්තට හැරවීම වළක්වන්න.',
-          'බිත්තියට ආසන්නව යන විට දිශාව කලින්ම හරවන්න.',
-          'ලකුණු 50කට වරක් වේගය ඉහළ යයි — සූදානම් වන්න!',
-        ]
-      : [
-          'You can\'t reverse directly backwards — plan your turns.',
-          'When close to a wall, change direction early.',
-          'Every 50 points the speed increases — stay sharp!',
-        ];
-  List<String> get candyTips => isSinhala
-      ? [
-          'කැන්ඩි 4ක් හෝ 5ක් පෙළගැස්වීමෙන් විශේෂ කැන්ඩි සෑදේ — ඒවා මාරු කිරීමෙන් පිපිරවිය හැක!',
-          'කොම්බෝ පිපිරුම් වැඩි ලකුණු ගෙන දේ — ගැලපීම් දාමයක් තැනීමට උත්සාහ කරන්න.',
-          'ඉලක්ක ලකුණු වෙත අවධානය යොමු කරන්න — ගමන් ඉතිරි කර ගන්න.',
-        ]
-      : [
-          'Matching 4 or 5 candies creates specials — swap them to detonate!',
-          'Combos score extra — try to chain matches together.',
-          'Keep your eye on the target score and save your moves.',
-        ];
-  List<String> get puzzleTips => isSinhala
-      ? [
-          'පළමුව ඉහළම පේළිය නිවැරදි කරන්න, පසුව ඉදිරියට යන්න.',
-          'ඉහළ පේළි සවි කළ පසු ඒවා යළි නොකැඩෙන සේ වැඩ කරන්න.',
-          'හොඳම කාලය ගණන අඩු කිරීමට හිස් තැන ආසන්නයේම තබා ගන්න.',
-        ]
-      : [
-          'Fix the top row first, then work your way down.',
-          'Once the top rows are set, avoid disturbing them.',
-          'Keep the empty space near the tiles you\'re arranging.',
-        ];
-  List<String> get wordTips => isSinhala
-      ? [
-          'තේරීමෙන් පෙර වචනයේ අකුරු ගණන බලන්න.',
-          'ස්වර සහ ව්‍යාංජන එකිනෙක අසල තබා උත්සාහ කරන්න.',
-          'අඛණ්ඩ නිවැරදි වචන ස්ට්‍රීක් බෝනස් ලකුණු දෙයි!',
-        ]
-      : [
-          'Check the letter count before you start choosing.',
-          'Look for common patterns — vowels beside consonants.',
-          'A correct-word streak earns bonus points each time!',
-        ];
 
   // Pattern Match
   String get patternInstructions => _s(
@@ -478,17 +329,6 @@ class AppStrings {
   String get oneTimeEvent => _s('එක් වරක් සිදුවීම', 'One-time event');
   String get addToCalendarBtn => _s('දිනදර්ශනයට එකතු කරන්න', 'Add to Calendar');
   String get calendarInfoNote => _s('මෙය සිදුවීම තහවුරු කිරීමට ඔබේ උපාංග දිනදර්ශන යෙදුම විවෘත කරයි. MindCare වෙත දත්ත යවන්නේ නැත.', 'This opens your device calendar app to confirm the event. No data is sent to MindCare.');
-  String get calendarProviderLabel => _s('දිනදර්ශනය', 'Calendar');
-  String get calendarProviderHint => _s('එය එකතු කළ යුතු දිනදර්ශනය තෝරන්න', 'Choose which calendar to add it to');
-  String get providerGoogle => _s('Google දිනදර්ශනය', 'Google Calendar');
-  String get providerApple => _s('Apple දිනදර්ශනය', 'Apple Calendar');
-  String get providerOutlook => _s('Outlook', 'Outlook');
-  String get providerSamsung => _s('Samsung දිනදර්ශනය', 'Samsung Calendar');
-  String get providerOther => _s('වෙනත් / පෙරනිමිය', 'Other / Default');
-  String get calendarAddedSnack => _s(
-        'දිනදර්ශනයට එකතු කරන ලදී',
-        'Added to calendar',
-      );
   // Reminder type labels
   String get typeMoodCheckin => _s('මනෝභාව පරීක්ෂාව', 'Mood Check-in');
   String get typeBreathing => _s('හුස්ම ගැනීමේ සැසිය', 'Breathing Session');
