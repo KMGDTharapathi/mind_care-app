@@ -37,7 +37,6 @@ dependencies:
   flutter_svg: ^2.2.4
   audio_service: ^0.18.19
   gal: ^2.3.3
-  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:

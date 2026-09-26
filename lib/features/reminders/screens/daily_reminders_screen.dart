@@ -374,6 +374,9 @@ class _CalendarTabState extends State<_CalendarTab> {
   int _selectedTypeIndex = 0;
   int _selectedProviderIndex = 0;
   bool _isRecurring = false;
+  String _customLabel = ''; // used when the "Custom" type is selected
+
+  static const _customTypeIndex = 4;
 
   static const _typeIcons = [
     Icons.favorite_border_rounded,
@@ -517,9 +520,46 @@ class _CalendarTabState extends State<_CalendarTab> {
           ),
         ),
 
-        const SizedBox(height: 12),
+        // Custom reminder-type label editor — shown when "Custom" is selected.
+        // The user's message shows on the calendar that day.
+        if (_selectedTypeIndex == _customTypeIndex) ...[
+          const SizedBox(height: 12),
+          _ReminderCard(
+            isDark: isDark,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const _IconCircle(
+                      icon: Icons.edit_outlined,
+                      color: Color(0xFFFF8A65),
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      s.reminderMessage,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : _kDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _MessagePicker(
+                  current: _customLabel,
+                  isDark: isDark,
+                  presets: const [],
+                  emptyFallback: s.typeCustom,
+                  onChanged: (msg) => setState(() => _customLabel = msg),
+                ),
+              ],
+            ),
+          ),
+        ],
 
-        // Calendar provider selector
+        const SizedBox(height: 12),
         _ReminderCard(
           isDark: isDark,
           child: Column(
@@ -828,7 +868,11 @@ class _CalendarTabState extends State<_CalendarTab> {
   }
 
   Future<void> _addToCalendar(List<String> typeLabels) async {
-    final selectedType = typeLabels[_selectedTypeIndex];
+    // For the "Custom" type, the user's own message is the event label.
+    final selectedType = _selectedTypeIndex == _customTypeIndex &&
+            _customLabel.trim().isNotEmpty
+        ? _customLabel.trim()
+        : typeLabels[_selectedTypeIndex];
     final s = LanguageProvider.of(context);
     final provider = _providerLabels(s)[_selectedProviderIndex];
     final start = DateTime(
@@ -1131,12 +1175,14 @@ class _MessagePicker extends StatefulWidget {
   final String current;
   final bool isDark;
   final List<String> presets;
+  final String? emptyFallback;
   final ValueChanged<String> onChanged;
 
   const _MessagePicker({
     required this.current,
     required this.isDark,
     required this.presets,
+    this.emptyFallback,
     required this.onChanged,
   });
 
@@ -1146,7 +1192,8 @@ class _MessagePicker extends StatefulWidget {
 
 class _MessagePickerState extends State<_MessagePicker> {
   late final TextEditingController _controller;
-  Timer? _debounce;
+  bool _editing = false;
+  bool _showActions = false;
 
   @override
   void initState() {
@@ -1156,88 +1203,229 @@ class _MessagePickerState extends State<_MessagePicker> {
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
-  void _commit(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () {
-      final trimmed = value.trim();
-      if (trimmed.isNotEmpty) widget.onChanged(trimmed);
+  void _save() {
+    var msg = _controller.text.trim();
+    // Empty input → fall back to the first preset (or emptyFallback) so the
+    // message is never blank. The user can "delete and save" to reset.
+    if (msg.isEmpty) {
+      msg = widget.presets.isNotEmpty
+          ? widget.presets.first
+          : (widget.emptyFallback ?? '');
+    }
+    _controller.text = msg;
+    _controller.selection = TextSelection.collapsed(offset: msg.length);
+    widget.onChanged(msg);
+    final s = LanguageProvider.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(s.saved),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _kTeal,
+      ),
+    );
+    setState(() {
+      _editing = false;
+      _showActions = false;
+    });
+  }
+
+  void _delete() {
+    // Deleting clears the saved message and lets the user type a new one
+    // (or tap save to fall back to the default preset).
+    _controller.clear();
+    setState(() {
+      _editing = true;
+      _showActions = false;
     });
   }
 
   void _selectPreset(String msg) {
-    _debounce?.cancel();
     _controller.text = msg;
     _controller.selection = TextSelection.collapsed(offset: msg.length);
     widget.onChanged(msg);
+    setState(() => _editing = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    final trimmed = _controller.text.trim();
     final isCustom =
-        !widget.presets.contains(widget.current) && widget.current.trim().isNotEmpty;
+        trimmed.isNotEmpty && !widget.presets.contains(trimmed);
     return Column(
       children: [
-        // Free-text custom message
-        TextField(
-          controller: _controller,
-          maxLines: 3,
-          minLines: 1,
-          onChanged: _commit,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          decoration: InputDecoration(
-            hintText: widget.presets.firstOrNull ?? 'Type a reminder message…',
-            hintStyle: TextStyle(
+        if (!_editing)
+          // Display mode — shows the saved message. Tapping it reveals the
+          // small edit + delete icon buttons.
+          GestureDetector(
+            onTap: () => setState(() => _showActions = !_showActions),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: isCustom
+                    ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
+                    : (widget.isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.grey.shade50),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isCustom
+                      ? const Color(0xFFFF8A65)
+                      : Colors.transparent,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.notifications_active_outlined,
+                    size: 20,
+                    color: Color(0xFFFF8A65),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      trimmed.isEmpty
+                          ? (widget.presets.firstOrNull ??
+                              widget.emptyFallback ??
+                              '')
+                          : trimmed,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color:
+                            widget.isDark ? Colors.white : Colors.black87,
+                        height: 1.4,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Small edit / delete buttons — only while actions are shown
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 180),
+                    child: _showActions
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _SmallActionButton(
+                                icon: Icons.edit_rounded,
+                                color: const Color(0xFFFF8A65),
+                                tooltip: s.edit,
+                                onPressed: () {
+                                  setState(() => _editing = true);
+                                  // Put the cursor at the end of the editable text.
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    _controller.selection =
+                                        TextSelection.collapsed(
+                                      offset: _controller.text.length,
+                                    );
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              _SmallActionButton(
+                                icon: Icons.delete_outline_rounded,
+                                color: Colors.red.shade400,
+                                tooltip: s.delete,
+                                onPressed: _delete,
+                              ),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else ...[
+          // Edit mode — editable field with the Save button.
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLines: 3,
+            minLines: 1,
+            style: TextStyle(
               fontSize: 14,
-              color: isDark ? Colors.white38 : Colors.grey.shade500,
+              color: widget.isDark ? Colors.white : Colors.black87,
             ),
-            prefixIcon: const Icon(
-              Icons.edit_rounded,
-              size: 20,
-              color: Color(0xFFFF8A65),
-            ),
-            filled: true,
-            fillColor: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isCustom
-                    ? const Color(0xFFFF8A65)
-                    : Colors.transparent,
-                width: 1.5,
+            decoration: InputDecoration(
+              hintText:
+                  widget.presets.firstOrNull ??
+                  widget.emptyFallback ??
+                  'Type a reminder message…',
+              hintStyle: TextStyle(
+                fontSize: 14,
+                color: widget.isDark ? Colors.white38 : Colors.grey.shade500,
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isCustom
-                    ? const Color(0xFFFF8A65)
-                    : Colors.transparent,
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
+              prefixIcon: const Icon(
+                Icons.edit_rounded,
+                size: 20,
                 color: Color(0xFFFF8A65),
-                width: 1.5,
+              ),
+              filled: true,
+              fillColor: widget.isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.grey.shade50,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF8A65),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF8A65),
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF8A65),
+                  width: 1.5,
+                ),
               ),
             ),
           ),
-        ),
+          const SizedBox(height: 10),
+          // Save the typed message as the reminder message.
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save_rounded, size: 18),
+              label: Text(s.save),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF8A65),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         ...widget.presets.map((msg) {
           final isSelected = _controller.text == msg;
@@ -1250,7 +1438,7 @@ class _MessagePickerState extends State<_MessagePicker> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
-                    : (isDark
+                    : (widget.isDark
                           ? Colors.white.withValues(alpha: 0.04)
                           : Colors.grey.shade50),
                 borderRadius: BorderRadius.circular(12),
@@ -1276,7 +1464,7 @@ class _MessagePickerState extends State<_MessagePicker> {
                       msg,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? Colors.white70 : Colors.black87,
+                        color: widget.isDark ? Colors.white70 : Colors.black87,
                         height: 1.4,
                       ),
                     ),
@@ -1287,6 +1475,36 @@ class _MessagePickerState extends State<_MessagePicker> {
           );
         }),
       ],
+    );
+  }
+}
+
+class _SmallActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _SmallActionButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: tooltip,
+      icon: Icon(icon, size: 18, color: color),
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.all(4),
+      constraints: const BoxConstraints(),
+      style: IconButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     );
   }
 }
