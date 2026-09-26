@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
+import 'package:mind_care_app/features/music/services/calm_audio_handler.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/services/auth/auth_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
@@ -86,8 +88,7 @@ Future<_InitResult> _heavyInit() async {
   // can block the main isolate.
   // Guarded: a transient channel error here must not abort the rest of init.
   try {
-    await PreferencesService.warmUp()
-        .timeout(const Duration(seconds: 3));
+    await PreferencesService.warmUp().timeout(const Duration(seconds: 3));
   } catch (e) {
     debugPrint('Prefs warmup failed: $e');
   }
@@ -143,10 +144,14 @@ Future<_InitResult> _heavyInit() async {
     ).catchError((e) => debugPrint('ServiceLocator failed: $e')),
   );
 
+  // Notifications first (must create the HIGH-importance music channel before
+  // audio_service binds to it), then the platform media session (media
+  // notification + lock screen controls + foreground service so music keeps
+  // playing in the background). All fire-and-forget; they don't block startup.
   unawaited(
-    NotificationService.init(
-      navigatorKey: navigatorKey,
-    ).catchError((e) => debugPrint('Notifications failed: $e')),
+    NotificationService.init(navigatorKey: navigatorKey)
+        .then((_) => _initAudioService())
+        .catchError((e) => debugPrint('Notifications failed: $e')),
   );
 
   unawaited(
@@ -156,6 +161,33 @@ Future<_InitResult> _heavyInit() async {
   );
 
   return _InitResult(onboardingComplete: onboardingComplete);
+}
+
+/// Initializes the OS media session used by the Calm Music player.
+///
+/// audio_service runs a foreground service on Android/iOS so the playback
+/// survives backgrounding and exposes media controls (notification + lock
+/// screen). On platforms without media-session support, playback still works,
+/// just without lock-screen controls.
+Future<void> _initAudioService() async {
+  try {
+    final handler = await AudioService.init(
+      // Return the SAME shared instance the music screen uses — builder only
+      // runs here, so identity is preserved if a screen opened first.
+      builder: () => CalmAudioHandler.instance ??= CalmAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'mindcare_music',
+        androidNotificationChannelName: 'Calm Music',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: true,
+      ),
+    );
+    CalmAudioHandler.instance ??= handler;
+  } catch (e) {
+    // No media session on this platform — CalmMusicScreen already falls back
+    // to playing through the local handler without lock-screen controls.
+    debugPrint('AudioService init skipped: $e');
+  }
 }
 
 class _InitResult {
@@ -293,7 +325,12 @@ class _EarlySplash extends StatelessWidget {
 /// No-op implementations for Firebase services when running without Firebase
 class NoOpCrashlyticsService implements CrashlyticsService {
   @override
-  Future<void> recordError(Object error, StackTrace? stack, {String? reason, bool fatal = false}) async {
+  Future<void> recordError(
+    Object error,
+    StackTrace? stack, {
+    String? reason,
+    bool fatal = false,
+  }) async {
     debugPrint('NoOpCrashlytics: $error');
   }
 
@@ -332,25 +369,20 @@ class NoOpAnalyticsService implements AnalyticsService {
 
 class NoOpAuthService implements AuthService {
   final _controller = StreamController<auth_models.AuthUser?>.broadcast();
-  
+
   NoOpAuthService() {
     // Emit an anonymous user immediately to satisfy the interface contract
-    _controller.add(auth_models.AuthUser(
-      uid: 'anonymous',
-      email: null,
-      isAnonymous: true,
-    ));
+    _controller.add(
+      auth_models.AuthUser(uid: 'anonymous', email: null, isAnonymous: true),
+    );
   }
 
   @override
   Stream<auth_models.AuthUser?> get authStateChanges => _controller.stream;
 
   @override
-  auth_models.AuthUser? get currentUser => auth_models.AuthUser(
-    uid: 'anonymous',
-    email: null,
-    isAnonymous: true,
-  );
+  auth_models.AuthUser? get currentUser =>
+      auth_models.AuthUser(uid: 'anonymous', email: null, isAnonymous: true);
 
   @override
   Future<auth_models.AuthUser> signInAnonymously() async {
@@ -358,7 +390,10 @@ class NoOpAuthService implements AuthService {
   }
 
   @override
-  Future<auth_models.AuthUser> signInWithEmail(String email, String password) async {
+  Future<auth_models.AuthUser> signInWithEmail(
+    String email,
+    String password,
+  ) async {
     return currentUser!;
   }
 
@@ -368,7 +403,10 @@ class NoOpAuthService implements AuthService {
   }
 
   @override
-  Future<auth_models.AuthUser> createAccountWithEmail(String email, String password) async {
+  Future<auth_models.AuthUser> createAccountWithEmail(
+    String email,
+    String password,
+  ) async {
     return currentUser!;
   }
 

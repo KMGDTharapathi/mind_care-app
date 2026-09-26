@@ -9,6 +9,8 @@ class SettingsState extends Equatable {
   final String? userEmail;
   final bool isAuthenticated;
   final bool analyticsConsent;
+  final String chatTheme; // ChatThemeId id
+  final String chatFont; // ChatFontId id
 
   const SettingsState({
     this.themeMode = ThemeMode.light,
@@ -19,6 +21,8 @@ class SettingsState extends Equatable {
     this.userEmail,
     this.isAuthenticated = false,
     this.analyticsConsent = false,
+    this.chatTheme = 'spring',
+    this.chatFont = 'normal',
   });
 
   SettingsState copyWith({
@@ -30,6 +34,8 @@ class SettingsState extends Equatable {
     String? userEmail,
     bool? isAuthenticated,
     bool? analyticsConsent,
+    String? chatTheme,
+    String? chatFont,
     bool clearUserEmail = false,
   }) {
     return SettingsState(
@@ -41,6 +47,8 @@ class SettingsState extends Equatable {
       userEmail: clearUserEmail ? null : (userEmail ?? this.userEmail),
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       analyticsConsent: analyticsConsent ?? this.analyticsConsent,
+      chatTheme: chatTheme ?? this.chatTheme,
+      chatFont: chatFont ?? this.chatFont,
     );
   }
 
@@ -68,5 +76,7 @@ class SettingsState extends Equatable {
         userEmail,
         isAuthenticated,
         analyticsConsent,
+        chatTheme,
+        chatFont,
       ];
 }

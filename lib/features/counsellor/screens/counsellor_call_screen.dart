@@ -9,6 +9,40 @@ import '../data/doctor_seed_data.dart';
 const _kTeal = Color(0xFF5BA8A0);
 const _kDark = Color(0xFF1A4A4A);
 
+/// Best location text for a doctor — hospital + full address when present,
+/// else just the hospital/clinic name. Includes the hospital so Google Maps
+/// can geocode the place instead of a bare street address.
+String _doctorLocationQuery(Doctor doctor) {
+  final address = doctor.address?.trim() ?? '';
+  if (address.isNotEmpty) {
+    return '$address, ${doctor.hospital}';
+  }
+  return doctor.hospital;
+}
+
+/// Opens Google Maps for the given place query. Uses the official Maps
+/// deep link so it opens the Maps app (not a browser) and geocodes the text.
+///
+/// Note: on Android 11+, `canLaunchUrl` can return false due to package
+/// visibility even though the intent would resolve — so we try `launchUrl`
+/// directly and only report when it actually throws.
+Future<void> _openInMaps(BuildContext context, String query) async {
+  final encoded = Uri.encodeComponent(query);
+  final uri = Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=$encoded',
+  );
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    debugPrint('Failed to open maps: $e');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open Google Maps')),
+      );
+    }
+  }
+}
+
 class CounsellorCallScreen extends StatefulWidget {
   const CounsellorCallScreen({super.key});
 
@@ -676,6 +710,36 @@ class _DoctorCard extends StatelessWidget {
                           .map((l) => _Chip(label: l))
                           .toList(),
                     ),
+                    const SizedBox(height: 6),
+                    // Tappable location → opens Google Maps
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () =>
+                          _openInMaps(context, _doctorLocationQuery(doctor)),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              _doctorLocationQuery(doctor),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.orange,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.orange,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -864,13 +928,7 @@ class _DoctorProfileSheet extends StatelessWidget {
                 icon: Icons.location_on_outlined,
                 label: doctor.address!,
                 color: Colors.orange,
-                onTap: () async {
-                  final encoded = Uri.encodeComponent(doctor.address!);
-                  final uri = Uri.parse('https://maps.google.com/?q=$encoded');
-                  if (await canLaunchUrl(uri)) {
-                    launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
+                onTap: () => _openInMaps(context, _doctorLocationQuery(doctor)),
               ),
             if (doctor.clinicHours != null && doctor.clinicHours!.isNotEmpty)
               Padding(

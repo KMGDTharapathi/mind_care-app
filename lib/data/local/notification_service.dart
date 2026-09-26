@@ -61,8 +61,9 @@ class NotificationService {
       }
     }
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -70,8 +71,7 @@ class NotificationService {
     );
 
     await flutterLocalNotificationsPlugin.initialize(
-      const InitializationSettings(
-          android: androidSettings, iOS: iosSettings),
+      const InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         // Media controls take priority over plain taps.
         switch (response.actionId) {
@@ -92,7 +92,8 @@ class NotificationService {
 
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     await androidPlugin?.createNotificationChannel(
       const AndroidNotificationChannel(
@@ -102,12 +103,17 @@ class NotificationService {
       ),
     );
 
+    // A channel's importance is fixed once created: an earlier install created
+    // 'mindcare_music' at LOW, and Android ignores later upgrades. Delete and
+    // recreate it so a media notification actually surfaces (heads-up + shade).
+    await androidPlugin?.deleteNotificationChannel(_musicChannelId);
     await androidPlugin?.createNotificationChannel(
       const AndroidNotificationChannel(
         _musicChannelId,
         _musicChannelName,
-        description: 'Shows the currently playing song with controls',
-        importance: Importance.low,
+        description:
+            'Controls the currently playing calm music from the notification shade',
+        importance: Importance.high,
         enableVibration: false,
         playSound: false,
       ),
@@ -128,18 +134,34 @@ class NotificationService {
   static Future<bool> areNotificationsEnabled() async {
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin != null) {
       return await androidPlugin.areNotificationsEnabled() ?? false;
     }
     final iosPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (iosPlugin != null) {
       final opts = await iosPlugin.checkPermissions();
       return opts?.isEnabled ?? opts?.isProvisionalEnabled ?? false;
     }
     // Desktop / web: notifications are assumed to be allowed.
+    return true;
+  }
+
+  /// Requests notification permission (Android 13+). Returns true when granted
+  /// or not required. Unlike [requestPermissions] it does NOT prompt for exact
+  /// alarms — used by the music player so its media notification can show.
+  static Future<bool> requestMediaPermission() async {
+    final androidPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (androidPlugin != null) {
+      return await androidPlugin.requestNotificationsPermission() ?? false;
+    }
     return true;
   }
 
@@ -153,8 +175,10 @@ class NotificationService {
       );
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-      return launchUrl(Uri.parse('app-settings:'),
-          mode: LaunchMode.externalApplication);
+      return launchUrl(
+        Uri.parse('app-settings:'),
+        mode: LaunchMode.externalApplication,
+      );
     }
     return false;
   }
@@ -162,7 +186,8 @@ class NotificationService {
   static Future<bool> requestPermissions() async {
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin != null) {
       final granted =
           await androidPlugin.requestNotificationsPermission() ?? false;
@@ -178,10 +203,14 @@ class NotificationService {
     }
     final iosPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (iosPlugin != null) {
       return await iosPlugin.requestPermissions(
-              alert: true, badge: true, sound: true) ??
+            alert: true,
+            badge: true,
+            sound: true,
+          ) ??
           false;
     }
     return true;
@@ -260,7 +289,8 @@ class NotificationService {
     // so reminders still fire — just possibly a few minutes late.
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final canScheduleExact =
         await androidPlugin?.canScheduleExactNotifications() ?? false;
     final scheduleMode = canScheduleExact
@@ -346,7 +376,13 @@ class NotificationService {
     final now = tz.TZDateTime.now(tz.local);
     // Dart weekday: 1=Mon…7=Sun — same as our convention
     var candidate = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day, time.hour, time.minute);
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      time.hour,
+      time.minute,
+    );
 
     // Advance until we hit the right weekday
     while (candidate.weekday != weekday || candidate.isBefore(now)) {

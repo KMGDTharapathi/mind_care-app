@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1125,7 +1127,7 @@ class _DayPicker extends StatelessWidget {
 
 // ── Message picker ────────────────────────────────────────────────────────────
 
-class _MessagePicker extends StatelessWidget {
+class _MessagePicker extends StatefulWidget {
   final String current;
   final bool isDark;
   final List<String> presets;
@@ -1139,55 +1141,152 @@ class _MessagePicker extends StatelessWidget {
   });
 
   @override
+  State<_MessagePicker> createState() => _MessagePickerState();
+}
+
+class _MessagePickerState extends State<_MessagePicker> {
+  late final TextEditingController _controller;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.current);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _commit(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      final trimmed = value.trim();
+      if (trimmed.isNotEmpty) widget.onChanged(trimmed);
+    });
+  }
+
+  void _selectPreset(String msg) {
+    _debounce?.cancel();
+    _controller.text = msg;
+    _controller.selection = TextSelection.collapsed(offset: msg.length);
+    widget.onChanged(msg);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isCustom =
+        !widget.presets.contains(widget.current) && widget.current.trim().isNotEmpty;
     return Column(
-      children: presets.map((msg) {
-        final isSelected = current == msg;
-        return GestureDetector(
-          onTap: () => onChanged(msg),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.grey.shade50),
+      children: [
+        // Free-text custom message
+        TextField(
+          controller: _controller,
+          maxLines: 3,
+          minLines: 1,
+          onChanged: _commit,
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+          decoration: InputDecoration(
+            hintText: widget.presets.firstOrNull ?? 'Type a reminder message…',
+            hintStyle: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white38 : Colors.grey.shade500,
+            ),
+            prefixIcon: const Icon(
+              Icons.edit_rounded,
+              size: 20,
+              color: Color(0xFFFF8A65),
+            ),
+            filled: true,
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
+              borderSide: BorderSide(
+                color: isCustom
                     ? const Color(0xFFFF8A65)
                     : Colors.transparent,
                 width: 1.5,
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  isSelected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  size: 18,
-                  color: isSelected ? const Color(0xFFFF8A65) : Colors.grey,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    msg,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isCustom
+                    ? const Color(0xFFFF8A65)
+                    : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFFFF8A65),
+                width: 1.5,
+              ),
             ),
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(height: 12),
+        ...widget.presets.map((msg) {
+          final isSelected = _controller.text == msg;
+          return GestureDetector(
+            onTap: () => _selectPreset(msg),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
+                    : (isDark
+                          ? Colors.white.withValues(alpha: 0.04)
+                          : Colors.grey.shade50),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFFFF8A65)
+                      : Colors.transparent,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 18,
+                    color: isSelected ? const Color(0xFFFF8A65) : Colors.grey,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      msg,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 }

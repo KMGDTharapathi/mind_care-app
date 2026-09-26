@@ -2,17 +2,19 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
+import '../models/chat_style.dart';
+import '../models/wellness_feature.dart';
+import '../services/chat_mood.dart';
 import '../services/willow_engine.dart';
 import '../services/willow_api_service.dart';
+import '../../settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDarkTeal = Color(0xFF1A4A4A);
-const _kBg = Color(0xFFF0F9F9);
-const _kUserBubble = Color(0xFFDCF8C6);
-const _kWillowBubble = Colors.white;
 
 class WillowChatScreen extends StatefulWidget {
   final String lang;
@@ -56,7 +58,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     // Welcome message
     Future.delayed(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      _addWillowMessage(_engine.welcomeMessage());
+      _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
     });
   }
 
@@ -82,12 +84,13 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     });
   }
 
-  void _addWillowMessage(String text) {
+  void _addWillowMessage(WillowReply reply) {
     final msg = ChatMessage.text(
       id: _uuid.v4(),
       sender: MessageSender.willow,
-      text: text,
+      text: reply.text,
       timestamp: DateTime.now(),
+      recommendations: reply.recommendations,
     );
     setState(() => _messages.add(msg));
     _scrollToBottom();
@@ -211,11 +214,15 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSi = appLanguage.value.isSinhala;
-    final bg = isDark ? const Color(0xFF0D1A1A) : _kBg;
+    final settings = context.watch<SettingsCubit>().state;
+    final chatTheme = ChatTheme.fromId(settings.chatTheme);
+    final chatFont = ChatFont.fromId(settings.chatFont);
+    final accent = chatTheme.accent(isDark);
+    final bg = isDark ? chatTheme.backgroundDark : chatTheme.backgroundLight;
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: _buildAppBar(isDark, isSi),
+      appBar: _buildAppBar(isDark, isSi, chatTheme, chatFont),
       body: Column(
         children: [
           // API config banner — shown when ngrok URL not set
@@ -233,11 +240,15 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                   itemCount: _messages.length + (_isTyping ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (_isTyping && index == _messages.length) {
-                      return _TypingIndicator();
+                      return _TypingIndicator(accent: accent);
                     }
                     return _MessageBubble(
                       message: _messages[index],
                       isDark: isDark,
+                      accent: accent,
+                      fontFamily: chatFont.family,
+                      userLight: chatTheme.userBubbleLight,
+                      userDark: chatTheme.userBubbleDark,
                     );
                   },
                 ),
@@ -246,7 +257,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                     bottom: 8,
                     right: 12,
                     child: FloatingActionButton.small(
-                      backgroundColor: _kTeal,
+                      backgroundColor: accent,
                       onPressed: () => _scrollToBottom(),
                       child: const Icon(
                         Icons.keyboard_arrow_down_rounded,
@@ -262,6 +273,8 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             hasText: _hasText,
             isDark: isDark,
             isSinhala: isSi,
+            accent: accent,
+            fontFamily: chatFont.family,
             onSend: _sendText,
             onAttach: _pickAttachment,
           ),
@@ -270,9 +283,15 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark, bool isSi) {
+  PreferredSizeWidget _buildAppBar(
+    bool isDark,
+    bool isSi,
+    ChatTheme theme,
+    ChatFont font,
+  ) {
+    final headerColor = theme.header(isDark);
     return AppBar(
-      backgroundColor: _kTeal,
+      backgroundColor: headerColor,
       foregroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
@@ -303,6 +322,13 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         ],
       ),
       actions: [
+        // Pick chat theme + font face
+        IconButton(
+          tooltip: isSi ? 'තේමාව සහ අකුරු' : 'Chat theme & font',
+          icon: const Icon(Icons.palette_outlined),
+          color: Colors.white,
+          onPressed: () => _showStyleSheet(isSi, theme, font),
+        ),
         // Tap to update API URL
         GestureDetector(
           onTap: () {
@@ -344,6 +370,21 @@ class _WillowChatScreenState extends State<WillowChatScreen>
           ),
         ),
       ],
+    );
+  }
+
+  void _showStyleSheet(bool isSi, ChatTheme currentTheme, ChatFont currentFont) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _ChatStyleSheet(
+        isSinhala: isSi,
+        currentTheme: currentTheme.id,
+        currentFont: currentFont.id,
+      ),
     );
   }
 }
@@ -422,15 +463,37 @@ class _WillowAvatar extends StatelessWidget {
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isDark;
-  const _MessageBubble({required this.message, required this.isDark});
+  final Color accent;
+  final String? fontFamily;
+  final Color userLight;
+  final Color userDark;
+
+  const _MessageBubble({
+    required this.message,
+    required this.isDark,
+    required this.accent,
+    this.fontFamily,
+    required this.userLight,
+    required this.userDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isUser = message.sender == MessageSender.user;
+    final mood = isUser
+        ? ChatMood.neutral
+        : ChatMoodDetector.detect(
+            message.content,
+            isSinhala: appLanguage.value.isSinhala,
+          );
+    final palette = ChatMoodDetector.paletteFor(mood);
     final bubbleColor = isUser
-        ? (isDark ? const Color(0xFF1B5E20) : _kUserBubble)
-        : (isDark ? const Color(0xFF1E3535) : _kWillowBubble);
-    final textColor = isDark ? Colors.white : _kDarkTeal;
+        ? (isDark ? userDark : userLight)
+        : (isDark ? palette.bubbleDark : palette.bubbleLight);
+    final textColor = isUser
+        ? (isDark ? Colors.white : _kDarkTeal)
+        : (isDark ? palette.textDark : palette.textLight);
+    final accentColor = isUser ? accent : palette.accent;
     final timeColor = isDark ? Colors.white38 : Colors.black38;
 
     return Padding(
@@ -467,7 +530,16 @@ class _MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildContent(textColor),
+                  _buildContent(textColor, accentColor),
+                  if (!isUser && message.recommendations.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _RecommendationChips(
+                      recommendations: message.recommendations,
+                      isDark: isDark,
+                      accent: accent,
+                      fontFamily: fontFamily,
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -480,7 +552,7 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       if (isUser) ...[
                         const SizedBox(width: 3),
-                        Icon(Icons.done_all_rounded, size: 13, color: _kTeal),
+                        Icon(Icons.done_all_rounded, size: 13, color: accent),
                       ],
                     ],
                   ),
@@ -494,14 +566,16 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(Color textColor) {
+  Widget _buildContent(Color textColor, Color accentColor) {
     switch (message.type) {
       case MessageType.text:
         return _StyledMessageText(
           text: message.content,
           textColor: textColor,
+          accentColor: accentColor,
           isUser: message.sender == MessageSender.user,
           isDark: isDark,
+          fontFamily: fontFamily,
         );
       case MessageType.image:
         return ClipRRect(
@@ -528,12 +602,12 @@ class _MessageBubble extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _kTeal.withValues(alpha: 0.15),
+                color: accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.insert_drive_file_outlined,
-                color: _kTeal,
+                color: accent,
                 size: 22,
               ),
             ),
@@ -627,9 +701,101 @@ class _VoiceBubble extends StatelessWidget {
   }
 }
 
+// ── Recommendation Chips ──────────────────────────────────────────────────────
+
+class _RecommendationChips extends StatelessWidget {
+  final List<String> recommendations;
+  final bool isDark;
+  final Color accent;
+  final String? fontFamily;
+
+  const _RecommendationChips({
+    required this.recommendations,
+    required this.isDark,
+    required this.accent,
+    this.fontFamily,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSinhala = appLanguage.value.isSinhala;
+    final features = recommendations
+        .map((id) => WellnessFeature.all[id])
+        .whereType<WellnessFeature>()
+        .toList();
+    if (features.isEmpty) return const SizedBox.shrink();
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isSinhala ? 'ඔබට ගැළපෙන දේ:' : 'Suggested for you:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white54 : accent,
+              fontFamily: fontFamily,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: features.map((feature) {
+              return Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => feature.open(context),
+                  child: Ink(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF2E4A4A)
+                          : const Color(0xFFE0F2F1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: accent.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(feature.icon, size: 14, color: accent),
+                        const SizedBox(width: 4),
+                        Text(
+                          feature.label(isSinhala),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: accent,
+                            fontFamily: fontFamily,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Typing Indicator ──────────────────────────────────────────────────────────
 
 class _TypingIndicator extends StatefulWidget {
+  final Color accent;
+  const _TypingIndicator({required this.accent});
   @override
   State<_TypingIndicator> createState() => _TypingIndicatorState();
 }
@@ -695,7 +861,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
                       height: 7,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: _kTeal.withValues(alpha: opacity),
+                        color: widget.accent.withValues(alpha: opacity),
                         shape: BoxShape.circle,
                       ),
                     );
@@ -717,6 +883,8 @@ class _InputBar extends StatelessWidget {
   final bool hasText;
   final bool isDark;
   final bool isSinhala;
+  final Color accent;
+  final String? fontFamily;
   final VoidCallback onSend;
   final VoidCallback onAttach;
 
@@ -725,6 +893,8 @@ class _InputBar extends StatelessWidget {
     required this.hasText,
     required this.isDark,
     required this.isSinhala,
+    required this.accent,
+    this.fontFamily,
     required this.onSend,
     required this.onAttach,
   });
@@ -759,7 +929,7 @@ class _InputBar extends StatelessWidget {
             // Attach button
             _IconBtn(
               icon: Icons.attach_file_rounded,
-              color: _kTeal,
+              color: accent,
               onTap: onAttach,
             ),
             const SizedBox(width: 6),
@@ -779,12 +949,20 @@ class _InputBar extends StatelessWidget {
                   controller: controller,
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
-                  style: TextStyle(fontSize: 14, color: textColor),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textColor,
+                    fontFamily: fontFamily,
+                  ),
                   decoration: InputDecoration(
                     hintText: isSinhala
                         ? 'පණිවිඩයක් ටයිප් කරන්න...'
                         : 'Type a message...',
-                    hintStyle: TextStyle(color: hintColor, fontSize: 14),
+                    hintStyle: TextStyle(
+                      color: hintColor,
+                      fontSize: 14,
+                      fontFamily: fontFamily,
+                    ),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -800,8 +978,16 @@ class _InputBar extends StatelessWidget {
               transitionBuilder: (child, anim) =>
                   ScaleTransition(scale: anim, child: child),
               child: hasText
-                  ? _SendBtn(key: const ValueKey('send'), onTap: onSend)
-                  : _MicBtn(key: const ValueKey('mic')),
+                  ? _SendBtn(
+                      key: const ValueKey('send'),
+                      accent: accent,
+                      onTap: onSend,
+                    )
+                  : const SizedBox(
+                      key: ValueKey('empty'),
+                      width: 44,
+                      height: 44,
+                    ),
             ),
           ],
         ),
@@ -839,7 +1025,8 @@ class _IconBtn extends StatelessWidget {
 
 class _SendBtn extends StatelessWidget {
   final VoidCallback onTap;
-  const _SendBtn({super.key, required this.onTap});
+  final Color accent;
+  const _SendBtn({super.key, required this.onTap, required this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -848,23 +1035,9 @@ class _SendBtn extends StatelessWidget {
       child: Container(
         width: 44,
         height: 44,
-        decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
         child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
       ),
-    );
-  }
-}
-
-class _MicBtn extends StatelessWidget {
-  const _MicBtn({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
-      child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
     );
   }
 }
@@ -985,28 +1158,32 @@ class _ApiConfigBanner extends StatelessWidget {
 class _StyledMessageText extends StatelessWidget {
   final String text;
   final Color textColor;
+  final Color accentColor;
   final bool isUser;
   final bool isDark;
+  final String? fontFamily;
 
   const _StyledMessageText({
     required this.text,
     required this.textColor,
+    required this.accentColor,
     required this.isUser,
     required this.isDark,
+    this.fontFamily,
   });
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF5BA8A0);
-    final accentColors = [
-      const Color(0xFF5BA8A0),
-      const Color(0xFF4DB6AC),
-      const Color(0xFF00796B),
-      const Color(0xFF26A69A),
-      const Color(0xFF66BB6A),
-      const Color(0xFF42A5F5),
-      const Color(0xFF7E57C2),
-      const Color(0xFFEC407A),
+    // Accent colors derived from the mood palette so quotes/bullets match the
+    // bubble's color instead of always using the brand teal.
+    final primaryColor = accentColor;
+    final base = accentColor;
+    final accentColors = <Color>[
+      base,
+      base.withValues(alpha: 0.85),
+      base.withValues(alpha: 0.7),
+      base.withValues(alpha: 0.6),
+      base.withValues(alpha: 0.5),
     ];
 
     // Parse markdown-like formatting for emphasis
@@ -1018,6 +1195,7 @@ class _StyledMessageText extends StatelessWidget {
           fontSize: 14,
           color: textColor,
           height: 1.5,
+          fontFamily: fontFamily,
         ),
         children: segments.map((seg) {
           Color segColor = textColor;
@@ -1048,6 +1226,7 @@ class _StyledMessageText extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : primaryColor,
+                      fontFamily: fontFamily,
                     ),
                   ),
                 ),
@@ -1074,6 +1253,7 @@ class _StyledMessageText extends StatelessWidget {
                       fontStyle: FontStyle.italic,
                       color: textColor.withValues(alpha: 0.85),
                       height: 1.4,
+                      fontFamily: fontFamily,
                     ),
                   ),
                 ),
@@ -1096,13 +1276,14 @@ class _StyledMessageText extends StatelessWidget {
                       ),
                       Flexible(
                         child: Text(
-                          seg.text,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: textColor,
-                            height: 1.4,
+                            seg.text,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textColor,
+                              height: 1.4,
+                              fontFamily: fontFamily,
+                            ),
                           ),
-                        ),
                       ),
                     ],
                   ),
@@ -1220,4 +1401,174 @@ class _TextSegment {
   final _SegmentType type;
 
   const _TextSegment({required this.text, required this.type});
+}
+
+// ── Chat Theme & Font Picker ─────────────────────────────────────────────────
+
+class _ChatStyleSheet extends StatelessWidget {
+  final bool isSinhala;
+  final String currentTheme;
+  final String currentFont;
+
+  const _ChatStyleSheet({
+    required this.isSinhala,
+    required this.currentTheme,
+    required this.currentFont,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<SettingsCubit>();
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isSinhala ? 'චැට් පෙනුම' : 'Chat look',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isSinhala ? 'තේමාව තෝරන්න' : 'Choose a theme',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 14,
+              runSpacing: 12,
+              children: ChatTheme.byId.values.map((theme) {
+                final selected = theme.id == currentTheme;
+                return GestureDetector(
+                  onTap: () => cubit.setChatTheme(theme.id),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: theme.accentLight,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selected
+                                ? Colors.grey.shade900
+                                : Colors.grey.shade300,
+                            width: selected ? 3 : 1,
+                          ),
+                        ),
+                        child: selected
+                            ? const Icon(Icons.check_rounded,
+                                color: Colors.white)
+                            : null,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isSinhala ? theme.siName : theme.enName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              isSinhala ? 'අකුරු (font) තෝරන්න' : 'Choose a font',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...ChatFont.byId.values.map((font) {
+              final selected = font.id == currentFont;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => cubit.setChatFont(font.id),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? themeAccent(context).withValues(alpha: 0.12)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected
+                            ? themeAccent(context)
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isSinhala ? font.siName : font.enName,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: font.family,
+                          ),
+                        ),
+                        if (selected)
+                          Icon(
+                            Icons.check_rounded,
+                            color: themeAccent(context),
+                            size: 18,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+            Text(
+              isSinhala
+                  ? 'අකුරු ආකෘතිය පණිවිඩවලට යොදවයි'
+                  : 'Font face applies to the messages',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color themeAccent(BuildContext context) =>
+      ChatTheme.fromId(currentTheme).accent(
+        Theme.of(context).brightness == Brightness.dark,
+      );
 }

@@ -1,100 +1,15 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
+import 'package:mind_care_app/features/music/models/music_track.dart';
+import 'package:mind_care_app/features/music/services/calm_audio_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  DATA MODEL
-// ─────────────────────────────────────────────────────────────────────────────
-class MusicTrack {
-  final String id;
-  final String title;
-  final String artist;
-  final String emoji;
-  final Color color;
-  final String url;
-  final bool isDefault;
-  final bool isLocal; // true = local file path, false = network URL
-
-  const MusicTrack({
-    required this.id,
-    required this.title,
-    required this.artist,
-    required this.emoji,
-    required this.color,
-    required this.url,
-    this.isDefault = true,
-    this.isLocal = false,
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  DEFAULT TRACKS
-// ─────────────────────────────────────────────────────────────────────────────
-final List<MusicTrack> kDefaultTracks = [
-  const MusicTrack(
-    id: 'high_calm',
-    title: 'High Calm',
-    artist: 'Peaceful Ambient',
-    emoji: '☁️',
-    color: Color(0xFF64B5F6),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-  ),
-  const MusicTrack(
-    id: 'peace',
-    title: 'Peace',
-    artist: 'Serene Melodies',
-    emoji: '🕊️',
-    color: Color(0xFF81C784),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-  ),
-  const MusicTrack(
-    id: 'forest',
-    title: 'Forest Morning',
-    artist: 'Nature Sounds',
-    emoji: '🌲',
-    color: Color(0xFF43A047),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-  ),
-  const MusicTrack(
-    id: 'ocean',
-    title: 'Ocean Waves',
-    artist: 'Nature Sounds',
-    emoji: '🌊',
-    color: Color(0xFF0288D1),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-  ),
-  const MusicTrack(
-    id: 'piano',
-    title: 'Soft Piano',
-    artist: 'Calm Melodies',
-    emoji: '🎹',
-    color: Color(0xFF7B1FA2),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-  ),
-  const MusicTrack(
-    id: 'lofi',
-    title: 'Lo-Fi Chill',
-    artist: 'Calm Melodies',
-    emoji: '🎧',
-    color: Color(0xFFE65100),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
-  ),
-  const MusicTrack(
-    id: 'birds',
-    title: 'Morning Birds',
-    artist: 'Nature Sounds',
-    emoji: '🐦',
-    color: Color(0xFFF9A825),
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
-  ),
-];
-
-// Emoji options for user tracks — first 16 shown by default, rest on expand
+//  Emoji options for user tracks — first 16 shown by default, rest on expand
 const List<String> kEmojiOptions = [
   '🎵',
   '🎶',
@@ -222,7 +137,8 @@ class CalmMusicScreen extends StatefulWidget {
 
 class _CalmMusicScreenState extends State<CalmMusicScreen>
     with TickerProviderStateMixin {
-  final AudioPlayer _player = AudioPlayer();
+  CalmAudioHandler get _handler =>
+      CalmAudioHandler.instance ??= CalmAudioHandler();
 
   List<MusicTrack> _userTracks = [];
   int _currentIndex = 0;
@@ -232,6 +148,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   final ValueNotifier<Duration> _position = ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> _duration = ValueNotifier(Duration.zero);
   final ValueNotifier<bool> _isPlaying = ValueNotifier(false);
+  Duration _lastShownPos = Duration.zero;
 
   // 0 = library, 1 = now playing, 2 = my playlist
   int _tab = 0;
@@ -257,50 +174,62 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       end: 1.05,
     ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
-    // Throttle position updates to once per second — progress bar shows seconds only
-    Duration lastPos = Duration.zero;
-    _player.onPositionChanged.listen((d) {
-      if ((d.inSeconds - lastPos.inSeconds).abs() >= 1) {
-        lastPos = d;
-        _position.value = d;
-      }
-    });
-    _player.onDurationChanged.listen((d) {
-      _duration.value = d;
-    });
-    _player.onPlayerStateChanged.listen((s) {
-      _isPlaying.value = s == PlayerState.playing;
-      // Pause pulse animation when not playing to save CPU
-      if (s == PlayerState.playing) {
-        if (!_pulseCtrl.isAnimating) _pulseCtrl.repeat(reverse: true);
-      } else {
-        _pulseCtrl.stop();
-      }
-    });
-    _player.onPlayerComplete.listen((_) => _playNext());
+    // Push the current playlist into the OS media session so next/prev and the
+    // media notification see the same queue the UI shows.
+    _handler.setQueue(_allTracks);
 
-    // Wire up now-playing notification media controls
-    mediaPlayerHooks.onPlayPause = _togglePlay;
-    mediaPlayerHooks.onNext = _playNext;
-    mediaPlayerHooks.onPrevious = _playPrev;
+    // Listen to the shared audio handler (the UI must reflect - and control -
+    // the same music that keeps playing when the app is in the background).
+    _handler.position.addListener(_syncPosition);
+    _handler.duration.addListener(_syncDuration);
+    _handler.isPlayingValue.addListener(_syncPlayState);
+    _handler.indexNotifier.addListener(_syncIndex);
 
     _loadUserTracks();
   }
 
+  void _syncPosition() {
+    final d = _handler.position.value;
+    final last = _lastShownPos;
+    if ((d.inSeconds - last.inSeconds).abs() >= 1) {
+      _lastShownPos = d;
+      _position.value = d;
+    }
+  }
+
+  void _syncPlayState() {
+    _isPlaying.value = _handler.isPlayingValue.value;
+    if (_handler.isPlayingValue.value) {
+      if (!_pulseCtrl.isAnimating) _pulseCtrl.repeat(reverse: true);
+    } else {
+      _pulseCtrl.stop();
+    }
+  }
+
+  void _syncIndex() {
+    if (!mounted) return;
+    setState(() => _currentIndex = _handler.currentIndex);
+  }
+
   @override
   void dispose() {
-    // Clean up now-playing notification
-    NotificationService.cancelNowPlaying();
-    mediaPlayerHooks.onPlayPause = null;
-    mediaPlayerHooks.onNext = null;
-    mediaPlayerHooks.onPrevious = null;
+    // The shared handler keeps playing (media notification + background
+    // playback) even when this screen is disposed — so we only detach the
+    // local listeners and animation, never stop the music.
+    _handler.position.removeListener(_syncPosition);
+    _handler.duration.removeListener(_syncDuration);
+    _handler.isPlayingValue.removeListener(_syncPlayState);
+    _handler.indexNotifier.removeListener(_syncIndex);
 
-    _player.dispose();
     _pulseCtrl.dispose();
     _position.dispose();
     _duration.dispose();
     _isPlaying.dispose();
     super.dispose();
+  }
+
+  void _syncDuration() {
+    _duration.value = _handler.duration.value;
   }
 
   // ── Persistence ────────────────────────────────────────────────────────────
@@ -325,7 +254,10 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           })
           .whereType<MusicTrack>()
           .toList();
-      if (mounted) setState(() => _userTracks = loaded);
+      if (mounted) {
+        setState(() => _userTracks = loaded);
+        _handler.setQueue(_allTracks);
+      }
     } catch (_) {}
   }
 
@@ -354,18 +286,10 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       _tab = 1;
     });
     try {
-      await _player.stop();
-      final source = all[index].isLocal
-          ? DeviceFileSource(all[index].url)
-          : UrlSource(all[index].url) as Source;
-      await _player.play(source);
-      // Show now-playing notification
-      final track = all[index];
-      await NotificationService.showNowPlaying(
-        title: track.title,
-        artist: track.artist,
-        isPlaying: true,
-      );
+      _handler.setQueue(all);
+      // Android 13+ hides media notifications until this permission is granted.
+      await NotificationService.requestMediaPermission();
+      await _handler.playIndex(index);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -382,55 +306,43 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
 
   Future<void> _togglePlay() async {
     if (_isPlaying.value) {
-      await _player.pause();
-      // Update notification to show paused state
-      final track = _current;
-      await NotificationService.showNowPlaying(
-        title: track.title,
-        artist: track.artist,
-        isPlaying: false,
-      );
+      await _handler.pause();
     } else {
       if (_position.value == Duration.zero) {
         await _play(_currentIndex);
       } else {
-        await _player.resume();
-        // Update notification to show playing state
-        final track = _current;
-        await NotificationService.showNowPlaying(
-          title: track.title,
-          artist: track.artist,
-          isPlaying: true,
-        );
+        await _handler.play();
       }
     }
   }
 
   void _playNext() {
-    _play((_currentIndex + 1) % _allTracks.length);
+    _handler.skipToNext();
   }
 
   void _playPrev() {
     if (_position.value.inSeconds > 3) {
-      _player.seek(Duration.zero);
+      _handler.seek(Duration.zero);
       return;
     }
-    _play((_currentIndex - 1 + _allTracks.length) % _allTracks.length);
+    _handler.skipToPrevious();
   }
 
   // ── User track management ──────────────────────────────────────────────────
   void _addTrack(MusicTrack track) {
     setState(() => _userTracks.add(track));
+    _handler.setQueue(_allTracks);
     _saveUserTracks();
   }
 
   void _deleteUserTrack(int userIndex) {
     final globalIndex = kDefaultTracks.length + userIndex;
-    if (_currentIndex == globalIndex && _isPlaying.value) _player.stop();
+    if (_currentIndex == globalIndex && _isPlaying.value) _handler.stop();
     setState(() {
       if (_currentIndex >= globalIndex && _currentIndex > 0) _currentIndex--;
       _userTracks.removeAt(userIndex);
     });
+    _handler.setQueue(_allTracks);
     _saveUserTracks();
   }
 
@@ -440,6 +352,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       final item = _userTracks.removeAt(oldIndex);
       _userTracks.insert(newIndex, item);
     });
+    _handler.setQueue(_allTracks);
     _saveUserTracks();
   }
 
@@ -874,7 +787,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
             duration: _duration,
             color: track.color,
             isDark: isDark,
-            onSeek: (v) => _player.seek(Duration(seconds: v.toInt())),
+            onSeek: (v) => _handler.seek(Duration(seconds: v.toInt())),
           ),
           const SizedBox(height: 20),
           // Play/pause button — only rebuilds on play state change
@@ -1641,9 +1554,7 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
   Future<void> _pickFile() async {
     setState(() => _isPicking = true);
     try {
-      final file = await FilePicker.pickFile(
-        type: FileType.audio,
-      );
+      final file = await FilePicker.pickFile(type: FileType.audio);
       if (file != null && file.path != null) {
         final nameWithoutExt = file.name.contains('.')
             ? file.name.substring(0, file.name.lastIndexOf('.'))

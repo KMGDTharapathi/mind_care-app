@@ -1,5 +1,5 @@
-﻿import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:gal/gal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -88,25 +88,47 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
     Quote quote,
     AppStrings strings,
   ) async {
-    try {
-      await Future.delayed(Duration.zero);
-      final boundary =
-          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-      final Uint8List bytes = byteData.buffer.asUint8List();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    void showSaved(String msg, [bool err = false]) {
+      messenger.showSnackBar(
         SnackBar(
-          content: Text('${strings.saveQuote}! (${bytes.length ~/ 1024}KB)'),
+          content: Text(msg),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: _kTeal,
+          backgroundColor: err ? Colors.red.shade700 : _kTeal,
         ),
       );
+    }
+    try {
+      showSaved(strings.savingQuote);
+      // Give the current frame a chance to paint before capturing.
+      await Future.delayed(const Duration(milliseconds: 10));
+      final boundary =
+          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        showSaved(strings.quoteSavedFail, true);
+        return;
+      }
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        showSaved(strings.quoteSavedFail, true);
+        return;
+      }
+      if (await Gal.hasAccess() == false) {
+        await Gal.requestAccess();
+      }
+      if (await Gal.hasAccess()) {
+        await Gal.putImageBytes(
+          byteData.buffer.asUint8List(),
+          name: 'mindcare_quote_${quote.id}',
+        );
+        showSaved(strings.quoteSaved);
+      } else {
+        showSaved(strings.quoteSavedNoPermission, true);
+      }
     } catch (e) {
       debugPrint('Download error: $e');
+      showSaved(strings.quoteSavedFail, true);
     }
   }
 
@@ -367,81 +389,67 @@ class _QuoteDetailSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // The actual card preview — full visual rendering
-          AspectRatio(
-            aspectRatio: 1.0,
-            child: _QuoteCard(
-              quote: quote,
-              displayText: displayText,
-              displayAuthor: displayAuthor,
-              onDownload: onDownload,
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Author + category row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
+              // Drag handle
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 3,
-                ),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: _kTeal.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                child: Text(
-                  quote.category.toUpperCase(),
-                  style: const TextStyle(
-                    color: _kTeal,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
+              ),
+              const SizedBox(height: 16),
+              // The actual card preview — capped so the Save button always
+              // fits on screen (the sheet scrolls if needed).
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 320,
+                  maxWidth: 320,
+                ),
+                child: AspectRatio(
+                  aspectRatio: 1.0,
+                  child: _QuoteCard(
+                    quote: quote,
+                    displayText: displayText,
+                    displayAuthor: displayAuthor,
+                    onDownload: onDownload,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Download button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onDownload();
+                  },
+                  icon: const Icon(Icons.download_rounded),
+                  label: Text(strings.saveQuote),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kTeal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Download button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                onDownload();
-              },
-              icon: const Icon(Icons.download_rounded),
-              label: Text(strings.saveQuote),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kTeal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
