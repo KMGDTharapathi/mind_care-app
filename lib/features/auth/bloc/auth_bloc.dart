@@ -147,7 +147,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     try {
       final user = await _authService.createAccountWithEmail(
-          event.email, event.password);
+        event.email,
+        event.password,
+        displayName: event.displayName,
+      );
       await _analyticsService?.setUserId(user.uid);
       await _crashlyticsService?.setUserId(user.uid);
       await _analyticsService?.logEvent(

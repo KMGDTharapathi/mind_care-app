@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_user_repository.dart';
 
 import 'auth_service.dart';
 
@@ -11,11 +13,14 @@ class FirebaseAuthService implements AuthService {
   FirebaseAuthService({
     FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
+    FirestoreUserRepository? userRepo,
   })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _userRepo = userRepo ?? FirestoreUserRepository();
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
+  final FirestoreUserRepository _userRepo;
 
   // ---------------------------------------------------------------------------
   // AuthService interface
@@ -45,7 +50,14 @@ class FirebaseAuthService implements AuthService {
         email: email,
         password: password,
       );
-      return _requireUser(result.user);
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: user.email ?? email,
+        displayName: result.user?.displayName,
+        photoUrl: result.user?.photoURL,
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
     }
@@ -69,7 +81,14 @@ class FirebaseAuthService implements AuthService {
       );
 
       final result = await _auth.signInWithCredential(credential);
-      return _requireUser(result.user);
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: user.email ?? result.user?.email ?? '',
+        displayName: result.user?.displayName,
+        photoUrl: result.user?.photoURL,
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
     }
@@ -77,13 +96,26 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<AuthUser> createAccountWithEmail(
-      String email, String password) async {
+    String email,
+    String password, {
+    String? displayName,
+  }) async {
     try {
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return _requireUser(result.user);
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        await result.user?.updateDisplayName(displayName.trim());
+      }
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: email,
+        displayName: displayName ?? result.user?.displayName,
+        photoUrl: result.user?.photoURL,
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
     }
@@ -120,6 +152,8 @@ class FirebaseAuthService implements AuthService {
     return AuthUser(
       uid: user.uid,
       email: user.email,
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
       isAnonymous: user.isAnonymous,
     );
   }

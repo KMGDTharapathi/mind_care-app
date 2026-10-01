@@ -24,10 +24,15 @@ class AuthSignOut extends AuthEvent {}
 
 /// Create a new account with email and password.
 class AuthCreateAccount extends AuthEvent {
-  AuthCreateAccount({required this.email, required this.password});
+  AuthCreateAccount({
+    required this.email,
+    required this.password,
+    this.displayName,
+  });
 
   final String email;
   final String password;
+  final String? displayName;
 }
 
 /// Send a password-reset email to the given address.

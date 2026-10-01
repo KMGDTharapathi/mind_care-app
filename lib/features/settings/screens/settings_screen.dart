@@ -6,11 +6,11 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_user_repository.dart';
 import 'package:mind_care_app/main.dart' show appUserName, appLanguage;
 
 class SettingsScreen extends StatefulWidget {
@@ -96,6 +96,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     if (result != null && result.isNotEmpty) {
       await PreferencesService.setUserName(result);
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && uid.isNotEmpty) {
+        try {
+          await FirestoreUserRepository().updateProfile(uid, displayName: result);
+        } catch (_) {}
+      }
       if (!mounted) return;
       // Defer notifier update to next frame to avoid InheritedWidget assertion
       // when dialog is still in the process of being dismissed
@@ -482,6 +488,11 @@ class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
 
   Future<String?> _loadProfilePicture() async {
     if (_cachedUrl != null) return _cachedUrl;
+    final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
+    if (authPhoto != null && authPhoto.isNotEmpty) {
+      _cachedUrl = authPhoto;
+      return authPhoto;
+    }
     try {
       final url = await _storageRef.getDownloadURL();
       _cachedUrl = url;
@@ -509,11 +520,8 @@ class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
         _uploading = true;
       });
 
-      // Upload bytes to storage
-      await _storageRef.putData(bytes);
-
-      // Fetch new download URL
-      final url = await _storageRef.getDownloadURL();
+      // Upload via repository (saves to Firebase Storage, updates FirebaseAuth photoURL & Firestore document)
+      final url = await FirestoreUserRepository().uploadProfileImage(_uid, bytes);
 
       setState(() {
         _cachedUrl = url;

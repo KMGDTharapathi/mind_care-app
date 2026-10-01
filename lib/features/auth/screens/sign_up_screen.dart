@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/gradient_scaffold.dart';
+import '../../../data/local/preferences_service.dart';
+import '../../../main.dart' show appUserName;
 import '../../../services/auth/auth_service.dart';
 import '../bloc/auth_bloc.dart';
 
@@ -16,6 +18,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -29,6 +32,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -46,6 +50,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _onCreateAccount() {
     _clearErrors();
+    final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmPasswordController.text;
@@ -67,8 +72,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
+    if (name.isNotEmpty) {
+      PreferencesService.setUserName(name);
+      appUserName.value = name;
+    }
+
     context.read<AuthBloc>().add(
-          AuthCreateAccount(email: email, password: password),
+          AuthCreateAccount(
+            email: email,
+            password: password,
+            displayName: name.isNotEmpty ? name : null,
+          ),
         );
   }
 
@@ -113,6 +127,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 16),
                 _Header(),
                 const SizedBox(height: 36),
+                _NameField(
+                  controller: _nameController,
+                ),
+                const SizedBox(height: 16),
                 _EmailField(
                   controller: _emailController,
                   errorText: _emailError,
@@ -211,6 +229,48 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Name field ────────────────────────────────────────────────────────────────
+
+class _NameField extends StatelessWidget {
+  const _NameField({
+    required this.controller,
+  });
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.name,
+      textCapitalization: TextCapitalization.words,
+      textInputAction: TextInputAction.next,
+      style: const TextStyle(fontSize: 16, color: AppColors.textDark),
+      decoration: InputDecoration(
+        labelText: 'Your Name (Optional)',
+        hintText: 'e.g. Nethmi',
+        prefixIcon:
+            const Icon(Icons.person_outline, color: AppColors.primaryDark),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.9),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide:
+              const BorderSide(color: AppColors.primaryDark, width: 1.5),
+        ),
+      ),
     );
   }
 }
