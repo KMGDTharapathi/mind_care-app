@@ -6,6 +6,8 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import '../models/doctor_model.dart';
 import '../data/doctor_seed_service.dart';
 import '../data/doctor_seed_data.dart';
+import '../widgets/book_appointment_sheet.dart';
+import '../widgets/appointments_tab.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDark = Color(0xFF1A4A4A);
@@ -64,7 +66,7 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     DoctorSeedService.seedIfEmpty();
   }
 
@@ -96,6 +98,10 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
           tabs: [
             Tab(icon: const Icon(Icons.people_outline), text: s.doctorsTab),
             Tab(icon: const Icon(Icons.phone_outlined), text: s.hotlinesTab),
+            Tab(
+              icon: const Icon(Icons.calendar_month_outlined),
+              text: s.isSinhala ? 'වෙන්කිරීම්' : 'Appointments',
+            ),
           ],
         ),
       ),
@@ -114,6 +120,10 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
             onLangChanged: (v) => setState(() => _filterLang = v),
           ),
           _HotlineTab(strings: s),
+          AppointmentsTab(
+            strings: s,
+            onFindDoctor: () => _tabController.animateTo(0),
+          ),
         ],
       ),
     );
@@ -828,6 +838,46 @@ class _DoctorProfileSheet extends StatelessWidget {
                   ],
                 ),
               ),
+            const SizedBox(height: 20),
+
+            // ── Book Appointment Button ────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.calendar_today_rounded, size: 18),
+                label: Text(
+                  strings.isSinhala
+                      ? 'වෙන්කරවා ගන්න (Book Appointment)'
+                      : 'Book Appointment',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kTeal,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 2,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => BookAppointmentSheet(
+                      doctorId: doctor.id,
+                      doctorName: doctor.name,
+                      doctorSpecialization: doctor.specialization,
+                      doctorHospital: doctor.hospital,
+                      photoUrl: doctor.photoUrl,
+                      strings: strings,
+                    ),
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -1104,31 +1154,6 @@ class _SectionTitle extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: _kDark)),
     );
-  }
-}
-
-class _StatBox extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color iconColor;
-  const _StatBox(
-      {required this.label,
-      required this.value,
-      required this.icon,
-      required this.iconColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, color: iconColor, size: 22),
-      const SizedBox(height: 4),
-      Text(value,
-          style: const TextStyle(
-              fontWeight: FontWeight.w700, fontSize: 14, color: _kDark)),
-      Text(label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-    ]);
   }
 }
 
