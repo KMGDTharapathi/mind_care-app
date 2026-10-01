@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/onboarding/screens/consent_prompt_screen.dart';
+import 'package:mind_care_app/features/music/services/calm_audio_handler.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/services/auth/firebase_auth_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
@@ -104,7 +106,12 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
   // all subsequent reads (PreferencesService, ConsentService, etc.) will reuse
   // as synchronous cache hits, preventing concurrent getInstance() calls that
   // can block the main isolate.
-  await PreferencesService.warmUp();
+  // Guarded: a transient channel error here must not abort the rest of init.
+  try {
+    await PreferencesService.warmUp().timeout(const Duration(seconds: 3));
+  } catch (e) {
+    debugPrint('Prefs warmup failed: $e');
+  }
 
   // Hive and Preferences run in parallel — both are needed before we can
   // determine onboardingComplete.
@@ -148,14 +155,48 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
     ).catchError((e) => debugPrint('ServiceLocator failed: $e')));
   }
 
-  unawaited(NotificationService.init(navigatorKey: navigatorKey)
-      .catchError((e) => debugPrint('Notifications failed: $e')));
+  // Notifications first (must create the HIGH-importance music channel before
+  // audio_service binds to it), then the platform media session (media
+  // notification + lock screen controls + foreground service so music keeps
+  // playing in the background). All fire-and-forget; they don't block startup.
+  unawaited(
+    NotificationService.init(navigatorKey: navigatorKey)
+        .then((_) => _initAudioService())
+        .catchError((e) => debugPrint('Notifications failed: $e')),
+  );
 
   unawaited(consentService.hasConsentBeenDecided().then((decided) {
     if (!decided) consentService.setAnalyticsConsent(true);
   }));
 
   return _InitResult(firebaseOk: firebaseOk, onboardingComplete: onboardingComplete);
+}
+
+/// Initializes the OS media session used by the Calm Music player.
+///
+/// audio_service runs a foreground service on Android/iOS so the playback
+/// survives backgrounding and exposes media controls (notification + lock
+/// screen). On platforms without media-session support, playback still works,
+/// just without lock-screen controls.
+Future<void> _initAudioService() async {
+  try {
+    final handler = await AudioService.init(
+      // Return the SAME shared instance the music screen uses — builder only
+      // runs here, so identity is preserved if a screen opened first.
+      builder: () => CalmAudioHandler.instance ??= CalmAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'mindcare_music',
+        androidNotificationChannelName: 'Calm Music',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: true,
+      ),
+    );
+    CalmAudioHandler.instance ??= handler;
+  } catch (e) {
+    // No media session on this platform — CalmMusicScreen already falls back
+    // to playing through the local handler without lock-screen controls.
+    debugPrint('AudioService init skipped: $e');
+  }
 }
 
 class _InitResult {
@@ -286,3 +327,4 @@ class _EarlySplash extends StatelessWidget {
     );
   }
 }
+

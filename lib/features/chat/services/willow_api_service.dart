@@ -2,6 +2,14 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+/// A Willow reply: the message text plus any recommended wellness features.
+class WillowChatResult {
+  final String text;
+  final List<String> recommendations;
+
+  const WillowChatResult({required this.text, this.recommendations = const []});
+}
+
 /// Calls the Willow LLaMA model served from Google Colab via ngrok.
 ///
 /// Usage:
@@ -24,7 +32,7 @@ class WillowApiService {
 
   /// Send a message to Willow and get a response.
   /// Returns null if the API is unreachable or not configured.
-  static Future<String?> chat(String message) async {
+  static Future<WillowChatResult?> chat(String message) async {
     if (!isConfigured) return null;
 
     try {
@@ -43,8 +51,16 @@ class WillowApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        // Support both {response: "..."} and {response: "...", emotion: "..."}
-        return data['response'] as String?;
+        final text = data['response'] as String?;
+        if (text == null) return null;
+        final raw = data['recommendations'];
+        final recommendations = raw is List
+            ? raw.whereType<String>().toList()
+            : const <String>[];
+        return WillowChatResult(
+          text: text,
+          recommendations: recommendations,
+        );
       }
       debugPrint('Willow API error: ${response.statusCode} ${response.body}');
       return null;

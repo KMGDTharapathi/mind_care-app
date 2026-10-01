@@ -1,6 +1,15 @@
 import 'dart:math';
 import '../models/chat_message.dart';
+import 'feature_recommender.dart';
 import 'willow_api_service.dart';
+
+/// A Willow chat reply: the message text and any suggested wellness features.
+class WillowReply {
+  final String text;
+  final List<String> recommendations;
+
+  const WillowReply({required this.text, this.recommendations = const []});
+}
 
 class WillowEngine {
   final bool isSinhala;
@@ -15,17 +24,35 @@ class WillowEngine {
     return "Hey! 🌿 I'm Willow.\n\nHow are you doing today? Feel free to share whatever's on your mind — I'm here and I'm listening. 💚";
   }
 
-  Future<String> respond(ChatMessage message) async {
+  Future<WillowReply> respond(ChatMessage message) async {
     if (message.type != MessageType.text) {
-      return _localRespond(message);
+      return WillowReply(text: await _localRespond(message));
     }
     if (WillowApiService.isConfigured) {
       final apiResponse = await WillowApiService.chat(message.content);
-      if (apiResponse != null && apiResponse.isNotEmpty) {
-        return apiResponse;
+      if (apiResponse != null && apiResponse.text.isNotEmpty) {
+        // Trust the server's recommendations; fall back to the local matcher
+        // when the server (older version) did not return any.
+        var recommendations = apiResponse.recommendations;
+        if (recommendations.isEmpty) {
+          recommendations = WellnessRecommender.recommend(
+            message.content,
+            isSinhala: isSinhala,
+          );
+        }
+        return WillowReply(
+          text: apiResponse.text,
+          recommendations: recommendations,
+        );
       }
     }
-    return _localRespond(message);
+    return WillowReply(
+      text: await _localRespond(message),
+      recommendations: WellnessRecommender.recommend(
+        message.content,
+        isSinhala: isSinhala,
+      ),
+    );
   }
 
   Future<String> _localRespond(ChatMessage message) async {
