@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -104,7 +105,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
       }
     });
-    });
   }
 
   @override
@@ -156,10 +156,9 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         'timestamp': Timestamp.fromDate(DateTime.now()),
       });
     } catch (e) {
-      debugPrint('Failed to save willow response to Firestore: ');
+      debugPrint('Failed to save willow response to Firestore: $e');
       _addWillowMessage(reply);
     }
-  }
   }
 
   Future<void> _sendText() async {
@@ -205,7 +204,8 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         _messages.add(ChatMessage.text(
           id: _uuid.v4(),
           sender: MessageSender.willow,
-          text: response,
+          text: response.text,
+          recommendations: response.recommendations,
           timestamp: DateTime.now(),
         ));
       });
@@ -453,6 +453,13 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         ],
       ),
       actions: [
+        // Clear chat history
+        IconButton(
+          tooltip: isSi ? 'සංවාදය මකන්න' : 'Clear Chat',
+          icon: const Icon(Icons.delete_outline_rounded),
+          color: Colors.white,
+          onPressed: () => _confirmClearChat(isSi),
+        ),
         // Pick chat theme + font face
         IconButton(
           tooltip: isSi ? 'තේමාව සහ අකුරු' : 'Chat theme & font',
@@ -501,6 +508,49 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         ),
       ],
     );
+  }
+
+  Future<void> _confirmClearChat(bool isSi) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(isSi ? 'සංවාදය මකන්නද?' : 'Clear Chat?'),
+        content: Text(
+          isSi
+              ? 'ඔබට මෙම සංවාදයේ සියලු පණිවිඩ මකා දැමීමට අවශ්‍ය බව සහතිකද?'
+              : 'Are you sure you want to delete all messages in this conversation?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isSi ? 'අවලංගු කරන්න' : 'Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(isSi ? 'මකන්න' : 'Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final snap = await _chatCollection.get();
+        final batch = FirebaseFirestore.instance.batch();
+        for (final doc in snap.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+        setState(() => _messages.clear());
+        await _addWillowMessageToFirestore(WillowReply(text: _engine.welcomeMessage()));
+      } catch (e) {
+        debugPrint('Error clearing chat: $e');
+        setState(() => _messages.clear());
+        _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
+      }
+    }
   }
 
   void _showStyleSheet(bool isSi, ChatTheme currentTheme, ChatFont currentFont) {
@@ -731,6 +781,7 @@ color: accent.withValues(alpha: 0.15),
               child: Icon(
                 Icons.insert_drive_file_outlined,
                 color: accent,
+              ),
             ),
             const SizedBox(width: 8),
             Flexible(
