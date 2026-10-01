@@ -91,8 +91,6 @@ class AppStrings {
   );
   String get notNow => _s('දැන් නොවේ', 'Not Now');
   String get allow => _s('ඉඩ දෙන්න', 'Allow');
-<<<<<<< HEAD
-=======
   String get openSettings => _s('සැකසුම් විවෘත කරන්න', 'Open Settings');
   String get notificationsDisabledTitle =>
       _s('දැනුම්දීම් අහෝසි කිරීම්', 'Notifications Disabled');
@@ -100,7 +98,6 @@ class AppStrings {
     'දැනුම්දීම් සදහා අවශ්‍ය අනුමැතිය නොලැබී ඇත. කරුණු කරන්න උපාංග සැකසුම් වලින් ඉඩ දෙන්න.',
     'Notification permission was not granted. Please enable it in your device settings.',
   );
->>>>>>> origin/main
 
   // ── Settings — Language section ───────────────────────────────────────────
   String get sectionLanguage => _s('භාෂාව', 'Language');
@@ -139,8 +136,6 @@ class AppStrings {
     'ඔබේ ඉතිහාසය මෙහි බැලීමට ඔබේ මනෝභාවය ලොග් කිරීම ආරම්භ කරන්න.',
     'Start logging your mood to see your history here.',
   );
-<<<<<<< HEAD
-=======
   String get moodEncouragementTitle => _s(
     'නොගැඹුරුවෙන් ඉන්න — ඔබ විසින් වැඩි බලවත්',
     'Don\'t give up — you are stronger than this',
@@ -157,7 +152,6 @@ class AppStrings {
     'ඔබේ සතුටු මනෝභාව අවශ්‍යතාව පෙන්වන අතර, ඔබ සියල්ලත් නිසිව කටයුතු කරනවා. මෙම සාමාධිරූප ස්ථාවර රඳවා ගන්න.',
     'Your positive moods show you\'re on the right path. Keep nurturing your wellbeing with the same care.',
   );
->>>>>>> origin/main
   String get recentEntries => _s('මෑත ඇතුළත් කිරීම්', 'Recent Entries');
   String get yesterdayLabel => _s('ඊයේ', 'Yesterday');
   String get moodHappy => _s('සතුටු', 'Happy');
@@ -236,8 +230,6 @@ class AppStrings {
   String get remaining => _s('ඉතිරිව ඇත', 'remaining');
   String get ready => _s('සූදානම්', 'ready');
   String get paused => _s('විරාම', 'paused');
-<<<<<<< HEAD
-=======
   String get pause => _s('විරාමය', 'Pause');
   String get resume => _s('නැවත ආරම්භ කරන්න', 'Resume');
   String get endSession => _s('අවසන් කරන්න', 'End');
@@ -245,7 +237,6 @@ class AppStrings {
       _s('හුස්ම අභ්‍යාසය අවසන් කරන්නද?', 'End breathing session?');
   String get endSessionContent =>
       _s('ඔබේ ප්‍රගතිය නැති වේ.', 'Your progress will be lost.');
->>>>>>> origin/main
   String get stepLabel => _s('පියවර', 'Step');
   String get beginner => _s('ආරම්භක', 'Beginner');
   String get intermediate => _s('මධ්‍යම', 'Intermediate');
@@ -319,7 +310,6 @@ class AppStrings {
     'Classic snake — eat fruit, grow longer. Simple controls, relaxing pace.',
   );
   String get gameSnakeMood => _s('😴 කම්මැලිකම', '😴 Lazy');
-<<<<<<< HEAD
   String get gamePatternTitle => _s('රටා ගැලපීම', 'Pattern Match');
   String get gamePatternDesc => _s('කාඩ් පෙරළා ගැලපෙන emoji යුගල සොයන්න. මනස ක්ෂණිකව සන්සුන් කරයි.', 'Flip cards and find matching emoji pairs. Calms the mind instantly.');
   String get gamePatternMood => _s('😤 ආතතිය', '😤 Stressed');
@@ -329,7 +319,6 @@ class AppStrings {
   String get gameStackTitle => _s('ගොඩ ගැසීම', 'Stack Builder');
   String get gameStackDesc => _s('ගෙවල් ගොඩ ගැසීමට ගමන් කරන කොටස් හෙළන්න. කාර්යය, විවේකය සහ විනෝදය සමතුලිත කරන්න!', 'Drop moving blocks to build a tower. Balance Work, Rest & Fun!');
   String get gameStackMood => _s('😵 අධික බර', '😵 Overwhelmed');
-=======
   String get gameCandyCrushTitle => _s('කැන්ඩි ක්‍රශ්', 'Candy Crush');
   String get gameCandyCrushDesc => _s(
     'සමාන කැන්ඩි එකතු කර පිපිරවන්න. ස්වභාවිකව ලිහිල් වේගය.',
@@ -348,7 +337,6 @@ class AppStrings {
     'Form words by arranging letters. Meditative and vocabulary building.',
   );
   String get gameWordPuzzleMood => _s('🔤 දැනුම් වර්ධනය', '🔤 Brain Boost');
->>>>>>> origin/main
 
   // ── Game UI strings ────────────────────────────────────────────────────────
   String get gameOver => _s('ක්‍රීඩාව අවසන්!', 'Game Over!');

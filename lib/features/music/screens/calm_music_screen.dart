@@ -1554,16 +1554,22 @@ class _TrackFormSheetState extends State<_TrackFormSheet> {
   Future<void> _pickFile() async {
     setState(() => _isPicking = true);
     try {
-      final file = await FilePicker.pickFile(type: FileType.audio);
-      if (file != null && file.path != null) {
-        final nameWithoutExt = file.name.contains('.')
-            ? file.name.substring(0, file.name.lastIndexOf('.'))
-            : file.name;
-        setState(() {
-          _localFilePath = file.path!;
-          _localFileName = file.name;
-          if (_titleCtrl.text.trim().isEmpty) _titleCtrl.text = nameWithoutExt;
-        });
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'],
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.single;
+        if (file.path != null) {
+          final nameWithoutExt = file.name.contains('.')
+              ? file.name.substring(0, file.name.lastIndexOf('.'))
+              : file.name;
+          setState(() {
+            _localFilePath = file.path!;
+            _localFileName = file.name;
+            if (_titleCtrl.text.trim().isEmpty) _titleCtrl.text = nameWithoutExt;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
