@@ -44,13 +44,9 @@ class CanvasPainter extends CustomPainter {
     final sx = size.width / kCanvasW;
     final sy = size.height / kCanvasH;
 
-    for (final s in strokes) {
-      _drawStroke(canvas, s, sx, sy);
-    }
+    for (final s in strokes) _drawStroke(canvas, s, sx, sy);
     if (current != null) _drawStroke(canvas, current!, sx, sy);
-    for (final sh in shapes) {
-      _drawShape(canvas, sh);
-    }
+    for (final sh in shapes) _drawShape(canvas, sh);
   }
 
   void _drawBackground(Canvas canvas, Size size) {
@@ -122,7 +118,8 @@ class CanvasPainter extends CustomPainter {
                 ..strokeWidth = w * (1.5 + i * 0.8)
                 ..strokeCap = StrokeCap.round
                 ..style = PaintingStyle.stroke
-                ..maskFilter = MaskFilter.blur(BlurStyle.normal, 1.0 + i * 0.5),
+                ..maskFilter =
+                    MaskFilter.blur(BlurStyle.normal, 1.0 + i * 0.5),
             );
           }
           paint
@@ -150,7 +147,8 @@ class CanvasPainter extends CustomPainter {
         (pts[i].dx + pts[i + 1].dx) / 2 * sx,
         (pts[i].dy + pts[i + 1].dy) / 2 * sy,
       );
-      path.quadraticBezierTo(pts[i].dx * sx, pts[i].dy * sy, mid.dx, mid.dy);
+      path.quadraticBezierTo(
+          pts[i].dx * sx, pts[i].dy * sy, mid.dx, mid.dy);
     }
     path.lineTo(pts.last.dx * sx, pts.last.dy * sy);
     return path;
@@ -159,10 +157,7 @@ class CanvasPainter extends CustomPainter {
   // Shapes are stored in render-space — draw directly
   void _drawShape(Canvas canvas, PlacedShape sh) {
     final r = Rect.fromCenter(
-      center: sh.position,
-      width: sh.width,
-      height: sh.height,
-    );
+        center: sh.position, width: sh.width, height: sh.height);
     final fill = Paint()..color = sh.color;
     final sel = Paint()
       ..color = const Color(0xFF2979FF)
@@ -175,26 +170,16 @@ class CanvasPainter extends CustomPainter {
         if (sh.selected) canvas.drawOval(r, sel);
       case ShapeKind.rect:
         canvas.drawRRect(
-          RRect.fromRectAndRadius(r, const Radius.circular(4)),
-          fill,
-        );
+            RRect.fromRectAndRadius(r, const Radius.circular(4)), fill);
         if (sh.selected) {
           canvas.drawRRect(
-            RRect.fromRectAndRadius(r, const Radius.circular(4)),
-            sel,
-          );
+              RRect.fromRectAndRadius(r, const Radius.circular(4)), sel);
         }
       case ShapeKind.triangle:
         final p = Path()
           ..moveTo(sh.position.dx, sh.position.dy - sh.height / 2)
-          ..lineTo(
-            sh.position.dx + sh.width / 2,
-            sh.position.dy + sh.height / 2,
-          )
-          ..lineTo(
-            sh.position.dx - sh.width / 2,
-            sh.position.dy + sh.height / 2,
-          )
+          ..lineTo(sh.position.dx + sh.width / 2, sh.position.dy + sh.height / 2)
+          ..lineTo(sh.position.dx - sh.width / 2, sh.position.dy + sh.height / 2)
           ..close();
         canvas.drawPath(p, fill);
         if (sh.selected) canvas.drawPath(p, sel);
@@ -262,14 +247,7 @@ class CanvasPainter extends CustomPainter {
       ..cubicTo(c.dx, c.dy - s * 0.5, c.dx - s, c.dy - s * 0.5, c.dx - s, c.dy)
       ..cubicTo(c.dx - s, c.dy + s * 0.6, c.dx, c.dy + s * 0.9, c.dx, c.dy + s)
       ..cubicTo(c.dx, c.dy + s * 0.9, c.dx + s, c.dy + s * 0.6, c.dx + s, c.dy)
-      ..cubicTo(
-        c.dx + s,
-        c.dy - s * 0.5,
-        c.dx,
-        c.dy - s * 0.5,
-        c.dx,
-        c.dy + s * 0.35,
-      )
+      ..cubicTo(c.dx + s, c.dy - s * 0.5, c.dx, c.dy - s * 0.5, c.dx, c.dy + s * 0.35)
       ..close();
   }
 

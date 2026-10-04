@@ -20,11 +20,11 @@ Widget buildMoodTrackerScreen(MoodRepository repository) {
     routes: [
       GoRoute(
         path: '/home',
-        builder: (_, _) => const Scaffold(body: Text('Home')),
+        builder: (_, __) => const Scaffold(body: Text('Home')),
         routes: [
           GoRoute(
             path: 'mood',
-            builder: (_, _) => BlocProvider(
+            builder: (_, __) => BlocProvider(
               create: (_) => MoodBloc(repository: repository),
               child: const MoodTrackerScreen(),
             ),
@@ -45,30 +45,28 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(
-      MoodEntry(id: 'fallback', mood: MoodType.calm, timestamp: DateTime.now()),
+      MoodEntry(
+        id: 'fallback',
+        mood: MoodType.calm,
+        timestamp: DateTime.now(),
+      ),
     );
   });
 
   group('MoodTrackerScreen widget tests', () {
-    testWidgets('submitting without selecting mood shows validation error', (
-      tester,
-    ) async {
+    testWidgets('submitting without selecting mood shows validation error',
+        (tester) async {
       await tester.pumpWidget(buildMoodTrackerScreen(mockRepository));
       await tester.pumpAndSettle();
 
       // Navigate to mood screen
-      tester
-          .element(find.text('Home'))
-          .findAncestorWidgetOfExactType<Scaffold>();
+      tester.element(find.text('Home')).findAncestorWidgetOfExactType<Scaffold>();
       final context = tester.element(find.text('Home'));
       GoRouter.of(context).go('/home/mood');
       await tester.pumpAndSettle();
 
       // Scroll down to make "Log Mood" button visible
-      await tester.drag(
-        find.byType(SingleChildScrollView),
-        const Offset(0, -300),
-      );
+      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
       await tester.pump();
 
       // Tap "Log Mood" without selecting a mood
@@ -76,13 +74,13 @@ void main() {
       await tester.pump();
 
       // Validation error should appear
-      expect(find.text('Please select a mood'), findsOneWidget);
+      expect(find.text('Please select a mood level'), findsOneWidget);
     });
 
-    testWidgets('selecting a mood and submitting calls saveMoodEntry', (
-      tester,
-    ) async {
-      when(() => mockRepository.saveMoodEntry(any())).thenAnswer((_) async {});
+    testWidgets('selecting a mood and submitting calls saveMoodEntry',
+        (tester) async {
+      when(() => mockRepository.saveMoodEntry(any()))
+          .thenAnswer((_) async {});
 
       await tester.pumpWidget(buildMoodTrackerScreen(mockRepository));
       await tester.pumpAndSettle();
@@ -92,15 +90,12 @@ void main() {
       GoRouter.of(context).go('/home/mood');
       await tester.pumpAndSettle();
 
-      // Select "Happy" mood
-      await tester.tap(find.text('Happy'));
+      // Select a mood level
+      await tester.tap(find.text('7'));
       await tester.pump();
 
       // Scroll down to make "Log Mood" button visible
-      await tester.drag(
-        find.byType(SingleChildScrollView),
-        const Offset(0, -300),
-      );
+      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
       await tester.pump();
 
       // Tap "Log Mood"
@@ -121,21 +116,18 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to and tap "Log Mood" to trigger validation error
-      await tester.drag(
-        find.byType(SingleChildScrollView),
-        const Offset(0, -300),
-      );
+      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -300));
       await tester.pump();
       await tester.tap(find.text('Log Mood'), warnIfMissed: false);
       await tester.pump();
-      expect(find.text('Please select a mood'), findsOneWidget);
+      expect(find.text('Please select a mood level'), findsOneWidget);
 
-      // Select a mood
-      await tester.tap(find.text('Calm'));
+      // Select a mood level
+      await tester.tap(find.text('3'));
       await tester.pump();
 
       // Validation error should be gone
-      expect(find.text('Please select a mood'), findsNothing);
+      expect(find.text('Please select a mood level'), findsNothing);
     });
   });
 }

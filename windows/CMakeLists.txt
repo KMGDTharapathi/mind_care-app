@@ -10,6 +10,12 @@ set(BINARY_NAME "mind_care_app")
 # versions of CMake.
 cmake_policy(VERSION 3.14...3.25)
 
+# CMake 4 removed compatibility with projects that declare very old minimum
+# versions. The Firebase C++ SDK bundled by FlutterFire still does that in some
+# releases, so set the compatibility floor before generated plugin CMake files
+# add Firebase as a subproject.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(IS_MULTICONFIG)

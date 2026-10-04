@@ -21,7 +21,9 @@ class _JournalListScreenState extends State<JournalListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Journal')),
+      appBar: AppBar(
+        title: const Text('Journal'),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/journal/new'),
         child: const Icon(Icons.add),
@@ -48,12 +50,10 @@ class _JournalListScreenState extends State<JournalListScreen> {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: state.entries.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final entry = state.entries[index];
-              final formattedDate = DateFormat(
-                'MMM d, yyyy',
-              ).format(entry.createdAt);
+              final formattedDate = DateFormat('MMM d, yyyy').format(entry.createdAt);
               return ListTile(
                 title: Text(
                   entry.title.isEmpty ? '(No title)' : entry.title,

@@ -1,13 +1,7 @@
 allprojects {
     repositories {
-        // google() first so Firebase's Android artifacts resolve from Google's
-        // Maven; the mirrors below remain a fallback for everything else.
         google()
         mavenCentral()
-        maven { url = uri("https://storage.flutter-io.cn/download.flutter.io") }
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/central") }
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
     }
 }
 

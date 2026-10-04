@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesService {
@@ -15,30 +13,14 @@ class PreferencesService {
 
   // Cached instance — avoids repeated platform channel calls on every read/write
   static SharedPreferences? _prefs;
-
-  static Future<SharedPreferences> _get() async {
-    var cached = _prefs;
-    if (cached != null) return cached;
-    // First-ever call: retry a few times, because on cold start the platform
-    // channel may not be ready yet (reports "Unable to establish connection").
-    for (var attempt = 0; attempt < 3; attempt++) {
-      try {
-        cached = await SharedPreferences.getInstance();
-        _prefs = cached;
-        return cached;
-      } catch (_) {
-        if (attempt == 2) rethrow;
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-      }
-    }
-    throw StateError('unreachable');
-  }
+  static Future<SharedPreferences> _get() async =>
+      _prefs ??= await SharedPreferences.getInstance();
 
   /// Pre-warms the SharedPreferences cache. Call once at startup (before
   /// any other PreferencesService method) so all subsequent reads are
   /// synchronous cache hits and never block the main isolate.
   static Future<void> warmUp() async {
-    await _get();
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
   /// Exposes the cached [SharedPreferences] instance for use by other services.

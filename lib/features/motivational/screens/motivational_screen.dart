@@ -1,5 +1,5 @@
+﻿import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:gal/gal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -29,47 +29,29 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
 
   // _CategoryItem separates the localized display label from the canonical English filter value
   static const _categoryValues = [
-    'All',
-    'love',
-    'strength',
-    'success',
-    'mindfulness',
-    'courage',
-    'happiness',
-    'growth',
-    'caring',
-    'resilience',
-    'peace',
+    'All','love','strength','success','mindfulness',
+    'courage','happiness','growth','caring','resilience','peace',
   ];
 
   List<String> _categoryLabels(AppStrings s) => [
-    s.categoryAll,
-    s.categoryLove,
-    s.categoryStrength,
-    s.categorySuccess,
-    s.categoryMindfulness,
-    s.categoryCourage,
-    s.categoryHappiness,
-    s.categoryGrowth,
-    s.categoryCaring,
-    s.categoryResilience,
-    s.categoryPeace,
+    s.categoryAll, s.categoryLove, s.categoryStrength, s.categorySuccess,
+    s.categoryMindfulness, s.categoryCourage, s.categoryHappiness,
+    s.categoryGrowth, s.categoryCaring, s.categoryResilience, s.categoryPeace,
   ];
 
   List<Quote> _filteredQuotes(bool isSinhala) {
     return kQuotes.where((q) {
-      final matchesCategory =
-          _selectedCategory == 'All' ||
+      final matchesCategory = _selectedCategory == 'All' ||
           q.category.toLowerCase() == _selectedCategory.toLowerCase();
       if (_searchQuery.isEmpty) return matchesCategory;
       final query = _searchQuery.toLowerCase();
       final matchesSearch = isSinhala
           ? ((q.textSi ?? q.text).toLowerCase().contains(query) ||
-                (q.authorSi ?? q.author).toLowerCase().contains(query) ||
-                q.category.toLowerCase().contains(query))
+             (q.authorSi ?? q.author).toLowerCase().contains(query) ||
+             q.category.toLowerCase().contains(query))
           : (q.text.toLowerCase().contains(query) ||
-                q.author.toLowerCase().contains(query) ||
-                q.category.toLowerCase().contains(query));
+             q.author.toLowerCase().contains(query) ||
+             q.category.toLowerCase().contains(query));
       return matchesCategory && matchesSearch;
     }).toList();
   }
@@ -83,52 +65,25 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
     return 135;
   }
 
-  Future<void> _downloadCard(
-    GlobalKey key,
-    Quote quote,
-    AppStrings strings,
-  ) async {
-    final messenger = ScaffoldMessenger.of(context);
-    void showSaved(String msg, [bool err = false]) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: err ? Colors.red.shade700 : _kTeal,
-        ),
-      );
-    }
+  Future<void> _downloadCard(GlobalKey key, Quote quote, AppStrings strings) async {
     try {
-      showSaved(strings.savingQuote);
-      // Give the current frame a chance to paint before capturing.
-      await Future.delayed(const Duration(milliseconds: 10));
-      final boundary =
-          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) {
-        showSaved(strings.quoteSavedFail, true);
-        return;
-      }
+      await Future.delayed(Duration.zero);
+      final boundary = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) {
-        showSaved(strings.quoteSavedFail, true);
-        return;
-      }
-      if (await Gal.hasAccess() == false) {
-        await Gal.requestAccess();
-      }
-      if (await Gal.hasAccess()) {
-        await Gal.putImageBytes(
-          byteData.buffer.asUint8List(),
-          name: 'mindcare_quote_${quote.id}',
-        );
-        showSaved(strings.quoteSaved);
-      } else {
-        showSaved(strings.quoteSavedNoPermission, true);
-      }
+      if (byteData == null) return;
+      final Uint8List bytes = byteData.buffer.asUint8List();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${strings.saveQuote}! (${bytes.length ~/ 1024}KB)'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: _kTeal,
+        ),
+      );
     } catch (e) {
       debugPrint('Download error: $e');
-      showSaved(strings.quoteSavedFail, true);
     }
   }
 
@@ -143,7 +98,6 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
       ),
     );
   }
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -181,21 +135,16 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? Colors.white : const Color(0xFF1A4A4A),
-            ),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: isDark ? Colors.white : const Color(0xFF1A4A4A)),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 4),
-          Text(
-            strings.motivationalBoostTitle,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF1A4A4A),
-            ),
-          ),
+          Text(strings.motivationalBoostTitle,
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF1A4A4A))),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -203,14 +152,9 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
               color: _kTeal,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: Text('$count',
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -234,26 +178,18 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
-                  },
-                )
+                  })
               : null,
           filled: true,
-          fillColor: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.white,
+          fillColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
-          ),
+              borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
-          ),
+              borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: _kTeal, width: 1.5),
-          ),
+              borderRadius: BorderRadius.circular(30),
+              borderSide: const BorderSide(color: _kTeal, width: 1.5)),
         ),
       ),
     );
@@ -267,7 +203,7 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _categoryValues.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final value = _categoryValues[i];
           final label = labels[i];
@@ -281,26 +217,24 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
                 color: selected
                     ? _kTeal
                     : (isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.white),
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.white),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 4,
-                  ),
+                      color: Colors.black.withValues(alpha: 0.07),
+                      blurRadius: 4)
                 ],
               ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected
-                      ? Colors.white
-                      : (isDark ? Colors.white70 : Colors.grey.shade700),
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  fontSize: 12,
-                ),
-              ),
+              child: Text(label,
+                  style: TextStyle(
+                    color: selected
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : Colors.grey.shade700),
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 12,
+                  )),
             ),
           );
         },
@@ -308,28 +242,15 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
     );
   }
 
-  Widget _buildMasonryGrid(
-    List<Quote> quotes,
-    bool isSinhala,
-    AppStrings strings,
-  ) {
+  Widget _buildMasonryGrid(List<Quote> quotes, bool isSinhala, AppStrings strings) {
     if (quotes.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 56,
-              color: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              strings.noQuotesFound,
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 16),
-            ),
-          ],
-        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.search_off_rounded, size: 56, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(strings.noQuotesFound,
+              style: TextStyle(color: Colors.grey.shade400, fontSize: 16)),
+        ]),
       );
     }
     return MasonryGridView.count(
@@ -342,12 +263,8 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
         final quote = quotes[index];
         final key = _keyFor(quote.id);
         final height = _cardHeight(quote, isSinhala);
-        final displayText = isSinhala
-            ? (quote.textSi ?? quote.text)
-            : quote.text;
-        final displayAuthor = isSinhala
-            ? (quote.authorSi ?? quote.author)
-            : quote.author;
+        final displayText = isSinhala ? (quote.textSi ?? quote.text) : quote.text;
+        final displayAuthor = isSinhala ? (quote.authorSi ?? quote.author) : quote.author;
         return GestureDetector(
           onTap: () => _showQuoteDetail(quote, key, strings),
           child: RepaintBoundary(
@@ -355,11 +272,10 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
             child: SizedBox(
               height: height,
               child: _QuoteCard(
-                quote: quote,
-                displayText: displayText,
-                displayAuthor: displayAuthor,
-                onDownload: () => _downloadCard(key, quote, strings),
-              ),
+                  quote: quote,
+                  displayText: displayText,
+                  displayAuthor: displayAuthor,
+                  onDownload: () => _downloadCard(key, quote, strings)),
             ),
           ),
         );
@@ -367,6 +283,8 @@ class _MotivationalScreenState extends State<MotivationalScreen> {
     );
   }
 }
+
+
 
 // ─── Quote Detail Bottom Sheet ────────────────────────────────────────────────
 
@@ -380,76 +298,71 @@ class _QuoteDetailSheet extends StatelessWidget {
     final strings = LanguageProvider.of(context);
     final isSinhala = strings.isSinhala;
     final displayText = isSinhala ? (quote.textSi ?? quote.text) : quote.text;
-    final displayAuthor = isSinhala
-        ? (quote.authorSi ?? quote.author)
-        : quote.author;
+    final displayAuthor = isSinhala ? (quote.authorSi ?? quote.author) : quote.author;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // The actual card preview — full visual rendering
+          AspectRatio(
+            aspectRatio: 1.0,
+            child: _QuoteCard(quote: quote, displayText: displayText, displayAuthor: displayAuthor, onDownload: onDownload),
+          ),
+          const SizedBox(height: 20),
+          // Author + category row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Drag handle
               Container(
-                width: 40,
-                height: 4,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+                  color: _kTeal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // The actual card preview — capped so the Save button always
-              // fits on screen (the sheet scrolls if needed).
-              ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 320,
-                  maxWidth: 320,
-                ),
-                child: AspectRatio(
-                  aspectRatio: 1.0,
-                  child: _QuoteCard(
-                    quote: quote,
-                    displayText: displayText,
-                    displayAuthor: displayAuthor,
-                    onDownload: onDownload,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Download button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    onDownload();
-                  },
-                  icon: const Icon(Icons.download_rounded),
-                  label: Text(strings.saveQuote),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kTeal,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                child: Text(quote.category.toUpperCase(),
+                    style: const TextStyle(
+                        color: _kTeal, fontSize: 10,
+                        fontWeight: FontWeight.w700, letterSpacing: 0.8)),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          // Download button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                onDownload();
+              },
+              icon: const Icon(Icons.download_rounded),
+              label: Text(strings.saveQuote),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kTeal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                textStyle: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -462,47 +375,20 @@ class _QuoteCard extends StatelessWidget {
   final String displayText;
   final String displayAuthor;
   final VoidCallback onDownload;
-  const _QuoteCard({
-    required this.quote,
-    required this.displayText,
-    required this.displayAuthor,
-    required this.onDownload,
-  });
+  const _QuoteCard({required this.quote, required this.displayText, required this.displayAuthor, required this.onDownload});
 
   @override
   Widget build(BuildContext context) {
-    if (quote.imageUrl != null) {
-      return _ImageCard(
-        quote: quote,
-        displayText: displayText,
-        displayAuthor: displayAuthor,
-        onDownload: onDownload,
-      );
-    }
+    if (quote.imageUrl != null) return _ImageCard(quote: quote, displayText: displayText, displayAuthor: displayAuthor, onDownload: onDownload);
     switch (quote.style) {
       case QuoteStyle.colored:
       case QuoteStyle.dark:
       case QuoteStyle.bold:
-        return _GradientCard(
-          quote: quote,
-          displayText: displayText,
-          displayAuthor: displayAuthor,
-          onDownload: onDownload,
-        );
+        return _GradientCard(quote: quote, displayText: displayText, displayAuthor: displayAuthor, onDownload: onDownload);
       case QuoteStyle.aesthetic:
-        return _AestheticCard(
-          quote: quote,
-          displayText: displayText,
-          displayAuthor: displayAuthor,
-          onDownload: onDownload,
-        );
+        return _AestheticCard(quote: quote, displayText: displayText, displayAuthor: displayAuthor, onDownload: onDownload);
       case QuoteStyle.minimal:
-        return _MinimalCard(
-          quote: quote,
-          displayText: displayText,
-          displayAuthor: displayAuthor,
-          onDownload: onDownload,
-        );
+        return _MinimalCard(quote: quote, displayText: displayText, displayAuthor: displayAuthor, onDownload: onDownload);
     }
   }
 }
@@ -512,106 +398,52 @@ class _ImageCard extends StatelessWidget {
   final String displayText;
   final String displayAuthor;
   final VoidCallback onDownload;
-  const _ImageCard({
-    required this.quote,
-    required this.displayText,
-    required this.displayAuthor,
-    required this.onDownload,
-  });
+  const _ImageCard({required this.quote, required this.displayText, required this.displayAuthor, required this.onDownload});
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(
-            quote.imageUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+      child: Stack(fit: StackFit.expand, children: [
+        Image.network(quote.imageUrl!, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: quote.colors,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: LinearGradient(colors: quote.colors,
+                    begin: Alignment.topLeft, end: Alignment.bottomRight),
               ),
+            )),
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xBB000000), Color(0x88000000)],
+              begin: Alignment.topCenter, end: Alignment.bottomCenter,
             ),
           ),
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xBB000000), Color(0x88000000)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 36),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '\u201C',
-                  style: TextStyle(
-                    fontSize: 40,
-                    color: Colors.white.withValues(alpha: 0.5),
-                    height: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  displayText,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 20,
-            left: 12,
-            right: 12,
-            child: Text(
-              '— $displayAuthor',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.85),
-                fontSize: 10,
-                fontStyle: FontStyle.italic,
-                shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 4,
-            right: 8,
-            child: GestureDetector(
-              onTap: onDownload,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.download_rounded,
-                  color: Colors.white,
-                  size: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 36),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text('\u201C', style: TextStyle(fontSize: 40,
+                color: Colors.white.withValues(alpha: 0.5), height: 0.8)),
+            const SizedBox(height: 4),
+            Text(displayText, textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 12,
+                    fontWeight: FontWeight.w700, height: 1.4,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
+          ]),
+        ),
+        Positioned(bottom: 20, left: 12, right: 12,
+          child: Text('— $displayAuthor', textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: 10, fontStyle: FontStyle.italic,
+                  shadows: const [Shadow(color: Colors.black54, blurRadius: 4)]))),
+        Positioned(bottom: 4, right: 8,
+          child: GestureDetector(onTap: onDownload,
+            child: Container(padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(6)),
+              child: const Icon(Icons.download_rounded, color: Colors.white, size: 13)))),
+      ]),
     );
   }
 }
@@ -621,95 +453,39 @@ class _GradientCard extends StatelessWidget {
   final String displayText;
   final String displayAuthor;
   final VoidCallback onDownload;
-  const _GradientCard({
-    required this.quote,
-    required this.displayText,
-    required this.displayAuthor,
-    required this.onDownload,
-  });
+  const _GradientCard({required this.quote, required this.displayText, required this.displayAuthor, required this.onDownload});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: quote.colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: LinearGradient(colors: quote.colors,
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: quote.colors.first.withValues(alpha: 0.35),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: quote.colors.first.withValues(alpha: 0.35),
+            blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 4,
-            left: 8,
-            child: Text(
-              '\u201C',
-              style: TextStyle(
-                fontSize: 52,
-                color: Colors.white.withValues(alpha: 0.25),
-                height: 1,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 24, 12, 34),
-            child: Center(
-              child: Text(
-                displayText,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 18,
-            left: 12,
-            right: 12,
-            child: Text(
-              '— $displayAuthor',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontSize: 10,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 4,
-            right: 8,
-            child: GestureDetector(
-              onTap: onDownload,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.download_rounded,
-                  color: Colors.white,
-                  size: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: Stack(children: [
+        Positioned(top: 4, left: 8,
+          child: Text('\u201C', style: TextStyle(fontSize: 52,
+              color: Colors.white.withValues(alpha: 0.25), height: 1))),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 24, 12, 34),
+          child: Center(child: Text(displayText, textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 12,
+                  fontWeight: FontWeight.w600, height: 1.4))),
+        ),
+        Positioned(bottom: 18, left: 12, right: 12,
+          child: Text('— $displayAuthor', textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 10, fontStyle: FontStyle.italic))),
+        Positioned(bottom: 4, right: 8,
+          child: GestureDetector(onTap: onDownload,
+            child: Container(padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6)),
+              child: const Icon(Icons.download_rounded, color: Colors.white, size: 13)))),
+      ]),
     );
   }
 }
@@ -719,96 +495,39 @@ class _AestheticCard extends StatelessWidget {
   final String displayText;
   final String displayAuthor;
   final VoidCallback onDownload;
-  const _AestheticCard({
-    required this.quote,
-    required this.displayText,
-    required this.displayAuthor,
-    required this.onDownload,
-  });
+  const _AestheticCard({required this.quote, required this.displayText, required this.displayAuthor, required this.onDownload});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: quote.colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: LinearGradient(colors: quote.colors,
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 4,
-            left: 8,
-            child: Text(
-              '\u201C',
-              style: TextStyle(
-                fontSize: 44,
-                color: Colors.black.withValues(alpha: 0.07),
-                height: 1,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 22, 12, 34),
-            child: Center(
-              child: Text(
-                displayText,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF3D3D3D),
-                  fontSize: 11.5,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.w500,
-                  height: 1.45,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 18,
-            left: 12,
-            right: 12,
-            child: Text(
-              '— $displayAuthor',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF757575),
-                fontSize: 10,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 4,
-            right: 8,
-            child: GestureDetector(
-              onTap: onDownload,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.download_rounded,
-                  color: Color(0xFF555555),
-                  size: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: Stack(children: [
+        Positioned(top: 4, left: 8,
+          child: Text('\u201C', style: TextStyle(fontSize: 44,
+              color: Colors.black.withValues(alpha: 0.07), height: 1))),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 22, 12, 34),
+          child: Center(child: Text(displayText, textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF3D3D3D), fontSize: 11.5,
+                  fontStyle: FontStyle.italic, fontWeight: FontWeight.w500, height: 1.45))),
+        ),
+        Positioned(bottom: 18, left: 12, right: 12,
+          child: Text('— $displayAuthor', textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF757575), fontSize: 10,
+                  fontStyle: FontStyle.italic))),
+        Positioned(bottom: 4, right: 8,
+          child: GestureDetector(onTap: onDownload,
+            child: Container(padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(6)),
+              child: const Icon(Icons.download_rounded, color: Color(0xFF555555), size: 13)))),
+      ]),
     );
   }
 }
@@ -818,12 +537,7 @@ class _MinimalCard extends StatelessWidget {
   final String displayText;
   final String displayAuthor;
   final VoidCallback onDownload;
-  const _MinimalCard({
-    required this.quote,
-    required this.displayText,
-    required this.displayAuthor,
-    required this.onDownload,
-  });
+  const _MinimalCard({required this.quote, required this.displayText, required this.displayAuthor, required this.onDownload});
 
   Color get _accentColor {
     final hex = quote.accent;
@@ -837,82 +551,33 @@ class _MinimalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 4,
-              decoration: BoxDecoration(
-                color: _accentColor,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 18, 12, 34),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayText,
-                  style: const TextStyle(
-                    color: Color(0xFF212121),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w500,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 18,
-            left: 14,
-            right: 12,
-            child: Text(
-              '— $displayAuthor',
-              style: TextStyle(
-                color: _accentColor,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 4,
-            right: 8,
-            child: GestureDetector(
-              onTap: onDownload,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: _accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  Icons.download_rounded,
-                  color: _accentColor,
-                  size: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: Stack(children: [
+        Positioned(top: 0, left: 0, right: 0,
+          child: Container(height: 4,
+            decoration: BoxDecoration(color: _accentColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16))))),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 18, 12, 34),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(displayText,
+                style: const TextStyle(color: Color(0xFF212121), fontSize: 11.5,
+                    fontWeight: FontWeight.w500, height: 1.45)),
+          ]),
+        ),
+        Positioned(bottom: 18, left: 14, right: 12,
+          child: Text('— $displayAuthor',
+              style: TextStyle(color: _accentColor, fontSize: 10, fontWeight: FontWeight.w600))),
+        Positioned(bottom: 4, right: 8,
+          child: GestureDetector(onTap: onDownload,
+            child: Container(padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: _accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6)),
+              child: Icon(Icons.download_rounded, color: _accentColor, size: 13)))),
+      ]),
     );
   }
 }

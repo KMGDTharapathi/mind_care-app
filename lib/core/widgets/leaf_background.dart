@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// Wraps [child] in a [Stack] with semi-transparent decorative leaf shapes
@@ -35,7 +36,7 @@ class _LeafPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF388E3C).withValues(alpha: 0.18)
+      ..color = const Color(0xFF388E3C).withOpacity(0.18)
       ..style = PaintingStyle.fill;
 
     for (final (fx, fy, rot, scale) in _leaves) {
@@ -46,12 +47,7 @@ class _LeafPainter extends CustomPainter {
   }
 
   void _drawLeaf(
-    Canvas canvas,
-    Paint paint,
-    Offset center,
-    double rotation,
-    double size,
-  ) {
+      Canvas canvas, Paint paint, Offset center, double rotation, double size) {
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(rotation);

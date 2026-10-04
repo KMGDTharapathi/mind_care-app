@@ -25,7 +25,9 @@ class DoctorCardWidget extends StatelessWidget {
           : doctor.name,
       child: Card(
         margin: const EdgeInsets.only(bottom: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
         elevation: 2,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -111,7 +113,7 @@ class _TypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _kTeal.withValues(alpha: 0.1),
+        color: _kTeal.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(

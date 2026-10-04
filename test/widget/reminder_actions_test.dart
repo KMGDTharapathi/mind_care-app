@@ -66,47 +66,55 @@ void main() {
     expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
   });
 
-  testWidgets('edit and delete are visible without any prior tap once the '
-      'reminder is enabled', (tester) async {
+  testWidgets('the message editor is on screen once the reminder is enabled', (
+    tester,
+  ) async {
     await tester.pumpWidget(_buildApp(notificationsOn: true));
     await tester.pumpAndSettle();
 
     await _scrollToPicker(tester);
 
-    // These used to require tapping the message row first, so they read as
-    // missing. They must already be on screen.
-    expect(find.byIcon(Icons.edit_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
+    // The editor card and its preset message list are visible.
+    expect(find.text(AppStrings.en.reminderMessage), findsOneWidget);
+    expect(find.byIcon(Icons.radio_button_off), findsWidgets);
   });
 
-  testWidgets('tapping edit reveals the save button', (tester) async {
+  testWidgets('tapping a preset message selects it', (tester) async {
     await tester.pumpWidget(_buildApp(notificationsOn: true));
     await tester.pumpAndSettle();
 
     await _scrollToPicker(tester);
-    await tester.ensureVisible(find.byIcon(Icons.edit_rounded));
+    final firstPreset = AppStrings.en.reminderPresets.first;
+    await tester.ensureVisible(find.text(firstPreset));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.edit_rounded));
+    await tester.tap(find.text(firstPreset));
     await _pumpBriefly(tester);
 
-    expect(find.byIcon(Icons.save_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'tapping delete enters the editor so the message can be retyped',
-    (tester) async {
-      await tester.pumpWidget(_buildApp(notificationsOn: true));
-      await tester.pumpAndSettle();
+  testWidgets('tapping a different preset switches the selection', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_buildApp(notificationsOn: true));
+    await tester.pumpAndSettle();
 
-      await _scrollToPicker(tester);
-      await tester.ensureVisible(find.byIcon(Icons.delete_outline_rounded));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.delete_outline_rounded));
-      await _pumpBriefly(tester);
+    await _scrollToPicker(tester);
+    final presets = AppStrings.en.reminderPresets;
+    await tester.ensureVisible(find.text(presets[0]));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(presets[0]));
+    await _pumpBriefly(tester);
+    expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
 
-      expect(find.byIcon(Icons.save_rounded), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    await tester.ensureVisible(find.text(presets[1]));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(presets[1]));
+    await _pumpBriefly(tester);
+
+    // Still exactly one selected; the checked state moved to the new preset.
+    expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

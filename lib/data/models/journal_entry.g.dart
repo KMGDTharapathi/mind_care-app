@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Manually written Hive TypeAdapters (replaces build_runner output)
 
 part of 'journal_entry.dart';
 

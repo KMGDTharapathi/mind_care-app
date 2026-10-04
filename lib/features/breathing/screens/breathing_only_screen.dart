@@ -14,26 +14,10 @@ class BreathingOnlyScreen extends StatelessWidget {
     final patterns = BreathingRepository().getAll();
     final s = LanguageProvider.of(context);
 
-    Map<String, ({String emoji, Color color, String desc, String benefit})>
-    meta = {
-      'box': (
-        emoji: '📦',
-        color: const Color(0xFF0288D1),
-        desc: s.boxBreathingDesc,
-        benefit: s.boxBreathingBenefit,
-      ),
-      '478': (
-        emoji: '😴',
-        color: const Color(0xFF7B1FA2),
-        desc: s.breathing478Desc,
-        benefit: s.breathing478Benefit,
-      ),
-      'deep-calm': (
-        emoji: '🌊',
-        color: const Color(0xFF00796B),
-        desc: s.deepCalmDesc,
-        benefit: s.deepCalmBenefit,
-      ),
+    Map<String, ({String emoji, Color color, String desc, String benefit})> meta = {
+      'box': (emoji: '📦', color: const Color(0xFF0288D1), desc: s.boxBreathingDesc, benefit: s.boxBreathingBenefit),
+      '478': (emoji: '😴', color: const Color(0xFF7B1FA2), desc: s.breathing478Desc, benefit: s.breathing478Benefit),
+      'deep-calm': (emoji: '🌊', color: const Color(0xFF00796B), desc: s.deepCalmDesc, benefit: s.deepCalmBenefit),
     };
 
     Map<String, String> names = {
@@ -44,14 +28,10 @@ class BreathingOnlyScreen extends StatelessWidget {
 
     String localPhaseLabel(String label) {
       switch (label) {
-        case 'Inhale':
-          return s.phaseInhale;
-        case 'Hold':
-          return s.phaseHold;
-        case 'Exhale':
-          return s.phaseExhale;
-        default:
-          return label;
+        case 'Inhale': return s.phaseInhale;
+        case 'Hold': return s.phaseHold;
+        case 'Exhale': return s.phaseExhale;
+        default: return label;
       }
     }
 
@@ -67,20 +47,17 @@ class BreathingOnlyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: isDark ? Colors.white : const Color(0xFF1A4A4A),
-                    ),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF1A4A4A)),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const Spacer(),
                   Text(
                     s.breathingExercises,
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF1A4A4A),
-                    ),
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1A4A4A)),
                   ),
                   const Spacer(),
                   const SizedBox(width: 48),
@@ -101,53 +78,40 @@ class BreathingOnlyScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0288D1).withValues(alpha: 0.3),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
+                      color: const Color(0xFF0288D1).withValues(alpha: 0.3),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5)),
                 ],
               ),
-              child: Row(
-                children: [
-                  const Text('🌬️', style: TextStyle(fontSize: 44)),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
+              child: Row(children: [
+                const Text('🌬️', style: TextStyle(fontSize: 44)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          s.breathingExercises,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                        Text(s.breathingExercises,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
                         const SizedBox(height: 3),
-                        Text(
-                          '${patterns.length} ${s.breathingTab} • ${s.howYouWillPractice}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.85),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                        Text('${patterns.length} ${s.breathingTab} • ${s.howYouWillPractice}',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.85))),
+                      ]),
+                ),
+              ]),
             ),
 
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
-              child: Text(
-                s.chooseTechnique,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white54 : const Color(0xFF2A5A5A),
-                ),
-              ),
+              child: Text(s.chooseTechnique,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white54 : const Color(0xFF2A5A5A))),
             ),
 
             // ── List ────────────────────────────────────────────────────────
@@ -155,7 +119,7 @@ class BreathingOnlyScreen extends StatelessWidget {
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 itemCount: patterns.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (_, i) {
                   final p = patterns[i];
                   final m = meta[p.id];
@@ -218,10 +182,9 @@ class _BreathingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3)),
           ],
         ),
         child: Row(
@@ -241,8 +204,7 @@ class _BreathingCard extends StatelessWidget {
                 ),
               ),
               child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 34)),
-              ),
+                  child: Text(emoji, style: const TextStyle(fontSize: 34))),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -251,55 +213,34 @@ class _BreathingCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            name,
+                    Row(children: [
+                      Expanded(
+                        child: Text(name,
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1A3333),
-                            ),
-                          ),
-                        ),
-                        if (benefit.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              benefit,
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: color,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(width: 8),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      desc,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.4,
-                        color: isDark
-                            ? Colors.white54
-                            : const Color(0xFF4A6A6A),
+                                color: isDark ? Colors.white : const Color(0xFF1A3333))),
                       ),
-                    ),
+                      if (benefit.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(benefit,
+                              style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.bold)),
+                        ),
+                      const SizedBox(width: 8),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(desc,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 11,
+                            height: 1.4,
+                            color: isDark ? Colors.white54 : const Color(0xFF4A6A6A))),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 4,
@@ -308,25 +249,16 @@ class _BreathingCard extends StatelessWidget {
                         final phColor = ph.label == 'Inhale'
                             ? const Color(0xFF43A047)
                             : ph.label == 'Exhale'
-                            ? const Color(0xFF0288D1)
-                            : const Color(0xFFF9A825);
+                                ? const Color(0xFF0288D1)
+                                : const Color(0xFFF9A825);
                         return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 3,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
                             color: phColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text(
-                            '${localPhaseLabel(ph.label)} ${ph.durationSeconds}s',
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: phColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: Text('${localPhaseLabel(ph.label)} ${ph.durationSeconds}s',
+                              style: TextStyle(fontSize: 9, color: phColor, fontWeight: FontWeight.w600)),
                         );
                       }).toList(),
                     ),

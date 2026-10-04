@@ -30,7 +30,7 @@ class DoctorDetailScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 36,
-                    backgroundColor: _kTeal.withValues(alpha: 0.15),
+                    backgroundColor: _kTeal.withOpacity(0.15),
                     child: const Icon(
                       Icons.local_hospital_outlined,
                       color: _kTeal,
@@ -111,10 +111,7 @@ class DoctorDetailScreen extends StatelessWidget {
                   onTap: () async {
                     final uri = Uri.parse(doctor.website!);
                     if (await canLaunchUrl(uri)) {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
                     }
                   },
                 ),
@@ -167,46 +164,48 @@ class DoctorDetailScreen extends StatelessWidget {
   }
 
   Widget _sectionTitle(String title) => Padding(
-    padding: const EdgeInsets.only(top: 20, bottom: 8),
-    child: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: Colors.grey,
-        letterSpacing: 0.5,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.only(top: 20, bottom: 8),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
 
   Widget _infoRow(
     IconData icon,
     String text,
     Color iconColor, {
     VoidCallback? onTap,
-  }) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(8),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: iconColor),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                color: onTap != null ? iconColor : Colors.black87,
-                decoration: onTap != null ? TextDecoration.underline : null,
+  }) =>
+      InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: iconColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: onTap != null ? iconColor : Colors.black87,
+                    decoration:
+                        onTap != null ? TextDecoration.underline : null,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
 
 // ── Type badge (mirrors _TypeBadge in doctor_card_widget.dart) ────────────────
@@ -221,7 +220,7 @@ class _TypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _kTeal.withValues(alpha: 0.1),
+        color: _kTeal.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(

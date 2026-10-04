@@ -1,4 +1,5 @@
-/// Local doctor model without Firestore dependencies.
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Doctor {
   final String id;
   final String name;
@@ -32,10 +33,10 @@ class Doctor {
     required this.callType,
   });
 
-  /// Create from a local map (e.g., from seed data)
-  factory Doctor.fromMap(String id, Map<String, dynamic> d) {
+  factory Doctor.fromFirestore(DocumentSnapshot doc) {
+    final d = doc.data() as Map<String, dynamic>;
     return Doctor(
-      id: id,
+      id: doc.id,
       name: d['name'] ?? '',
       photoUrl: d['photo_url'] ?? '',
       specialization: d['specialization'] ?? '',
@@ -52,7 +53,7 @@ class Doctor {
     );
   }
 
-  /// Sample doctors shown when no data is available.
+  /// Sample doctors shown when Firestore has no data yet.
   static const List<Doctor> samples = [
     Doctor(
       id: 's1',
@@ -156,7 +157,6 @@ class Doctor {
   ];
 }
 
-/// Local hotline model without Firestore dependencies.
 class Hotline {
   final String id;
   final String name;
@@ -182,10 +182,18 @@ class Hotline {
     required this.category,
   });
 
-  /// Create from a local map
-  factory Hotline.fromMap(String id, Map<String, dynamic> d) {
+  String localName(bool isSinhala) =>
+      (isSinhala && nameSi != null && nameSi!.isNotEmpty) ? nameSi! : name;
+
+  String localDescription(bool isSinhala) =>
+      (isSinhala && descriptionSi != null && descriptionSi!.isNotEmpty)
+          ? descriptionSi!
+          : description;
+
+  factory Hotline.fromFirestore(DocumentSnapshot doc) {
+    final d = doc.data() as Map<String, dynamic>;
     return Hotline(
-      id: id,
+      id: doc.id,
       name: d['name'] ?? '',
       nameSi: d['name_si'],
       number: d['number'] ?? '',
@@ -197,14 +205,6 @@ class Hotline {
       category: d['category'] ?? 'general',
     );
   }
-
-  String localName(bool isSinhala) =>
-      (isSinhala && nameSi != null && nameSi!.isNotEmpty) ? nameSi! : name;
-
-  String localDescription(bool isSinhala) =>
-      (isSinhala && descriptionSi != null && descriptionSi!.isNotEmpty)
-          ? descriptionSi!
-          : description;
 
   static const List<Hotline> fallback = [
     Hotline(
