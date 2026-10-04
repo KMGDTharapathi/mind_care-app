@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mind_care_app/data/repositories/firestore/firestore_user_repository.dart';
 
@@ -15,7 +16,12 @@ class FirebaseAuthService implements AuthService {
     GoogleSignIn? googleSignIn,
     FirestoreUserRepository? userRepo,
   })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              clientId: kIsWeb
+                  ? '384910835517-ge9peqbi87so7e63nf2jofnueh98g424.apps.googleusercontent.com'
+                  : null,
+            ),
         _userRepo = userRepo ?? FirestoreUserRepository();
 
   final FirebaseAuth _auth;
