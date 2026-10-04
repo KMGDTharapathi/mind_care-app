@@ -26,7 +26,15 @@ class NotificationService {
   static const _baseId = 100; // IDs 100-106 for Mon-Sun
 
   // Music player notification
-  static const _musicChannelId = 'mindcare_music';
+  //
+  // Android fixes a channel's importance at creation and silently ignores
+  // later upgrades. 'mindcare_music' was created at LOW, so the media
+  // notification was demoted and never surfaced with its player buttons. The
+  // delete-and-recreate below races audio_service (which recreates the channel
+  // at its own default), so a never-before-used id is used instead: there is
+  // no stale LOW entry to inherit.
+  static const _musicChannelId = 'mindcare_playback';
+  static const _legacyMusicChannelId = 'mindcare_music';
   static const _musicChannelName = 'Now Playing';
   static const _nowPlayingId = 9001;
 
@@ -103,10 +111,11 @@ class NotificationService {
       ),
     );
 
-    // A channel's importance is fixed once created: an earlier install created
-    // 'mindcare_music' at LOW, and Android ignores later upgrades. Delete and
-    // recreate it so a media notification actually surfaces (heads-up + shade).
-    await androidPlugin?.deleteNotificationChannel(_musicChannelId);
+    // A channel's importance is fixed once created: Android ignores later
+    // upgrades. Drop the old LOW-importance channel, then create the new one
+    // at HIGH so the media notification surfaces in the shade and on the lock
+    // screen. This runs before audio_service.init binds to the same id.
+    await androidPlugin?.deleteNotificationChannel(_legacyMusicChannelId);
     await androidPlugin?.createNotificationChannel(
       const AndroidNotificationChannel(
         _musicChannelId,

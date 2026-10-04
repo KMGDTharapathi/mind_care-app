@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/services/game_audio_service.dart';
 import '../widgets/game_exit_dialog.dart';
 import '../widgets/game_assistant.dart';
 
@@ -333,6 +334,7 @@ class _BubbleShooterState extends State<BubbleShooterGame>
   Future<void> _shoot(double w, double h) async {
     if (_aimAngle == null || _firing || _won || _lost) return;
     setState(() => _firing = true);
+    GameAudio.instance.play(GameSfx.shoot);
 
     final gridData = _grid
         .map((b) => {'row': b.row, 'col': b.col, 'colorIdx': b.colorIdx})
@@ -365,7 +367,14 @@ class _BubbleShooterState extends State<BubbleShooterGame>
       }
       _score += result.matched.length * (_level + 1) * 10;
       didPop = true;
+      // Bigger groups pop brighter, so the reward is audible as well as visual.
+      GameAudio.instance.play(
+        GameSfx.pop,
+        rate: 1.0 + (result.matched.length - 3) * 0.07,
+      );
       _popCtrl.forward(from: 0);
+    } else {
+      GameAudio.instance.play(GameSfx.stick);
     }
 
     _shots--;
@@ -384,6 +393,12 @@ class _BubbleShooterState extends State<BubbleShooterGame>
       if (outOfShots && !_won) _lost = true;
       _firing = false;
     });
+
+    if (allGone) {
+      GameAudio.instance.play(GameSfx.win);
+    } else if (outOfShots) {
+      GameAudio.instance.play(GameSfx.lose);
+    }
   }
 
   List<Offset> _trajectory(double w, double h) {

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/services/game_audio_service.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/game_assistant.dart';
@@ -290,12 +291,14 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
 
     if (_selected == null) {
       setState(() => _selected = candy);
+      GameAudio.instance.play(GameSfx.tap, volume: 0.35);
     } else if (_selected == candy) {
       setState(() => _selected = null);
     } else if (_areAdjacent(_selected!, candy)) {
       _trySwap(_selected!, candy);
     } else {
       setState(() => _selected = candy);
+      GameAudio.instance.play(GameSfx.tap, volume: 0.35);
     }
   }
 
@@ -324,9 +327,12 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
 
     final hasMatch = _checkMatchAt(a.row, a.col) || _checkMatchAt(b.row, b.col);
     if (!hasMatch) {
+      GameAudio.instance.play(GameSfx.swap);
       Future.delayed(const Duration(milliseconds: 160), () {
         if (mounted) {
           setState(() => _swapInPlace(a.row, a.col, b.row, b.col));
+          // The swap was a dead end — a soft bump, never a buzzer.
+          GameAudio.instance.play(GameSfx.bump);
           _removeMatchesNext();
         }
       });
@@ -335,6 +341,7 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
 
     _moves--;
     _combo = 0;
+    GameAudio.instance.play(GameSfx.swap);
     Future.delayed(const Duration(milliseconds: 180), () {
       if (mounted) _removeMatchesNext();
     });
@@ -342,6 +349,7 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
 
   void _detonateSpecial(Candy special) {
     setState(() {}); // show the swap
+    GameAudio.instance.play(GameSfx.blast, rate: 0.85);
     Future.delayed(const Duration(milliseconds: 220), () {
       if (!mounted) return;
       _combo++;
@@ -362,6 +370,7 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
           _isAnimating = false;
           _initBoard();
         });
+        GameAudio.instance.play(GameSfx.drop);
       } else {
         setState(() => _isAnimating = false);
       }
@@ -392,6 +401,11 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
     }
 
     _score += toClear.length * 10 * _combo;
+    // Each cascade step lands a little higher, so combos are audible.
+    GameAudio.instance.play(
+      GameSfx.match,
+      rate: 1.0 + (_combo - 1).clamp(0, 8) * 0.06,
+    );
     _applyRemoval(toClear);
   }
 
@@ -447,6 +461,11 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
         _persistBest();
       }
     });
+    if (reachedTarget) {
+      GameAudio.instance.play(GameSfx.win);
+    } else {
+      GameAudio.instance.play(GameSfx.lose);
+    }
   }
 
   Future<void> _persistBest() async {
@@ -649,6 +668,7 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
                   isLastLevel: _levelIndex == _levels.length - 1,
                   onPlayAgain: () => setState(() {
                     _startLevel(_levelIndex);
+                    GameAudio.instance.play(GameSfx.tap);
                   }),
                   onNextLevel: () => setState(() {
                     _startLevel(
@@ -656,6 +676,7 @@ class _CandyCrushGameState extends State<CandyCrushGame> {
                           ? _levelIndex + 1
                           : _levelIndex,
                     );
+                    GameAudio.instance.play(GameSfx.levelUp);
                   }),
                 ),
               ] else

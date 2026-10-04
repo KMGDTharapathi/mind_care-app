@@ -125,7 +125,11 @@ class _SettingsScreenState extends State<SettingsScreen>
         // Defer notifier update to next frame to avoid InheritedWidget assertion
         // when dialog is still in the process of being dismissed
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) appUserName.value = result;
+          if (mounted) {
+            appUserName.value = result;
+            // Push the new name to the cloud for re-login restore.
+            context.read<SettingsCubit>().pushSettings();
+          }
         });
         if (!mounted) return;
         // Show success feedback
@@ -567,6 +571,10 @@ Future<void> _onLanguageSelected(
     // Persist first, then update notifier (Requirement 8.3)
     await PreferencesService.setAppLanguage(newCode);
     appLanguage.value = newCode == 'si' ? AppStrings.si : AppStrings.en;
+    // Push chosen language to cloud for re-login restore.
+    if (context.mounted) {
+      context.read<SettingsCubit>().pushSettings();
+    }
   } catch (_) {
     // Revert on failure (Requirement 8.5)
     appLanguage.value = previousCode == 'si' ? AppStrings.si : AppStrings.en;

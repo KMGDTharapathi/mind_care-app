@@ -30,7 +30,6 @@ import 'package:mind_care_app/features/meditation/screens/meditation_list_screen
 import 'package:mind_care_app/features/music/screens/calm_music_screen.dart';
 import 'package:mind_care_app/features/motivational/screens/motivational_screen.dart';
 import 'package:mind_care_app/features/counsellor/screens/counsellor_call_screen.dart';
-import 'package:mind_care_app/features/chat/screens/sinhala_chat_screen.dart';
 import 'package:mind_care_app/features/reminders/screens/daily_reminders_screen.dart';
 import 'package:mind_care_app/features/painting/screens/painting_screen.dart';
 import 'package:mind_care_app/features/splash/splash_screen.dart';
@@ -72,7 +71,6 @@ class AppRouter {
   static const String motivational = '/motivational';
   static const String counsellorCall = '/counsellor-call';
   static const String dailyReminders = '/daily-reminders';
-  static const String sinhalaChatRoute = '/sinhala-chat';
   static const String willowChat = '/willow-chat';
   static const String findDoctor = '/find-doctor';
 
@@ -237,10 +235,6 @@ class AppRouter {
     GoRoute(
       path: dailyReminders,
       builder: (context, state) => const DailyRemindersScreen(),
-    ),
-    GoRoute(
-      path: sinhalaChatRoute,
-      builder: (context, state) => const SinhalaChatScreen(),
     ),
     GoRoute(
       path: willowChat,

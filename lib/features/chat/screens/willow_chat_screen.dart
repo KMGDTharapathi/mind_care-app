@@ -1,8 +1,10 @@
-import 'dart:io';
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
 import '../models/chat_style.dart';
@@ -10,6 +12,9 @@ import '../models/wellness_feature.dart';
 import '../services/chat_mood.dart';
 import '../services/willow_engine.dart';
 import '../services/willow_api_service.dart';
+import '../widgets/attachment_image.dart';
+import 'package:mind_care_app/core/service_locator.dart';
+import 'package:mind_care_app/data/local/hive_service.dart';
 import '../../settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
 
@@ -30,6 +35,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   final _uuid = const Uuid();
+  StreamSubscription<BoxEvent>? _boxSub;
 
   bool _isTyping = false;
   bool _showScrollDown = false;
@@ -55,15 +61,64 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         setState(() => _showScrollDown = false);
       }
     });
-    // Welcome message
+    // Live-merge messages synced back from the cloud (e.g. right after a
+    // re-login, when the Hive box is cleared and Firestore repopulates it).
+    _boxSub = HiveService.chatMessages.watch().listen(_onBoxEvent);
+    // Welcome message (unless persisted history is restored first)
     Future.delayed(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
+      _loadChatHistory();
     });
+  }
+
+  /// Merges a Hive box change into the visible message list (by id), so
+  /// cloud-restored history appears live in sync without duplicating messages
+  /// that are already on screen.
+  void _onBoxEvent(BoxEvent event) {
+    final value = event.value;
+    if (value is! ChatMessage || !mounted) return;
+    if (_messages.any((m) => m.id == value.id)) return;
+    setState(() {
+      _messages.add(value);
+      _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    });
+    _scrollToBottom(animated: false);
+  }
+
+  void _loadChatHistory() {
+    try {
+      final box = HiveService.chatMessages;
+      final saved = box.values.toList()
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      if (saved.isEmpty) {
+        _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
+        return;
+      }
+      setState(() => _messages.addAll(saved));
+      _scrollToBottom(animated: false);
+    } catch (e) {
+      // Box not ready / corrupt — start fresh with the welcome message.
+      _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
+    }
+  }
+
+  void _persist(ChatMessage msg) {
+    try {
+      HiveService.chatMessages.put(msg.id, msg);
+    } catch (_) {
+      // Persistence is best-effort; never break chat if Hive fails.
+    }
+    // Best-effort push to the cloud so history restores on re-login.
+    final sync = ServiceLocator.syncService;
+    if (sync != null) {
+      // Fire-and-forget: failures are handled inside the sync service.
+      unawaited(sync.enqueueChatMessage(msg));
+    }
   }
 
   @override
   void dispose() {
+    _boxSub?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -93,6 +148,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       recommendations: reply.recommendations,
     );
     setState(() => _messages.add(msg));
+    _persist(msg);
     _scrollToBottom();
   }
 
@@ -111,12 +167,61 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       _messages.add(userMsg);
       _isTyping = true;
     });
+    _persist(userMsg);
     _scrollToBottom();
 
     final response = await _engine.respond(userMsg);
     if (!mounted) return;
     setState(() => _isTyping = false);
     _addWillowMessage(response);
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData('text/plain');
+    final text = data?.text;
+    if (text == null || text.isEmpty) {
+      final isSi = appLanguage.value.isSinhala;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              isSi ? 'පිටපත් කිරීමට කිසිවක් නැත' : 'Nothing to paste',
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 1),
+            backgroundColor: _kTeal,
+          ),
+        );
+      return;
+    }
+    final existing = _textController.text;
+    final cursor = _textController.selection;
+    if (cursor.isValid && cursor.start != cursor.end) {
+      // Replace the selected text.
+      final newText = existing.replaceRange(
+        cursor.start,
+        cursor.end,
+        text,
+      );
+      _setTextWithCursor(newText, cursor.start + text.length);
+    } else if (existing.isNotEmpty) {
+      // Append to the end with a leading space if needed.
+      final newText = existing.endsWith(' ') ||
+              existing.endsWith('\n') ||
+              existing.isEmpty
+          ? existing + text
+          : '$existing $text';
+      _setTextWithCursor(newText, newText.length);
+    } else {
+      _setTextWithCursor(text, text.length);
+    }
+  }
+
+  void _setTextWithCursor(String value, int offset) {
+    _textController.text = value;
+    _textController.selection = TextSelection.collapsed(offset: offset);
   }
 
   Future<void> _pickAttachment() async {
@@ -183,6 +288,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         _messages.add(userMsg);
         _isTyping = true;
       });
+      _persist(userMsg);
       _scrollToBottom();
       final response = await _engine.respond(userMsg);
       if (!mounted) return;
@@ -202,6 +308,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         _messages.add(userMsg);
         _isTyping = true;
       });
+      _persist(userMsg);
       _scrollToBottom();
       final response = await _engine.respond(userMsg);
       if (!mounted) return;
@@ -246,7 +353,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                       message: _messages[index],
                       isDark: isDark,
                       accent: accent,
-                      fontFamily: chatFont.family,
+                      chatFont: chatFont,
                       userLight: chatTheme.userBubbleLight,
                       userDark: chatTheme.userBubbleDark,
                     );
@@ -274,9 +381,10 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             isDark: isDark,
             isSinhala: isSi,
             accent: accent,
-            fontFamily: chatFont.family,
+            chatFont: chatFont,
             onSend: _sendText,
             onAttach: _pickAttachment,
+            onPaste: _pasteFromClipboard,
           ),
         ],
       ),
@@ -464,7 +572,7 @@ class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isDark;
   final Color accent;
-  final String? fontFamily;
+  final ChatFont chatFont;
   final Color userLight;
   final Color userDark;
 
@@ -472,7 +580,7 @@ class _MessageBubble extends StatelessWidget {
     required this.message,
     required this.isDark,
     required this.accent,
-    this.fontFamily,
+    required this.chatFont,
     required this.userLight,
     required this.userDark,
   });
@@ -506,7 +614,9 @@ class _MessageBubble extends StatelessWidget {
         children: [
           if (!isUser) ...[_WillowAvatar(size: 28), const SizedBox(width: 6)],
           Flexible(
-            child: Container(
+            child: GestureDetector(
+              onLongPress: () => _copyToClipboard(context),
+              child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.72,
               ),
@@ -537,7 +647,7 @@ class _MessageBubble extends StatelessWidget {
                       recommendations: message.recommendations,
                       isDark: isDark,
                       accent: accent,
-                      fontFamily: fontFamily,
+                      chatFont: chatFont,
                     ),
                   ],
                   const SizedBox(height: 4),
@@ -558,6 +668,7 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
             ),
           ),
           if (isUser) const SizedBox(width: 4),
@@ -575,24 +686,16 @@ class _MessageBubble extends StatelessWidget {
           accentColor: accentColor,
           isUser: message.sender == MessageSender.user,
           isDark: isDark,
-          fontFamily: fontFamily,
+          chatFont: chatFont,
         );
       case MessageType.image:
         return ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.file(
-            File(message.content),
+          child: AttachmentImage(
+            path: message.content,
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
-              height: 100,
-              color: Colors.grey.shade200,
-              child: const Icon(
-                Icons.broken_image_outlined,
-                color: Colors.grey,
-              ),
-            ),
           ),
         );
       case MessageType.file:
@@ -634,6 +737,28 @@ class _MessageBubble extends StatelessWidget {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  Future<void> _copyToClipboard(BuildContext context) async {
+    // Copy the text content (or file name) of any message to the clipboard.
+    final isSi = appLanguage.value.isSinhala;
+    final toCopy = message.type == MessageType.text
+        ? message.content
+        : (message.fileName != null
+              ? message.fileName!
+              : message.content);
+    await Clipboard.setData(ClipboardData(text: toCopy));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(isSi ? 'පිටපත් කරන ලදී' : 'Copied'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+          backgroundColor: accent,
+        ),
+      );
   }
 }
 
@@ -707,13 +832,13 @@ class _RecommendationChips extends StatelessWidget {
   final List<String> recommendations;
   final bool isDark;
   final Color accent;
-  final String? fontFamily;
+  final ChatFont chatFont;
 
   const _RecommendationChips({
     required this.recommendations,
     required this.isDark,
     required this.accent,
-    this.fontFamily,
+    required this.chatFont,
   });
 
   @override
@@ -736,7 +861,7 @@ class _RecommendationChips extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white54 : accent,
-              fontFamily: fontFamily,
+              fontFamily: chatFont.family,
             ),
           ),
           const SizedBox(height: 6),
@@ -775,7 +900,7 @@ class _RecommendationChips extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: accent,
-                            fontFamily: fontFamily,
+                            fontFamily: chatFont.family,
                           ),
                         ),
                       ],
@@ -884,9 +1009,10 @@ class _InputBar extends StatelessWidget {
   final bool isDark;
   final bool isSinhala;
   final Color accent;
-  final String? fontFamily;
+  final ChatFont chatFont;
   final VoidCallback onSend;
   final VoidCallback onAttach;
+  final VoidCallback onPaste;
 
   const _InputBar({
     required this.controller,
@@ -894,9 +1020,10 @@ class _InputBar extends StatelessWidget {
     required this.isDark,
     required this.isSinhala,
     required this.accent,
-    this.fontFamily,
+    required this.chatFont,
     required this.onSend,
     required this.onAttach,
+    required this.onPaste,
   });
 
   @override
@@ -933,6 +1060,13 @@ class _InputBar extends StatelessWidget {
               onTap: onAttach,
             ),
             const SizedBox(width: 6),
+            // Paste button
+            _IconBtn(
+              icon: Icons.content_paste_rounded,
+              color: accent,
+              onTap: onPaste,
+            ),
+            const SizedBox(width: 6),
             // Text field
             Expanded(
               child: Container(
@@ -952,7 +1086,9 @@ class _InputBar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     color: textColor,
-                    fontFamily: fontFamily,
+                    fontFamily: chatFont.family,
+                    fontWeight: chatFont.weight,
+                    fontStyle: chatFont.style,
                   ),
                   decoration: InputDecoration(
                     hintText: isSinhala
@@ -961,7 +1097,7 @@ class _InputBar extends StatelessWidget {
                     hintStyle: TextStyle(
                       color: hintColor,
                       fontSize: 14,
-                      fontFamily: fontFamily,
+                      fontFamily: chatFont.family,
                     ),
                     border: InputBorder.none,
                     isDense: true,
@@ -1161,7 +1297,7 @@ class _StyledMessageText extends StatelessWidget {
   final Color accentColor;
   final bool isUser;
   final bool isDark;
-  final String? fontFamily;
+  final ChatFont chatFont;
 
   const _StyledMessageText({
     required this.text,
@@ -1169,7 +1305,7 @@ class _StyledMessageText extends StatelessWidget {
     required this.accentColor,
     required this.isUser,
     required this.isDark,
-    this.fontFamily,
+    required this.chatFont,
   });
 
   @override
@@ -1195,12 +1331,12 @@ class _StyledMessageText extends StatelessWidget {
           fontSize: 14,
           color: textColor,
           height: 1.5,
-          fontFamily: fontFamily,
+          fontFamily: chatFont.family,
         ),
         children: segments.map((seg) {
           Color segColor = textColor;
-          FontWeight weight = FontWeight.normal;
-          FontStyle style = FontStyle.normal;
+          FontWeight weight = chatFont.weight ?? FontWeight.normal;
+          FontStyle style = chatFont.style ?? FontStyle.normal;
           double size = 14;
 
           switch (seg.type) {
@@ -1226,7 +1362,7 @@ class _StyledMessageText extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : primaryColor,
-                      fontFamily: fontFamily,
+                      fontFamily: chatFont.family,
                     ),
                   ),
                 ),
@@ -1253,7 +1389,7 @@ class _StyledMessageText extends StatelessWidget {
                       fontStyle: FontStyle.italic,
                       color: textColor.withValues(alpha: 0.85),
                       height: 1.4,
-                      fontFamily: fontFamily,
+                      fontFamily: chatFont.family,
                     ),
                   ),
                 ),
@@ -1281,7 +1417,7 @@ class _StyledMessageText extends StatelessWidget {
                               fontSize: 13,
                               color: textColor,
                               height: 1.4,
-                              fontFamily: fontFamily,
+                              fontFamily: chatFont.family,
                             ),
                           ),
                       ),
@@ -1405,7 +1541,7 @@ class _TextSegment {
 
 // ── Chat Theme & Font Picker ─────────────────────────────────────────────────
 
-class _ChatStyleSheet extends StatelessWidget {
+class _ChatStyleSheet extends StatefulWidget {
   final bool isSinhala;
   final String currentTheme;
   final String currentFont;
@@ -1417,7 +1553,16 @@ class _ChatStyleSheet extends StatelessWidget {
   });
 
   @override
+  State<_ChatStyleSheet> createState() => _ChatStyleSheetState();
+}
+
+class _ChatStyleSheetState extends State<_ChatStyleSheet> {
+  @override
   Widget build(BuildContext context) {
+    final isSinhala = widget.isSinhala;
+    final settings = context.watch<SettingsCubit>().state;
+    final currentTheme = settings.chatTheme;
+    final currentFont = settings.chatFont;
     final cubit = context.read<SettingsCubit>();
 
     return SafeArea(
@@ -1535,7 +1680,8 @@ class _ChatStyleSheet extends StatelessWidget {
                           isSinhala ? font.siName : font.enName,
                           style: TextStyle(
                             fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: font.weight ?? FontWeight.w500,
+                            fontStyle: font.style,
                             fontFamily: font.family,
                           ),
                         ),
@@ -1568,7 +1714,7 @@ class _ChatStyleSheet extends StatelessWidget {
   }
 
   Color themeAccent(BuildContext context) =>
-      ChatTheme.fromId(currentTheme).accent(
+      ChatTheme.fromId(context.watch<SettingsCubit>().state.chatTheme).accent(
         Theme.of(context).brightness == Brightness.dark,
       );
 }

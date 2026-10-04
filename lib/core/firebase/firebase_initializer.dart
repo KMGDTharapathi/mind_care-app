@@ -4,6 +4,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:mind_care_app/firebase_options.dart';
 import 'package:mind_care_app/services/remote_config/remote_config_service.dart';
 
 /// Result of a Firebase initialisation attempt.
@@ -38,8 +39,10 @@ class FirebaseInitializer {
     try {
       // Use a timeout shorter than Android's 5s ANR threshold.
       // Firebase.initializeApp() can block on slow/first-launch devices.
-      await Firebase.initializeApp()
-          .timeout(const Duration(seconds: 4));
+      // Use the generated platform config so web needs no google-services.json.
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(const Duration(seconds: 4));
 
       // Re-enable collection now that Firebase is initialized on the Dart side.
       // These were disabled in AndroidManifest.xml to prevent auto-init from
@@ -70,8 +73,9 @@ class FirebaseInitializer {
         enableAnalytics: enableAnalytics,
       );
     } catch (e) {
-      // Timeout or other error — treat as non-fatal, app continues without Firebase
-      return FirebaseInitResult(success: true, error: e.toString());
+      // Timeout or other error — Firebase is genuinely down; services must
+      // fall back to their no-op implementations.
+      return FirebaseInitResult(success: false, error: e.toString());
     }
   }
 }

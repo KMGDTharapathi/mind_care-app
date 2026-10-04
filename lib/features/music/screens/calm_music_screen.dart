@@ -141,6 +141,11 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       CalmAudioHandler.instance ??= CalmAudioHandler();
 
   List<MusicTrack> _userTracks = [];
+
+  /// Track ids in the order they should play. Ids with no matching track are
+  /// ignored, and tracks missing from this list are appended to the end.
+  List<String> _playOrder = [];
+
   int _currentIndex = 0;
   bool _isLoading = false;
 
@@ -156,11 +161,31 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
 
-  List<MusicTrack> get _allTracks => [...kDefaultTracks, ..._userTracks];
-  MusicTrack get _current =>
-      _allTracks[_currentIndex.clamp(0, _allTracks.length - 1)];
+  /// Every track, ordered by the user's play order.
+  List<MusicTrack> get _allTracks {
+    final all = [...kDefaultTracks, ..._userTracks];
+    if (_playOrder.isEmpty) return all;
+    final byId = <String, MusicTrack>{for (final t in all) t.id: t};
+    final ordered = <MusicTrack>[];
+    for (final id in _playOrder) {
+      final track = byId.remove(id);
+      if (track != null) ordered.add(track);
+    }
+    // Anything added since the order was saved goes to the end of the queue.
+    ordered.addAll(byId.values);
+    return ordered;
+  }
+
+  int _indexOfId(String id) => _allTracks.indexWhere((t) => t.id == id);
+
+  MusicTrack get _current {
+    final all = _allTracks;
+    if (all.isEmpty) return kDefaultTracks.first;
+    return all[_currentIndex.clamp(0, all.length - 1)];
+  }
 
   static const _prefKey = 'calm_music_user_tracks_v2';
+  static const _playOrderKey = 'calm_music_play_order_v1';
 
   @override
   void initState() {
@@ -174,9 +199,14 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
       end: 1.05,
     ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
-    // Push the current playlist into the OS media session so next/prev and the
-    // media notification see the same queue the UI shows.
-    _handler.setQueue(_allTracks);
+    // Fresh start: hand the media session a queue to work with.
+    if (_handler.tracks.isEmpty) _handler.setQueue(_allTracks);
+
+    // Music keeps playing when this screen is disposed, so on re-entry we must
+    // adopt the handler's live state instead of starting from a blank
+    // "nothing playing" slate. addListener() does not replay the current
+    // value, so seed the local state by hand.
+    _adoptHandlerState();
 
     // Listen to the shared audio handler (the UI must reflect - and control -
     // the same music that keeps playing when the app is in the background).
@@ -186,6 +216,22 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
     _handler.indexNotifier.addListener(_syncIndex);
 
     _loadUserTracks();
+    _loadPlayOrder();
+  }
+
+  /// Copies the handler's live playback state into this screen's local state.
+  void _adoptHandlerState() {
+    _isPlaying.value = _handler.isPlayingValue.value;
+    _position.value = _handler.position.value;
+    _duration.value = _handler.duration.value;
+    _lastShownPos = _handler.position.value;
+    final index = _handler.indexNotifier.value;
+    if (index >= 0) _currentIndex = index;
+    if (_isPlaying.value) {
+      _pulseCtrl.repeat(reverse: true);
+      // Open straight onto the music that is running, not the library.
+      _tab = 1;
+    }
   }
 
   void _syncPosition() {
@@ -256,8 +302,18 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           .toList();
       if (mounted) {
         setState(() => _userTracks = loaded);
-        _handler.setQueue(_allTracks);
+        _pushQueue();
       }
+    } catch (_) {}
+  }
+
+  Future<void> _loadPlayOrder() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getStringList(_playOrderKey) ?? [];
+      if (!mounted) return;
+      setState(() => _playOrder = raw);
+      _pushQueue();
     } catch (_) {}
   }
 
@@ -274,6 +330,29 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
             .toList(),
       );
     } catch (_) {}
+  }
+
+  Future<void> _savePlayOrder() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_playOrderKey, _playOrder);
+    } catch (_) {}
+  }
+
+  /// Re-pushes the (possibly reordered) queue while keeping whatever track is
+  /// loaded playing — the handler follows it to its new position by id.
+  void _pushQueue() {
+    final all = _allTracks;
+    if (all.isEmpty) return;
+    final currentId = _handler.currentTrackId;
+    setState(() {
+      _currentIndex =
+          (currentId == null ? _currentIndex : _indexOfId(currentId)).clamp(
+            0,
+            all.length - 1,
+          );
+    });
+    _handler.setQueue(all);
   }
 
   // ── Playback ───────────────────────────────────────────────────────────────
@@ -307,14 +386,18 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   Future<void> _togglePlay() async {
     if (_isPlaying.value) {
       await _handler.pause();
+      return;
+    }
+    // A paused track continues from where it stopped; after a stop (or on a
+    // freshly opened screen) play starts the current track from the beginning.
+    if (_handler.hasTrack && !_handler.isStopped) {
+      await _handler.play();
     } else {
-      if (_position.value == Duration.zero) {
-        await _play(_currentIndex);
-      } else {
-        await _handler.play();
-      }
+      await _play(_currentIndex);
     }
   }
+
+  Future<void> _stopMusic() => _handler.stop();
 
   void _playNext() {
     _handler.skipToNext();
@@ -330,34 +413,76 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
 
   // ── User track management ──────────────────────────────────────────────────
   void _addTrack(MusicTrack track) {
-    setState(() => _userTracks.add(track));
+    setState(() {
+      _userTracks.add(track);
+      _playOrder = [..._playOrder, track.id];
+    });
     _handler.setQueue(_allTracks);
     _saveUserTracks();
+    _savePlayOrder();
   }
 
   void _deleteUserTrack(int userIndex) {
-    final globalIndex = kDefaultTracks.length + userIndex;
-    if (_currentIndex == globalIndex && _isPlaying.value) _handler.stop();
+    final track = _userTracks[userIndex];
+    // Read the loaded track before the queue changes underneath the handler.
+    final wasLoaded = _handler.currentTrackId == track.id;
+    if (wasLoaded) _handler.stop();
+
     setState(() {
-      if (_currentIndex >= globalIndex && _currentIndex > 0) _currentIndex--;
       _userTracks.removeAt(userIndex);
+      _playOrder = _playOrder.where((id) => id != track.id).toList();
     });
-    _handler.setQueue(_allTracks);
+    // Re-resolves _currentIndex from whatever is still loaded, so tracks after
+    // the removed one land in the right place.
+    _pushQueue();
     _saveUserTracks();
+    _savePlayOrder();
   }
 
+  /// Reorders the whole play queue (the Library tab lists every track in the
+  /// order they will play, built-in ones included).
+  void _reorderAll(int oldIndex, int newIndex) {
+    final ids = _allTracks.map((t) => t.id).toList();
+    if (oldIndex < 0 || oldIndex >= ids.length) return;
+    if (newIndex > oldIndex) newIndex--;
+    newIndex = newIndex.clamp(0, ids.length - 1);
+    final item = ids.removeAt(oldIndex);
+    ids.insert(newIndex, item);
+    setState(() => _playOrder = ids);
+    _pushQueue();
+    _savePlayOrder();
+  }
+
+  /// Reorders the user's own tracks (My Playlist tab), leaving the built-in
+  /// tracks where they are in the play order.
   void _reorderUserTracks(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) newIndex--;
-      final item = _userTracks.removeAt(oldIndex);
-      _userTracks.insert(newIndex, item);
-    });
-    _handler.setQueue(_allTracks);
-    _saveUserTracks();
+    final userIds = _userTracks.map((t) => t.id).toList();
+    if (oldIndex < 0 || oldIndex >= userIds.length) return;
+    if (newIndex > oldIndex) newIndex--;
+    newIndex = newIndex.clamp(0, userIds.length - 1);
+    final moved = userIds.removeAt(oldIndex);
+    userIds.insert(newIndex, moved);
+
+    // Rewrite only the slots the user tracks already occupy, so reordering them
+    // never disturbs the default tracks' positions.
+    final next = _allTracks.map((t) => t.id).toList();
+    final slots = <int>[];
+    for (var i = 0; i < next.length; i++) {
+      if (userIds.contains(next[i])) slots.add(i);
+    }
+    for (var i = 0; i < slots.length; i++) {
+      next[slots[i]] = userIds[i];
+    }
+
+    setState(() => _playOrder = next);
+    _pushQueue();
+    _savePlayOrder();
   }
 
   void _editUserTrack(int userIndex, MusicTrack updated) {
+    // The form keeps the original id, so the play order is unaffected.
     setState(() => _userTracks[userIndex] = updated);
+    _pushQueue();
     _saveUserTracks();
   }
 
@@ -540,7 +665,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           child: Row(
             children: [
               Text(
-                'All Tracks',
+                'Play Order',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -563,27 +688,43 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
                   ),
                 ),
               ),
+              const Spacer(),
+              Text(
+                'Hold & drag to reorder',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark ? Colors.white30 : Colors.black26,
+                ),
+              ),
             ],
           ),
         ),
         Expanded(
-          child: ListView.separated(
+          child: ReorderableListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             itemCount: all.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (_, i) {
+            onReorder: _reorderAll,
+            proxyDecorator: (child, index, animation) => Material(
+              color: Colors.transparent,
+              elevation: 8,
+              borderRadius: BorderRadius.circular(16),
+              child: child,
+            ),
+            itemBuilder: (context, i) {
               final track = all[i];
-              return ValueListenableBuilder2<bool, int>(
-                first: _isPlaying,
-                second: ValueNotifier(
-                  _currentIndex,
-                ), // static snapshot is fine here
-                builder: (_, playing, _, _) => _TrackTile(
-                  track: track,
-                  isPlaying: playing && _currentIndex == i,
-                  isCurrent: _currentIndex == i,
-                  isDark: isDark,
-                  onTap: () => _play(i),
+              return Padding(
+                key: ValueKey(track.id),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: _isPlaying,
+                  builder: (_, playing, _) => _TrackTile(
+                    track: track,
+                    isPlaying: playing && _currentIndex == i,
+                    isCurrent: _currentIndex == i,
+                    isDark: isDark,
+                    dragIndex: i,
+                    onTap: () => _play(i),
+                  ),
                 ),
               );
             },
@@ -696,14 +837,17 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
               child: child,
             ),
             itemBuilder: (_, i) {
-              final globalIndex = kDefaultTracks.length + i;
+              final track = _userTracks[i];
+              // Play order is user-defined, so look the position up by id
+              // rather than assuming the tracks sit after the built-ins.
+              final globalIndex = _indexOfId(track.id);
               return Padding(
-                key: ValueKey(_userTracks[i].id),
+                key: ValueKey(track.id),
                 padding: const EdgeInsets.only(bottom: 8),
                 child: ValueListenableBuilder<bool>(
                   valueListenable: _isPlaying,
                   builder: (_, playing, _) => _UserTrackTile(
-                    track: _userTracks[i],
+                    track: track,
                     isPlaying: playing && _currentIndex == globalIndex,
                     isCurrent: _currentIndex == globalIndex,
                     isDark: isDark,
@@ -836,17 +980,50 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
               ],
             ),
           ),
-          const SizedBox(height: 28),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Queue',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white54 : const Color(0xFF5BA8A0),
+          const SizedBox(height: 4),
+          // Stop — ends playback and rewinds the track.
+          ValueListenableBuilder2<bool, Duration>(
+            first: _isPlaying,
+            second: _position,
+            builder: (_, playing, pos, _) {
+              final active = playing || pos > Duration.zero;
+              return TextButton.icon(
+                onPressed: active && !_isLoading ? _stopMusic : null,
+                icon: Icon(
+                  Icons.stop_rounded,
+                  size: 18,
+                  color: track.color.withValues(alpha: active ? 0.8 : 0.25),
+                ),
+                label: Text(
+                  'Stop',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: track.color.withValues(alpha: active ? 0.8 : 0.25),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Text(
+                'Queue',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white54 : const Color(0xFF5BA8A0),
+                ),
               ),
-            ),
+              const Spacer(),
+              Text(
+                'Reorder in Library',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark ? Colors.white30 : Colors.black26,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           // Queue rows — only isPlaying indicator rebuilds
@@ -924,18 +1101,31 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
                 ],
               ),
             ),
-            // Only the icon rebuilds on play state change
+            // Only the icons rebuild on play state change
             ValueListenableBuilder<bool>(
               valueListenable: _isPlaying,
-              builder: (_, playing, _) => IconButton(
-                icon: Icon(
-                  playing
-                      ? Icons.pause_circle_filled
-                      : Icons.play_circle_filled,
-                  color: track.color,
-                  size: 34,
-                ),
-                onPressed: _togglePlay,
+              builder: (_, playing, _) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.stop_rounded,
+                      color: track.color.withValues(alpha: 0.7),
+                      size: 26,
+                    ),
+                    onPressed: _stopMusic,
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      playing
+                          ? Icons.pause_circle_filled
+                          : Icons.play_circle_filled,
+                      color: track.color,
+                      size: 34,
+                    ),
+                    onPressed: _togglePlay,
+                  ),
+                ],
               ),
             ),
           ],
@@ -1021,12 +1211,16 @@ class _TrackTile extends StatelessWidget {
   final bool isPlaying, isCurrent, isDark;
   final VoidCallback onTap;
 
+  /// When set, shows a drag handle that reorders the play queue.
+  final int? dragIndex;
+
   const _TrackTile({
     required this.track,
     required this.isPlaying,
     required this.isCurrent,
     required this.isDark,
     required this.onTap,
+    this.dragIndex,
   });
 
   @override
@@ -1064,6 +1258,17 @@ class _TrackTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
+              if (dragIndex != null) ...[
+                ReorderableDragStartListener(
+                  index: dragIndex!,
+                  child: Icon(
+                    Icons.drag_handle_rounded,
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Container(
                 width: 46,
                 height: 46,

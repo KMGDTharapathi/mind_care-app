@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/services/game_audio_service.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import '../widgets/game_exit_dialog.dart';
 import '../widgets/game_assistant.dart';
@@ -49,6 +50,7 @@ class _SnakeGameState extends State<SnakeGame> {
     _showHelp = true;
     _spawnFood();
     _startTimer();
+    GameAudio.instance.play(GameSfx.tap);
   }
 
   void _startTimer() {
@@ -59,6 +61,9 @@ class _SnakeGameState extends State<SnakeGame> {
 
   void _tick() {
     if (!mounted || !_running) return;
+    var ate = false;
+    var leveledUp = false;
+    var died = false;
     setState(() {
       _dir = _nextDir;
       final head = _snake.first;
@@ -85,6 +90,7 @@ class _SnakeGameState extends State<SnakeGame> {
         _running = false;
         _gameOver = true;
         _timer?.cancel();
+        died = true;
         return;
       }
       _snake.insert(0, newHead);
@@ -93,13 +99,22 @@ class _SnakeGameState extends State<SnakeGame> {
         _showHelp = false;
         if (_score % 50 == 0) {
           _level++;
+          leveledUp = true;
           _startTimer();
         }
+        ate = true;
         _spawnFood();
       } else {
         _snake.removeLast();
       }
     });
+
+    if (died) {
+      GameAudio.instance.play(GameSfx.crash);
+    } else if (ate) {
+      GameAudio.instance.play(GameSfx.eat);
+    }
+    if (leveledUp) GameAudio.instance.play(GameSfx.levelUp);
   }
 
   void _spawnFood() {
@@ -115,7 +130,10 @@ class _SnakeGameState extends State<SnakeGame> {
     if (_dir == _Dir.down && d == _Dir.up) return;
     if (_dir == _Dir.left && d == _Dir.right) return;
     if (_dir == _Dir.right && d == _Dir.left) return;
+    if (_nextDir == d) return;
     _nextDir = d;
+    // A quiet tick makes the D-pad feel responsive without being noisy.
+    GameAudio.instance.play(GameSfx.tap, volume: 0.3);
   }
 
   @override

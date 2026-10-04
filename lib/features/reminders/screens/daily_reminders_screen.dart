@@ -409,20 +409,20 @@ class _CalendarTabState extends State<_CalendarTab> {
   ];
 
   List<String> _typeLabels(s) => [
-        s.typeMoodCheckin,
-        s.typeBreathing,
-        s.typeMeditation,
-        s.typeJournal,
-        s.typeCustom,
-      ];
+    s.typeMoodCheckin,
+    s.typeBreathing,
+    s.typeMeditation,
+    s.typeJournal,
+    s.typeCustom,
+  ];
 
   List<String> _providerLabels(s) => [
-        s.providerGoogle,
-        s.providerApple,
-        s.providerOutlook,
-        s.providerSamsung,
-        s.providerOther,
-      ];
+    s.providerGoogle,
+    s.providerApple,
+    s.providerOutlook,
+    s.providerSamsung,
+    s.providerOther,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -600,12 +600,10 @@ class _CalendarTabState extends State<_CalendarTab> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: List.generate(
-                  _providerLabels(s).length,
-                  (i) {
-                    final label = _providerLabels(s)[i];
-                    final isSelected = _selectedProviderIndex == i;
-                    final color = _providerColors[i];
+                children: List.generate(_providerLabels(s).length, (i) {
+                  final label = _providerLabels(s)[i];
+                  final isSelected = _selectedProviderIndex == i;
+                  final color = _providerColors[i];
                   return GestureDetector(
                     onTap: () => setState(() => _selectedProviderIndex = i),
                     child: AnimatedContainer(
@@ -642,9 +640,7 @@ class _CalendarTabState extends State<_CalendarTab> {
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.w400,
-                              color: isSelected
-                                  ? color
-                                  : Colors.grey.shade600,
+                              color: isSelected ? color : Colors.grey.shade600,
                             ),
                           ),
                         ],
@@ -869,8 +865,8 @@ class _CalendarTabState extends State<_CalendarTab> {
 
   Future<void> _addToCalendar(List<String> typeLabels) async {
     // For the "Custom" type, the user's own message is the event label.
-    final selectedType = _selectedTypeIndex == _customTypeIndex &&
-            _customLabel.trim().isNotEmpty
+    final selectedType =
+        _selectedTypeIndex == _customTypeIndex && _customLabel.trim().isNotEmpty
         ? _customLabel.trim()
         : typeLabels[_selectedTypeIndex];
     final s = LanguageProvider.of(context);
@@ -912,9 +908,7 @@ class _CalendarTabState extends State<_CalendarTab> {
         content: Text('${s.calendarAddedSnack}: $provider'),
         backgroundColor: const Color(0xFF7986CB),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -1193,7 +1187,6 @@ class _MessagePicker extends StatefulWidget {
 class _MessagePickerState extends State<_MessagePicker> {
   late final TextEditingController _controller;
   bool _editing = false;
-  bool _showActions = false;
 
   @override
   void initState() {
@@ -1227,20 +1220,14 @@ class _MessagePickerState extends State<_MessagePicker> {
         backgroundColor: _kTeal,
       ),
     );
-    setState(() {
-      _editing = false;
-      _showActions = false;
-    });
+    setState(() => _editing = false);
   }
 
   void _delete() {
     // Deleting clears the saved message and lets the user type a new one
     // (or tap save to fall back to the default preset).
     _controller.clear();
-    setState(() {
-      _editing = true;
-      _showActions = false;
-    });
+    setState(() => _editing = true);
   }
 
   void _selectPreset(String msg) {
@@ -1254,97 +1241,81 @@ class _MessagePickerState extends State<_MessagePicker> {
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
     final trimmed = _controller.text.trim();
-    final isCustom =
-        trimmed.isNotEmpty && !widget.presets.contains(trimmed);
+    final isCustom = trimmed.isNotEmpty && !widget.presets.contains(trimmed);
     return Column(
       children: [
         if (!_editing)
-          // Display mode — shows the saved message. Tapping it reveals the
-          // small edit + delete icon buttons.
-          GestureDetector(
-            onTap: () => setState(() => _showActions = !_showActions),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
+          // Display mode — shows the saved message next to the always-visible
+          // edit and delete actions.
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: isCustom
+                  ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
+                  : (widget.isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.grey.shade50),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isCustom ? const Color(0xFFFF8A65) : Colors.transparent,
+                width: 1.5,
               ),
-              decoration: BoxDecoration(
-                color: isCustom
-                    ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
-                    : (widget.isDark
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : Colors.grey.shade50),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isCustom
-                      ? const Color(0xFFFF8A65)
-                      : Colors.transparent,
-                  width: 1.5,
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.notifications_active_outlined,
+                  size: 20,
+                  color: Color(0xFFFF8A65),
                 ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.notifications_active_outlined,
-                    size: 20,
-                    color: Color(0xFFFF8A65),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      trimmed.isEmpty
-                          ? (widget.presets.firstOrNull ??
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    trimmed.isEmpty
+                        ? (widget.presets.firstOrNull ??
                               widget.emptyFallback ??
                               '')
-                          : trimmed,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color:
-                            widget.isDark ? Colors.white : Colors.black87,
-                        height: 1.4,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                        : trimmed,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: widget.isDark ? Colors.white : Colors.black87,
+                      height: 1.4,
                     ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  // Small edit / delete buttons — only while actions are shown
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 180),
-                    child: _showActions
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _SmallActionButton(
-                                icon: Icons.edit_rounded,
-                                color: const Color(0xFFFF8A65),
-                                tooltip: s.edit,
-                                onPressed: () {
-                                  setState(() => _editing = true);
-                                  // Put the cursor at the end of the editable text.
-                                  WidgetsBinding.instance
-                                      .addPostFrameCallback((_) {
-                                    _controller.selection =
-                                        TextSelection.collapsed(
-                                      offset: _controller.text.length,
-                                    );
-                                  });
-                                },
-                              ),
-                              const SizedBox(width: 4),
-                              _SmallActionButton(
-                                icon: Icons.delete_outline_rounded,
-                                color: Colors.red.shade400,
-                                tooltip: s.delete,
-                                onPressed: _delete,
-                              ),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
+                ),
+                // Edit / delete are always shown so they are discoverable
+                // without relying on a hidden tap target.
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SmallActionButton(
+                      icon: Icons.edit_rounded,
+                      color: const Color(0xFFFF8A65),
+                      tooltip: s.edit,
+                      onPressed: () {
+                        setState(() => _editing = true);
+                        // Put the cursor at the end of the editable text.
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _controller.selection = TextSelection.collapsed(
+                            offset: _controller.text.length,
+                          );
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 4),
+                    _SmallActionButton(
+                      icon: Icons.delete_outline_rounded,
+                      color: Colors.red.shade400,
+                      tooltip: s.delete,
+                      onPressed: _delete,
+                    ),
+                  ],
+                ),
+              ],
             ),
           )
         else ...[

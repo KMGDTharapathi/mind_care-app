@@ -102,6 +102,71 @@ class ChatTheme {
       userBubbleLight: Color(0xFFDCEEDD),
       userBubbleDark: Color(0xFF1F4726),
     ),
+    'blush': ChatTheme(
+      id: 'blush',
+      enName: 'Pastel blush',
+      siName: 'පැස්ටල් රෝස',
+      backgroundLight: Color(0xFFFDF2F7),
+      backgroundDark: Color(0xFF24121E),
+      headerLight: Color(0xFFF48FB1),
+      headerDark: Color(0xFF4A2540),
+      accentLight: Color(0xFFEC407A),
+      accentDark: Color(0xFFF48FB1),
+      userBubbleLight: Color(0xFFFCE4EC),
+      userBubbleDark: Color(0xFF70254A),
+    ),
+    'mint': ChatTheme(
+      id: 'mint',
+      enName: 'Pastel mint',
+      siName: 'පැස්ටල් මින්ත්',
+      backgroundLight: Color(0xFFF0FBF7),
+      backgroundDark: Color(0xFF0D1F19),
+      headerLight: Color(0xFF4DB6AC),
+      headerDark: Color(0xFF1B4A43),
+      accentLight: Color(0xFF26A69A),
+      accentDark: Color(0xFF80CBC4),
+      userBubbleLight: Color(0xFFE0F2F1),
+      userBubbleDark: Color(0xFF1A4A42),
+    ),
+    'butter': ChatTheme(
+      id: 'butter',
+      enName: 'Pastel butter',
+      siName: 'පැස්ටල් කහ',
+      backgroundLight: Color(0xFFFDFBF0),
+      backgroundDark: Color(0xFF242110),
+      headerLight: Color(0xFFFFD54F),
+      headerDark: Color(0xFF4A3D1C),
+      accentLight: Color(0xFFFFC107),
+      accentDark: Color(0xFFFFE082),
+      userBubbleLight: Color(0xFFFFF8E1),
+      userBubbleDark: Color(0xFF5C4A12),
+    ),
+    'sky': ChatTheme(
+      id: 'sky',
+      enName: 'Pastel sky',
+      siName: 'පැස්ටල් නිල්',
+      backgroundLight: Color(0xFFF4FAFE),
+      backgroundDark: Color(0xFF0E1D2A),
+      headerLight: Color(0xFF81D4FA),
+      headerDark: Color(0xFF1C3A50),
+      accentLight: Color(0xFF29B6F6),
+      accentDark: Color(0xFF81D4FA),
+      userBubbleLight: Color(0xFFE1F5FE),
+      userBubbleDark: Color(0xFF16405C),
+    ),
+    'peach': ChatTheme(
+      id: 'peach',
+      enName: 'Pastel peach',
+      siName: 'පැස්ටල් පීච්',
+      backgroundLight: Color(0xFFFEF6F1),
+      backgroundDark: Color(0xFF251A13),
+      headerLight: Color(0xFFFFB74D),
+      headerDark: Color(0xFF4A3018),
+      accentLight: Color(0xFFFF9800),
+      accentDark: Color(0xFFFFCC80),
+      userBubbleLight: Color(0xFFFFF3E0),
+      userBubbleDark: Color(0xFF5C3A10),
+    ),
   };
 
   static ChatTheme fromId(String? id) => byId[id] ?? byId['spring']!;
@@ -114,12 +179,16 @@ class ChatFont {
   final String enName;
   final String siName;
   final String? family;
+  final FontWeight? weight;
+  final FontStyle? style;
 
   const ChatFont({
     required this.id,
     required this.enName,
     required this.siName,
     this.family,
+    this.weight,
+    this.style,
   });
 
   static const Map<String, ChatFont> byId = {
@@ -139,6 +208,43 @@ class ChatFont {
       enName: 'Monospace',
       siName: 'මොනෝ',
       family: 'monospace',
+    ),
+    'sans_condensed': ChatFont(
+      id: 'sans_condensed',
+      enName: 'Condensed',
+      siName: 'සංයුක්ත',
+      family: 'sans-serif-condensed',
+    ),
+    'sans_light': ChatFont(
+      id: 'sans_light',
+      enName: 'Light sans',
+      siName: 'සිහින්',
+      family: 'sans-serif-light',
+    ),
+    'sans_medium': ChatFont(
+      id: 'sans_medium',
+      enName: 'Medium sans',
+      siName: 'මධ්‍යම',
+      family: 'sans-serif-medium',
+    ),
+    'cursive': ChatFont(
+      id: 'cursive',
+      enName: 'Cursive',
+      siName: 'අකුරු සැරසිලි',
+      family: 'cursive',
+    ),
+    'casual': ChatFont(
+      id: 'casual',
+      enName: 'Casual',
+      siName: 'කැජුවල්',
+      family: 'casual',
+    ),
+    'serif_medium': ChatFont(
+      id: 'serif_medium',
+      enName: 'Serif medium',
+      siName: 'සෙරිෆ් මධ්‍යම',
+      family: 'serif',
+      weight: FontWeight.w600,
     ),
   };
 

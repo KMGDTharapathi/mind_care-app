@@ -5,8 +5,16 @@ part of 'paint_studio.dart';
 class _TopBar extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
   final VoidCallback onClear;
-  const _TopBar({required this.onBack, this.onUndo, required this.onClear});
+  final VoidCallback onExport;
+  const _TopBar({
+    required this.onBack,
+    this.onUndo,
+    this.onRedo,
+    required this.onClear,
+    required this.onExport,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +49,21 @@ class _TopBar extends StatelessWidget {
             enabled: onUndo != null,
             onTap: onUndo ?? () {},
           ),
-          _TBtn(icon: Icons.redo_rounded, enabled: false, onTap: () {}),
+          _TBtn(
+            icon: Icons.redo_rounded,
+            enabled: onRedo != null,
+            onTap: onRedo ?? () {},
+          ),
           _TBtn(
             icon: Icons.delete_outline_rounded,
             enabled: true,
             onTap: onClear,
           ),
-          _TBtn(icon: Icons.download_rounded, enabled: true, onTap: () {}),
+          _TBtn(
+            icon: Icons.download_rounded,
+            enabled: true,
+            onTap: onExport,
+          ),
         ],
       ),
     );

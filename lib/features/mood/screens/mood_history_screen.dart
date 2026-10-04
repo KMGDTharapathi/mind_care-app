@@ -520,7 +520,7 @@ class _RecentEntries extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
-    final reversed = entries.reversed.toList();
+    final reversed = entries.reversed.take(5).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

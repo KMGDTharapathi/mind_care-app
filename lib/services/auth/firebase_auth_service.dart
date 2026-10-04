@@ -40,7 +40,28 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<AuthUser> signInWithEmail(String email, String password) async {
+    final credential =
+        EmailAuthProvider.credential(email: email, password: password);
     try {
+      final current = _auth.currentUser;
+      if (current != null && current.isAnonymous) {
+        try {
+          // The app starts every session anonymously. Upgrading in place keeps
+          // the same uid (and therefore the same Firestore data) when the user
+          // later signs in with an email they already own.
+          final result = await current.linkWithCredential(credential);
+          return _requireUser(result.user);
+        } on FirebaseAuthException catch (e) {
+          // Email already belongs to another account — fall through to a
+          // regular sign-in instead of losing the session.
+          if (e.code != 'email-already-in-use' &&
+              e.code != 'credential-already-in-use' &&
+              e.code != 'account-exists-with-different-credential') {
+            rethrow;
+          }
+        }
+      }
+
       final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -68,6 +89,22 @@ class FirebaseAuthService implements AuthService {
         idToken: googleAuth.idToken,
       );
 
+      // Link an existing anonymous session to Google so the uid (and its
+      // cloud data) is preserved; fall back to signing in with the credential
+      // if the account already exists under another provider.
+      final current = _auth.currentUser;
+      if (current != null && current.isAnonymous) {
+        try {
+          final result = await current.linkWithCredential(credential);
+          return _requireUser(result.user);
+        } on FirebaseAuthException catch (e) {
+          if (e.code != 'account-exists-with-different-credential' &&
+              e.code != 'credential-already-in-use') {
+            rethrow;
+          }
+        }
+      }
+
       final result = await _auth.signInWithCredential(credential);
       return _requireUser(result.user);
     } on FirebaseAuthException catch (e) {
@@ -79,6 +116,15 @@ class FirebaseAuthService implements AuthService {
   Future<AuthUser> createAccountWithEmail(
       String email, String password) async {
     try {
+      // If a session was started anonymously, upgrade it in place so the uid —
+      // and every mood/journal/chat already synced under it — is preserved.
+      final current = _auth.currentUser;
+      if (current != null && current.isAnonymous) {
+        final result = await current.linkWithCredential(
+          EmailAuthProvider.credential(email: email, password: password),
+        );
+        return _requireUser(result.user);
+      }
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,

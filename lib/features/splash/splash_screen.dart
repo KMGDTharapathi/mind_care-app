@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
-import 'package:mind_care_app/core/theme/app_colors.dart';
-import 'package:mind_care_app/core/widgets/leaf_background.dart';
+import 'package:mind_care_app/core/widgets/app_loading_view.dart';
 import 'package:mind_care_app/main.dart'
     show hiveReadyCompleter, appUserName, splashSavedName;
 
@@ -13,20 +12,10 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _controller.forward();
 
     Future.delayed(const Duration(milliseconds: 1500), () async {
       if (!mounted) return;
@@ -62,68 +51,9 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.gradientStart,
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.onboardingGradient),
-        child: LeafBackground(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 110,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryDark.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.eco_rounded,
-                      size: 60,
-                      color: AppColors.primaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'MindCare',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your safe space for mental wellness',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: AppColors.textSecondaryDark.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    // The loading view owns its own entrance animation. Navigation above is
+    // unchanged — this route only decides *when* to leave the loading state.
+    return const AppLoadingView();
   }
 }

@@ -7,22 +7,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mind_care_app/core/firebase/firebase_initializer.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/service_locator.dart';
 import 'package:mind_care_app/core/theme/app_theme.dart';
+import 'package:mind_care_app/core/widgets/app_loading_view.dart';
 import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/music/services/calm_audio_handler.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
-import 'package:mind_care_app/services/auth/auth_service.dart';
-import 'package:mind_care_app/services/consent/consent_service.dart';
 import 'package:mind_care_app/services/analytics/analytics_service.dart';
+import 'package:mind_care_app/services/analytics/firebase_analytics_service.dart';
+import 'package:mind_care_app/services/auth/auth_service.dart';
+import 'package:mind_care_app/services/auth/firebase_auth_service.dart';
+import 'package:mind_care_app/services/consent/consent_service.dart';
 import 'package:mind_care_app/services/crashlytics/crashlytics_service.dart';
+import 'package:mind_care_app/services/crashlytics/firebase_crashlytics_service.dart';
 import 'package:mind_care_app/services/remote_config/remote_config_service.dart';
+import 'package:mind_care_app/services/remote_config/firebase_remote_config_service.dart';
 import 'package:mind_care_app/services/auth/auth_service.dart' as auth_models;
 
 /// Global navigator key used by [NotificationService] to navigate on tap.
@@ -42,8 +48,28 @@ final Completer<void> hiveReadyCompleter = Completer<void>();
 String? splashSavedName;
 String? splashSavedLang;
 
+/// Whether Firebase came up. False means the app runs fully offline with the
+/// NoOp service implementations below.
+bool _firebaseReady = false;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialise Firebase before the first frame so the real services can be
+  // constructed without a null FirebaseApp. Failures are non-fatal: we fall
+  // back to the offline NoOp services and the app still starts.
+  _firebaseReady = await FirebaseInitializer.init().then(
+    (result) {
+      if (!result.success) {
+        debugPrint('Firebase init failed: ${result.error}');
+      }
+      return result.success;
+    },
+    onError: (Object e) {
+      debugPrint('Firebase init error: $e');
+      return false;
+    },
+  );
 
   // Start the app immediately — router shows /splash at once.
   runApp(
@@ -71,16 +97,34 @@ Future<_InitResult> _heavyInit() async {
   await Future.delayed(const Duration(milliseconds: 50));
 
   final consentService = ConsentService();
-  final crashlyticsService = NoOpCrashlyticsService();
+  // Only report to Crashlytics once Firebase is up; before that the channel
+  // would throw on every error.
+  final crashlyticsService = _firebaseReady
+      ? FirebaseCrashlyticsService(consentService: consentService)
+      : NoOpCrashlyticsService();
 
   FlutterError.onError = (details) {
+    if (_firebaseReady) {
+      unawaited(
+        crashlyticsService.recordError(
+          details.exception,
+          details.stack,
+          fatal: true,
+        ),
+      );
+    }
     FlutterError.presentError(details);
   };
   PlatformDispatcher.instance.onError = (error, stack) {
+    if (_firebaseReady) {
+      unawaited(crashlyticsService.recordError(error, stack, fatal: true));
+    }
     return true;
   };
 
-  final remoteConfig = NoOpRemoteConfigService();
+  final remoteConfig = _firebaseReady
+      ? FirebaseRemoteConfigService(crashlyticsService: crashlyticsService)
+      : NoOpRemoteConfigService();
 
   // Warm up SharedPreferences cache FIRST — single platform channel call that
   // all subsequent reads (PreferencesService, ConsentService, etc.) will reuse
@@ -130,28 +174,36 @@ Future<_InitResult> _heavyInit() async {
   }
 
   // Signal splash screen that Hive + nav data are ready — safe to navigate now.
+  // ServiceLocator is initialised first so every route builder and bloc below
+  // reads the real (or gracefully no-op) services instead of null references.
+  try {
+    await ServiceLocator.init(
+      auth: _firebaseReady ? FirebaseAuthService() : NoOpAuthService(),
+      remoteConfig: remoteConfig,
+      analytics: _firebaseReady
+          ? FirebaseAnalyticsService(consentService: consentService)
+          : NoOpAnalyticsService(consentService: consentService),
+      crashlytics: crashlyticsService,
+    ).timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('ServiceLocator init failed (continuing with no-ops): $e');
+  }
   if (!hiveReadyCompleter.isCompleted) hiveReadyCompleter.complete();
 
   final onboardingComplete = (prefsResult[1] as bool?) ?? false;
-
-  // Notifications, ServiceLocator — all fire-and-forget.
-  // They do NOT block the app from starting.
-  unawaited(
-    ServiceLocator.init(
-      remoteConfig: remoteConfig,
-      analytics: NoOpAnalyticsService(consentService: consentService),
-      crashlytics: crashlyticsService,
-    ).catchError((e) => debugPrint('ServiceLocator failed: $e')),
-  );
 
   // Notifications first (must create the HIGH-importance music channel before
   // audio_service binds to it), then the platform media session (media
   // notification + lock screen controls + foreground service so music keeps
   // playing in the background). All fire-and-forget; they don't block startup.
+  //
+  // These are chained so the channel exists before audio_service binds, but a
+  // failure in one must not skip the other — a silent skip here left the media
+  // controls missing with no visible cause.
   unawaited(
     NotificationService.init(navigatorKey: navigatorKey)
-        .then((_) => _initAudioService())
-        .catchError((e) => debugPrint('Notifications failed: $e')),
+        .catchError((e) => debugPrint('Notifications failed: $e'))
+        .whenComplete(_initAudioService),
   );
 
   unawaited(
@@ -176,8 +228,10 @@ Future<void> _initAudioService() async {
       // runs here, so identity is preserved if a screen opened first.
       builder: () => CalmAudioHandler.instance ??= CalmAudioHandler(),
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'mindcare_music',
-        androidNotificationChannelName: 'Calm Music',
+        // Must match NotificationService._musicChannelId, which creates it at
+        // HIGH importance before this runs.
+        androidNotificationChannelId: 'mindcare_playback',
+        androidNotificationChannelName: 'Now Playing',
         androidNotificationOngoing: true,
         androidStopForegroundOnPause: true,
       ),
@@ -230,6 +284,7 @@ class _MindCareAppState extends State<MindCareApp> {
                 authService: ServiceLocator.authService ?? NoOpAuthService(),
                 analyticsService: ServiceLocator.analyticsService,
                 crashlyticsService: ServiceLocator.crashlyticsService,
+                syncService: ServiceLocator.syncService,
               ),
             ),
             BlocProvider<SettingsCubit>(
@@ -271,53 +326,16 @@ class _MindCareAppState extends State<MindCareApp> {
 }
 
 /// Shown for the brief moment before Hive finish loading.
-/// Identical look to the real SplashScreen but needs zero dependencies.
+/// Uses the same [AppLoadingView] as the `/splash` route, so the very first
+/// frame is visually identical to what replaces it a moment later.
 class _EarlySplash extends StatelessWidget {
   const _EarlySplash();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: const Color(0xFFB2DFDB),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFB2DFDB), Color(0xFF80CBC4), Color(0xFF4DB6AC)],
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.eco_rounded, size: 72, color: Color(0xFF004D40)),
-                SizedBox(height: 20),
-                Text(
-                  'MindCare',
-                  style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF004D40),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                SizedBox(height: 12),
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Color(0xFF004D40),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      home: AppLoadingView(),
     );
   }
 }
@@ -350,9 +368,6 @@ class NoOpRemoteConfigService implements RemoteConfigService {
 
   @override
   int getInt(String key) => 0;
-
-  @override
-  double getDouble(String key) => 0.0;
 }
 
 class NoOpAnalyticsService implements AnalyticsService {
@@ -371,7 +386,10 @@ class NoOpAuthService implements AuthService {
   final _controller = StreamController<auth_models.AuthUser?>.broadcast();
 
   NoOpAuthService() {
-    // Emit an anonymous user immediately to satisfy the interface contract
+    // Emit an anonymous guest immediately to satisfy the interface contract.
+    // Guest mode is legitimately local-only — real accounts are not available
+    // while Firebase is down, and attempting one should fail loudly, not fake
+    // a signed-in user.
     _controller.add(
       auth_models.AuthUser(uid: 'anonymous', email: null, isAnonymous: true),
     );
@@ -384,8 +402,17 @@ class NoOpAuthService implements AuthService {
   auth_models.AuthUser? get currentUser =>
       auth_models.AuthUser(uid: 'anonymous', email: null, isAnonymous: true);
 
+  /// Throws on any explicit account sign-in because there is no backend to
+  /// honour it. UI surfaces [AuthError] instead of a phantom success.
+  Never _unavailable() => throw AuthException(
+        AuthErrorType.networkError,
+        'Sign-in is unavailable while Firebase is offline. '
+            'You are using the app as a local guest.',
+      );
+
   @override
   Future<auth_models.AuthUser> signInAnonymously() async {
+    await Future<void>.delayed(Duration.zero);
     return currentUser!;
   }
 
@@ -393,26 +420,30 @@ class NoOpAuthService implements AuthService {
   Future<auth_models.AuthUser> signInWithEmail(
     String email,
     String password,
-  ) async {
-    return currentUser!;
+  ) {
+    throw _unavailable();
   }
 
   @override
-  Future<auth_models.AuthUser> signInWithGoogle() async {
-    return currentUser!;
+  Future<auth_models.AuthUser> signInWithGoogle() {
+    throw _unavailable();
   }
 
   @override
   Future<auth_models.AuthUser> createAccountWithEmail(
     String email,
     String password,
-  ) async {
-    return currentUser!;
+  ) {
+    throw _unavailable();
   }
 
   @override
-  Future<void> sendPasswordResetEmail(String email) async {}
+  Future<void> sendPasswordResetEmail(String email) {
+    throw _unavailable();
+  }
 
   @override
-  Future<void> signOut() async {}
+  Future<void> signOut() async {
+    // Keep the guest session — nothing to sign out of locally.
+  }
 }

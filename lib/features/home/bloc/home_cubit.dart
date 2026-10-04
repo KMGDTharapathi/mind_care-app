@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mind_care_app/core/service_locator.dart';
 import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
@@ -71,6 +72,9 @@ class HomeCubit extends Cubit<HomeState> {
     final currentStreak = await PreferencesService.getStreakCount();
 
     int newStreak;
+    final effectiveDate = lastActiveDateStr == null
+        ? today
+        : DateTime.parse(lastActiveDateStr);
 
     if (lastActiveDateStr == null) {
       // First launch
@@ -95,6 +99,10 @@ class HomeCubit extends Cubit<HomeState> {
         await PreferencesService.setStreakCount(newStreak);
       }
     }
+
+    // Push the current streak to the cloud so it restores after a re-login.
+    ServiceLocator.syncService
+        ?.enqueueStreak(newStreak, _formatDate(effectiveDate));
 
     return newStreak;
   }

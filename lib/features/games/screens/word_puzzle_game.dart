@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/services/game_audio_service.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import '../widgets/game_assistant.dart';
 
@@ -71,6 +72,7 @@ class _WordPuzzleGameState extends State<WordPuzzleGame>
         _checkWord();
       }
     });
+    GameAudio.instance.play(GameSfx.tap, volume: 0.4);
   }
 
   void _onSelectedTap(int index) {
@@ -78,6 +80,7 @@ class _WordPuzzleGameState extends State<WordPuzzleGame>
       _scrambledLetters.add(_selectedLetters[index]);
       _selectedLetters.removeAt(index);
     });
+    GameAudio.instance.play(GameSfx.slide, volume: 0.4);
   }
 
   void _checkWord() {
@@ -95,6 +98,7 @@ class _WordPuzzleGameState extends State<WordPuzzleGame>
     final levelBonus = _level * 5;
     final points = basePoints + streakBonus + levelBonus;
 
+    var leveledUp = false;
     setState(() {
       _score += points + streakBonus;
       _streak++;
@@ -102,8 +106,20 @@ class _WordPuzzleGameState extends State<WordPuzzleGame>
 
       if (_wordsFound % 5 == 0) {
         _level++;
+        leveledUp = true;
       }
     });
+
+    // A long winning streak lifts the chime, then the level-up flourish plays.
+    GameAudio.instance.play(
+      GameSfx.correct,
+      rate: 1.0 + _streak.clamp(0, 6) * 0.03,
+    );
+    if (leveledUp) {
+      Future.delayed(const Duration(milliseconds: 420), () {
+        if (mounted) GameAudio.instance.play(GameSfx.levelUp);
+      });
+    }
 
     // Show success and get new word
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -122,6 +138,7 @@ class _WordPuzzleGameState extends State<WordPuzzleGame>
       // Shuffle again
       _scrambleWord();
     });
+    GameAudio.instance.play(GameSfx.wrong);
   }
 
   @override

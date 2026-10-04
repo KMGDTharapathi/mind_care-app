@@ -145,6 +145,46 @@ class _HomeScreenState extends State<HomeScreen> {
               iconColor: isDark ? Colors.white70 : Colors.white,
               layout: _CardLayout.iconTop,
             ),
+            _Feature(
+              title: 'දිනපොත',
+              icon: Icons.book_outlined,
+              color: isDark ? const Color(0xFF2A3D3D) : const Color(0xFFB2DFDB),
+              onTap: (ctx) => ctx.push(AppRouter.journal),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF1A4A4A),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'මානසික\nසම්පත්',
+              icon: Icons.menu_book_outlined,
+              color: isDark ? const Color(0xFF3D2A2A) : const Color(0xFFF8BBD0),
+              onTap: (ctx) => ctx.push(AppRouter.resources),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF880E4F),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'මනෝභාවය\nනිරීක්ෂණය',
+              icon: Icons.mood_outlined,
+              color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFC8E6C9),
+              onTap: (ctx) => ctx.push(AppRouter.moodTracker),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF1B5E20),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'සිතුවම්\nකිරීම',
+              icon: Icons.palette_outlined,
+              color: isDark ? const Color(0xFF2A2A3D) : const Color(0xFFFFF9C4),
+              onTap: (ctx) => ctx.push(AppRouter.painting),
+              iconColor: isDark ? Colors.white70 : const Color(0xFFF57F17),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'වෛද්‍යවරයකු\nසොයන්න',
+              icon: Icons.local_hospital_outlined,
+              color: isDark ? const Color(0xFF3D2A3D) : const Color(0xFFD1C4E9),
+              onTap: (ctx) => ctx.push(AppRouter.findDoctor),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF311B92),
+              layout: _CardLayout.iconTop,
+            ),
           ]
         : [
             _Feature(
@@ -215,6 +255,46 @@ class _HomeScreenState extends State<HomeScreen> {
               color: isDark ? const Color(0xFF1A3A3A) : const Color(0xFF4DB6AC),
               onTap: (ctx) => ctx.push(AppRouter.breathingExercises),
               iconColor: isDark ? Colors.white70 : Colors.white,
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'Journal',
+              icon: Icons.book_outlined,
+              color: isDark ? const Color(0xFF2A3D3D) : const Color(0xFFB2DFDB),
+              onTap: (ctx) => ctx.push(AppRouter.journal),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF1A4A4A),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'Resources',
+              icon: Icons.menu_book_outlined,
+              color: isDark ? const Color(0xFF3D2A2A) : const Color(0xFFF8BBD0),
+              onTap: (ctx) => ctx.push(AppRouter.resources),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF880E4F),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'Mood\nTracker',
+              icon: Icons.mood_outlined,
+              color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFC8E6C9),
+              onTap: (ctx) => ctx.push(AppRouter.moodTracker),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF1B5E20),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'Painting',
+              icon: Icons.palette_outlined,
+              color: isDark ? const Color(0xFF2A2A3D) : const Color(0xFFFFF9C4),
+              onTap: (ctx) => ctx.push(AppRouter.painting),
+              iconColor: isDark ? Colors.white70 : const Color(0xFFF57F17),
+              layout: _CardLayout.iconTop,
+            ),
+            _Feature(
+              title: 'Find Doctor',
+              icon: Icons.local_hospital_outlined,
+              color: isDark ? const Color(0xFF3D2A3D) : const Color(0xFFD1C4E9),
+              onTap: (ctx) => ctx.push(AppRouter.findDoctor),
+              iconColor: isDark ? Colors.white70 : const Color(0xFF311B92),
               layout: _CardLayout.iconTop,
             ),
           ];
@@ -315,9 +395,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        // Calculate aspect ratio so all 4 rows fit in available height
+                        // Size cards to fit the viewport, scaled to however
+                        // many rows the feature list needs (scrolls if taller).
+                        final rows = (features.length / 2).ceil();
                         final availableHeight = constraints.maxHeight - 12;
-                        final cardHeight = (availableHeight - (3 * 10)) / 4;
+                        final cardHeight =
+                            (availableHeight - ((rows - 1) * 10)) / rows;
                         final cardWidth = (constraints.maxWidth - 10) / 2;
                         return GridView.builder(
                           // Never clamp the top of the aspect ratio: card sizes
@@ -437,31 +520,38 @@ class _IconLeftContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD4EAD0),
-            borderRadius: BorderRadius.circular(12),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4EAD0),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(feature.icon, color: const Color(0xFF5BA8A0), size: 24),
           ),
-          child: Icon(feature.icon, color: const Color(0xFF5BA8A0), size: 24),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            feature.title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-              height: 1.3,
+          const SizedBox(width: 10),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 140,
+              maxHeight: 80,
+            ),
+            child: Text(
+              feature.title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+                height: 1.3,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -473,23 +563,29 @@ class _IconTopContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (feature.icon != null)
-          Icon(feature.icon, color: feature.iconColor, size: 32),
-        if (feature.icon != null) const SizedBox(height: 10),
-        Text(
-          feature.title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: textColor,
-            height: 1.3,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (feature.icon != null)
+            Icon(feature.icon, color: feature.iconColor, size: 32),
+          if (feature.icon != null) const SizedBox(height: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: Text(
+              feature.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+                height: 1.3,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -501,15 +597,19 @@ class _TextOnlyContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        feature.title,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: textColor,
-          height: 1.3,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 170),
+        child: Text(
+          feature.title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: textColor,
+            height: 1.3,
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/services/game_audio_service.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/features/games/screens/bubble_blaster_game.dart';
 import 'package:mind_care_app/features/games/screens/snake_game.dart';
@@ -170,6 +171,26 @@ class GamesScreen extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: GameAudio.instance.enabled,
+                      builder: (context, on, _) => IconButton(
+                        icon: Icon(
+                          on
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_off_rounded,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF1A4A4A),
+                        ),
+                        tooltip: s.isSinhala
+                            ? (on ? 'ශබ්ද ඇත' : 'ශබ්ද නොඇත')
+                            : (on ? 'Sound effects on' : 'Sound effects off'),
+                        onPressed: () {
+                          GameAudio.instance.setEnabled(!on);
+                          if (!on) GameAudio.instance.play(GameSfx.tap);
+                        },
+                      ),
+                    ),
                     const Text('🎮', style: TextStyle(fontSize: 28)),
                   ],
                 ),

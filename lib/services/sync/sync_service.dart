@@ -5,8 +5,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/local/hive_service.dart';
+import '../../data/local/preferences_service.dart';
 import '../../data/models/journal_entry.dart';
 import '../../data/models/mood_entry.dart';
+import '../../features/chat/models/chat_message.dart';
 import '../auth/auth_service.dart';
 import '../crashlytics/crashlytics_service.dart';
 import 'write_queue.dart';
@@ -21,6 +23,7 @@ abstract class SyncService {
   Future<void> enqueueBookmark(String resourceId, bool bookmarked);
   Future<void> enqueueSettings(Map<String, dynamic> settings);
   Future<void> enqueueStreak(int count, String lastActiveDate);
+  Future<void> enqueueChatMessage(ChatMessage message);
 }
 
 /// Concrete implementation that orchestrates Hive ↔ Firestore sync.
@@ -155,6 +158,29 @@ class FirestoreSyncService implements SyncService {
       await _crashlyticsService?.recordError(e, stack,
           reason: 'startSync settings failed');
     }
+
+    // chat_messages
+    try {
+      _firestoreSubscriptions.add(
+        _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('chat_messages')
+            .orderBy('timestamp')
+            .snapshots()
+            .listen(
+              (snapshot) => _onChatMessagesSnapshot(snapshot),
+              onError: (e, stack) => _crashlyticsService?.recordError(
+                e,
+                stack,
+                reason: 'chat_messages listener error',
+              ),
+            ),
+      );
+    } catch (e, stack) {
+      await _crashlyticsService?.recordError(e, stack,
+          reason: 'startSync chat_messages failed');
+    }
   }
 
   // ─── Firestore listener handlers ────────────────────────────────────────────
@@ -246,8 +272,102 @@ class FirestoreSyncService implements SyncService {
   }
 
   void _onSettingsSnapshot(DocumentSnapshot<Map<String, dynamic>> snapshot) {
-    // Settings are read by the SettingsCubit directly; no Hive model for them.
-    // This listener is registered to keep the subscription alive for future use.
+    final data = snapshot.data();
+    if (data == null) return;
+    try {
+      // Restore settings + streak into local prefs so re-login brings them back.
+      _restoreFromSettings(data);
+    } catch (_) {
+      // Silently ignore malformed settings documents.
+    }
+  }
+
+  /// Applies cloud-stored settings (theme, streak, user name, language, …) to
+  /// local SharedPreferences so a fresh login restores the user's choices.
+  Future<void> _restoreFromSettings(Map<String, dynamic> data) async {
+    final prefs = await PreferencesService.getSharedPreferences();
+
+    final theme = data['theme_mode'];
+    if (theme is String && theme.isNotEmpty) {
+      await prefs.setString('theme_mode', theme);
+    }
+    final chatTheme = data['chat_theme'];
+    if (chatTheme is String && chatTheme.isNotEmpty) {
+      await prefs.setString('chat_theme', chatTheme);
+    }
+    final chatFont = data['chat_font'];
+    if (chatFont is String && chatFont.isNotEmpty) {
+      await prefs.setString('chat_font', chatFont);
+    }
+    final notifications = data['notifications_enabled'];
+    if (notifications is bool) {
+      await prefs.setBool('notifications_enabled', notifications);
+    }
+    final notificationTime = data['notification_time'];
+    if (notificationTime is String && notificationTime.isNotEmpty) {
+      await prefs.setString('notification_time', notificationTime);
+    }
+    final repeatDays = data['repeat_days'];
+    if (repeatDays is List) {
+      await prefs.setStringList(
+        'repeat_days',
+        repeatDays.map((d) => d.toString()).toList(),
+      );
+    }
+    final reminderMessage = data['reminder_message'];
+    if (reminderMessage is String && reminderMessage.isNotEmpty) {
+      await prefs.setString('reminder_message', reminderMessage);
+    }
+
+    // Streak data (written by enqueueStreak) shares the same preferences doc.
+    final streakCount = data['streakCount'];
+    if (streakCount is int) {
+      await prefs.setInt('streak_count', streakCount);
+    }
+    final lastActiveDate = data['lastActiveDate'];
+    if (lastActiveDate is String && lastActiveDate.isNotEmpty) {
+      await prefs.setString('last_active_date', lastActiveDate);
+    }
+
+    final userName = data['user_name'];
+    if (userName is String) {
+      await prefs.setString('user_name', userName);
+    }
+    final appLanguage = data['app_language'];
+    if (appLanguage is String && appLanguage.isNotEmpty) {
+      await prefs.setString('app_language', appLanguage);
+    }
+  }
+
+  void _onChatMessagesSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
+    for (final change in snapshot.docChanges) {
+      if (change.type == DocumentChangeType.removed) continue;
+      final data = change.doc.data();
+      if (data == null) continue;
+      try {
+        final messageId = data['id'] as String? ?? change.doc.id;
+        final localMessage = HiveService.chatMessages.get(messageId);
+        final remoteTimestamp =
+            (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+        // Only overwrite local if the remote copy is newer (or absent locally).
+        if (localMessage == null ||
+            localMessage.timestamp.isBefore(remoteTimestamp)) {
+          final message = ChatMessage(
+            id: messageId,
+            senderName: data['senderName'] as String? ?? 'user',
+            typeName: data['typeName'] as String? ?? 'text',
+            content: data['content'] as String? ?? '',
+            fileName: data['fileName'] as String?,
+            durationSeconds: (data['durationSeconds'] as num?)?.toInt() ?? 0,
+            timestamp: remoteTimestamp,
+          );
+          HiveService.chatMessages.put(messageId, message);
+        }
+      } catch (_) {
+        // Silently ignore malformed documents.
+      }
+    }
   }
 
   // ─── stopSync ───────────────────────────────────────────────────────────────
@@ -266,6 +386,7 @@ class FirestoreSyncService implements SyncService {
     await HiveService.moodEntries.clear();
     await HiveService.journalEntries.clear();
     await HiveService.bookmarks.clear();
+    await HiveService.chatMessages.clear();
   }
 
   // ─── flushQueue ─────────────────────────────────────────────────────────────
@@ -476,6 +597,35 @@ class FirestoreSyncService implements SyncService {
       await _writeToFirestore('settings', 'preferences', data);
     } else {
       await _enqueue('settings', 'preferences', data);
+    }
+  }
+
+  // ─── enqueueChatMessage ─────────────────────────────────────────────────────
+
+  @override
+  Future<void> enqueueChatMessage(ChatMessage message) async {
+    // Write to Hive first
+    await HiveService.chatMessages.put(message.id, message);
+
+    final data = {
+      'id': message.id,
+      'senderName': message.senderName,
+      'typeName': message.typeName,
+      'content': message.content,
+      if (message.fileName != null) 'fileName': message.fileName,
+      'durationSeconds': message.durationSeconds,
+      'timestamp': Timestamp.fromDate(message.timestamp),
+    };
+
+    if (_authService.currentUser?.isAnonymous == true) {
+      await _writeToFirestore('chat_messages', message.id, data);
+      return;
+    }
+
+    if (_isAuthenticatedUser) {
+      await _writeToFirestore('chat_messages', message.id, data);
+    } else {
+      await _enqueue('chat_messages', message.id, data);
     }
   }
 }

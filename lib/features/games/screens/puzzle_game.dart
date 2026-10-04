@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/services/game_audio_service.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import '../widgets/game_assistant.dart';
 
@@ -88,8 +89,13 @@ class _PuzzleGameState extends State<PuzzleGame>
     final isAdjacent = (tapRow == emptyRow && (tapCol - emptyCol).abs() == 1) ||
         (tapCol == emptyCol && (tapRow - emptyRow).abs() == 1);
 
-    if (!isAdjacent) return;
+    if (!isAdjacent) {
+      // A distant tile — acknowledge the tap softly instead of ignoring it.
+      GameAudio.instance.play(GameSfx.bump, volume: 0.3);
+      return;
+    }
 
+    var justSolved = false;
     setState(() {
       _tiles[_emptyIndex] = _tiles[index];
       _tiles[index] = 0;
@@ -98,11 +104,18 @@ class _PuzzleGameState extends State<PuzzleGame>
 
       if (_isSolvedState()) {
         _isSolved = true;
+        justSolved = true;
         if (_bestMoves == 0 || _moves < _bestMoves) {
           _bestMoves = _moves;
         }
       }
     });
+
+    if (justSolved) {
+      GameAudio.instance.play(GameSfx.win);
+    } else {
+      GameAudio.instance.play(GameSfx.slide);
+    }
   }
 
   @override
@@ -250,7 +263,10 @@ class _PuzzleGameState extends State<PuzzleGame>
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => setState(_shuffle),
+                  onPressed: () {
+                    setState(_shuffle);
+                    GameAudio.instance.play(GameSfx.tap);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2196F3),
                     foregroundColor: Colors.white,
