@@ -2,6 +2,15 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+/// One turn of prior conversation context. `role` is 'user' or 'model'
+/// (the app mirrors Gemini's roles so the API can send alternating turns).
+class WillowTurn {
+  final String role;
+  final String text;
+
+  const WillowTurn({required this.role, required this.text});
+}
+
 /// A Willow reply: the message text plus any recommended wellness features.
 class WillowChatResult {
   final String text;
@@ -10,12 +19,11 @@ class WillowChatResult {
   const WillowChatResult({required this.text, this.recommendations = const []});
 }
 
-/// Calls Google Gemini (gemini-3.8-flash) directly from the app.
-///
-/// A Sinhala-first mental-health persona ("Willow") is enforced through the
-/// system prompt inside the API call. Crisis and very positive messages are
-/// short-circuited locally for speed and safety. If Gemini is unreachable or
-/// overloaded, a curated in-app reply is returned so the chat always responds.
+/// Replies come from the trained model (a hosted fine-tuned Qwen server)
+/// whenever it is reachable. Gemini is used as an online fallback when a key
+/// is present, and a curated in-app brain is the offline-only last resort so
+/// the chat always responds. Crisis statements are handled locally and
+/// deterministically in every path for speed and safety.
 class WillowApiService {
   static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
   static final Uri _endpoint = Uri.parse(
@@ -23,15 +31,40 @@ class WillowApiService {
     'gemini-3.8-flash:generateContent',
   );
 
-  static String _baseUrl =
-      'https://paint-assurance-humanitarian-amanda.trycloudflare.com';
-  static bool _serverMode = false;
+  /// The fine-tuned model server. Defaults to the local `serve_qwen.py`
+  /// instance (Android emulators reach the host via 10.0.2.2); paste a
+  /// tunnel/cloud URL in the chat setup dialog to override it.
+  static String _baseUrl = defaultTargetPlatform == TargetPlatform.android
+      ? 'http://10.0.2.2:8000'
+      : 'http://127.0.0.1:8000';
+  static bool _serverMode = true;
 
-  /// Connect to a model server (e.g. the Kaggle notebook via tunnel). When set,
-  /// hosted replies are used first; Gemini/curated replies remain the fallback.
+  /// Model server reachability cache. Probing happens at most once every few
+  /// seconds so a server that is down never stalls each message on a timeout;
+  /// when it comes back up, the next probe reconnects automatically.
+  static bool _serverReachable = false;
+  static DateTime _lastProbe = DateTime.fromMillisecondsSinceEpoch(0);
+
+  static Future<bool> _serverUp() async {
+    if (DateTime.now().difference(_lastProbe) < const Duration(seconds: 12)) {
+      return _serverReachable;
+    }
+    _lastProbe = DateTime.now();
+    _serverReachable = await healthCheck();
+    return _serverReachable;
+  }
+
+  static void _markServerDown() {
+    _lastProbe = DateTime.now();
+    _serverReachable = false;
+  }
+
+  /// Connect to a model server (fine-tuned Qwen). When set, hosted model
+  /// replies are used first; Gemini/curated replies remain the fallback.
   static void setBaseUrl(String url) {
     _baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
     _serverMode = true;
+    _lastProbe = DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   static String get baseUrl => _baseUrl;
@@ -41,46 +74,129 @@ class WillowApiService {
 
   /// Send a message to Willow and get a response. Never returns null when
   /// configured. Order: hosted model server (if set) -> Gemini -> curated.
-  static Future<WillowChatResult?> chat(String message) async {
+  ///
+  /// `turns` carries up to the previous ~6 messages of the conversation so the
+  /// bot can read the user's state and continue the thread. Crisis signals are
+  /// scanned across the whole recent window (a danger statement is never
+  /// ignored), while the reply topic is accumulated over every user message so
+  /// the conversation follows the user's mind.
+  static Future<WillowChatResult?> chat(
+    String message, {
+    List<WillowTurn> turns = const [],
+  }) async {
     if (!isConfigured) return null;
-
-    if (_serverMode) {
-      final hosted = await _callServer(message);
-      if (hosted != null) return hosted;
-      debugPrint('Hosted server unavailable, falling back to in-app brain');
-    }
 
     final q = _normalize(message);
     final isSi = _looksSinhala(q);
+    final userTexts = <String>[
+      ...turns.where((t) => t.role == 'user').map((t) => t.text),
+      message,
+    ];
 
-    if ((isSi ? _crisisSignals : _crisisSignalsEn).any(q.contains)) {
+    // Suggestions should be sparse, not on every message. Chips are only shown
+    // the first time a topic is raised (a new theme worth acting on), and for
+    // crisis. Repeat/follow-up messages, greetings and positives stay clean.
+    final singleTopic = _pickTopicForSingle(q, isSi);
+    List<String> topicRecsForFirstMention() {
+      if (singleTopic == null) return const <String>[];
+      if (_topicHits(singleTopic, userTexts, isSi) > 1) {
+        return const <String>[];
+      }
+      return _topicRecs[singleTopic] ?? const <String>[];
+    }
+
+    // A danger statement is an emergency in any language: reply in the
+    // language that matched, defaulting to the current message's language.
+    // This is checked before the model server so safety never depends on a
+    // network call or on generation quality.
+    final siCrisis = _hasSignal(_crisisSignals, userTexts);
+    final enCrisis = _hasSignal(_crisisSignalsEn, userTexts);
+    if (siCrisis || enCrisis) {
+      final useSi = siCrisis == enCrisis ? isSi : siCrisis;
       return WillowChatResult(
-        text: isSi ? _crisisReply : _crisisReplyEn,
+        text: useSi ? _crisisReply : _crisisReplyEn,
         recommendations: const ['counsellorCall', 'findDoctor'],
       );
     }
 
-    if ((isSi ? _positiveSignals : _positiveSignalsEn).any(q.contains)) {
+    if (_serverMode && await _serverUp()) {
+      final hosted = await _callServer(message, turns);
+      if (hosted != null) {
+        // The trained model authors the text. Suggestions stay the app's own
+        // on-topic shortcut chips: shown the first time a topic is raised.
+        return WillowChatResult(
+          text: hosted.text,
+          recommendations: topicRecsForFirstMention(),
+        );
+      }
+      // Health said up but the call failed: remember it so we don't keep
+      // hammering a dying server, and fall back to the in-app brain.
+      _markServerDown();
+      debugPrint('Model server unreachable, falling back to in-app brain');
+    }
+
+    // Follow the user's mind across the recent window, but never let history
+    // override a clear new direction: the current message's own topic wins;
+    // a recurring theme (2+ mentions) is only used when the current message
+    // doesn't name a topic.
+    final topic = singleTopic ?? _recurringTopic(userTexts, isSi);
+    final recs = topicRecsForFirstMention();
+
+    // Fallback two: Gemini (online), only when the trained server is
+    // unreachable and an API key was compiled in. Same contract: the model
+    // authors every non-crisis message; curated templates are offline-only.
+    if (_apiKey.isNotEmpty) {
+      try {
+        var text =
+            await _callGemini(message, turns).timeout(const Duration(seconds: 90));
+        if (text.trim().isEmpty) throw Exception('empty Gemini reply');
+        return WillowChatResult(text: text.trim(), recommendations: recs);
+      } catch (e) {
+        debugPrint('Gemini unavailable, using curated reply: $e');
+      }
+    }
+
+    final bool isGreeting = isSi
+        ? _greetingSignals.any(q.contains)
+        : _greetingSignalsEn.any((s) => _matchesWholeWord(q, s));
+    if (isGreeting) {
       return WillowChatResult(
-        text: isSi ? _positiveReply : _positiveReplyEn,
+        text: _pickVariant(
+          isSi ? _greetingReplies : _greetingRepliesEn,
+          '$q#g',
+        ),
       );
     }
 
-    final topic = _pickTopic(q, isSi);
-    final recs = topic == null
-        ? const <String>[]
-        : _topicRecs[topic] ?? const <String>[];
+    if (_hasUnnegatedPositive(
+      isSi ? _positiveSignals : _positiveSignalsEn,
+      q,
+      isSi,
+    )) {
+      return WillowChatResult(
+        text: _pickVariant(
+          isSi ? _positiveReplies : _positiveRepliesEn,
+          '$q#${userTexts.length}',
+        ),
+      );
+    }
+
+    // A clear "thank you" deserves a "you're welcome", not a random happy reply.
+    if ((isSi && _thanksSignalsSi.any(q.contains)) ||
+        (!isSi && _thanksSignalsEn.any((s) => _matchesWholeWord(q, s)))) {
+      return WillowChatResult(
+        text: _pickVariant(
+          isSi ? _thanksRepliesSi : _thanksRepliesEn,
+          '$q#t',
+        ),
+      );
+    }
 
     String text = _curatedReply(topic, q, isSi);
-    if (_apiKey.isNotEmpty) {
-      try {
-        text = await _callGemini(message).timeout(const Duration(seconds: 90));
-        if (text.trim().isEmpty) throw Exception('empty Gemini reply');
-        text = text.trim();
-      } catch (e) {
-        debugPrint('Gemini unavailable, using curated reply: $e');
-        text = _curatedReply(topic, q, isSi);
-      }
+    // The bot keeps following the user's mind: when the same dominant topic
+    // recurs across the recent window, name it and carry the thread forward.
+    if (topic != null && _topicHits(topic, userTexts, isSi) > 1) {
+      text = '${isSi ? _continuitySi : _continuityEn} $text';
     }
     debugPrint('Willow topic=$topic sinhala=$isSi gemini=${_apiKey.isNotEmpty}');
     return WillowChatResult(text: text, recommendations: recs);
@@ -98,7 +214,7 @@ class WillowApiService {
               'User-Agent': 'MindCareApp/1.0',
             },
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 3));
       return response.statusCode == 200;
     } catch (_) {
       return false;
@@ -106,16 +222,27 @@ class WillowApiService {
   }
 
   /// Ask the hosted model server (Kaggle notebook via tunnel) for a reply.
-  static Future<WillowChatResult?> _callServer(String message) async {
+  static Future<WillowChatResult?> _callServer(
+    String message,
+    List<WillowTurn> turns,
+  ) async {
     try {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/chat'),
             headers: {
               'Content-Type': 'application/json',
+              'cf-access-client-id': 'bypass',
               'User-Agent': 'MindCareApp/1.0',
             },
-            body: jsonEncode({'message': message}),
+            body: jsonEncode({
+              'message': message,
+              'lang': _looksSinhala(message) ? 'si' : 'en',
+              'history': [
+                for (final t in turns)
+                  {'role': t.role, 'content': t.text},
+              ],
+            }),
           )
           .timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) {
@@ -145,12 +272,14 @@ class WillowApiService {
 
   static bool _isSinhala(int r) => r >= 0x0d80 && r <= 0x0dff;
 
-  /// Rejects incoherent model output (digit-soup, mixed-scrambled, truncated).
+  /// Rejects incoherent model output (digit-soup, mixed-scrambled, digit-garbage).
   /// A reply is acceptable when it is coherently Sinhala-dominant or
-  /// Latin-dominant; muddled mixes of both are rejected.
+  /// Latin-dominant; muddled mixes of both are rejected. A reply may be short:
+  /// the persona answers in 1-3 sentences, and natural Sinhala sentences end
+  /// in vowel signs (e.g. ා/ි/ු) or ව, so no trailing-rune rule is applied.
   static bool _looksUsable(String text) {
     final s = text.trim();
-    if (s.length < 30) return false;
+    if (s.runes.length < 6) return false;
     if (s.contains('&') || s.contains('#') || s.contains('\uFFFD')) return false;
     final runes = s.runes.toList();
     var sinhala = 0;
@@ -175,12 +304,20 @@ class WillowApiService {
         return false;
       }
     }
-    final last = runes.last;
-    if (last >= 0x0dc0 && last <= 0x0dff) return false;
     return true;
   }
 
-  static Future<String> _callGemini(String userText) async {
+  static Future<String> _callGemini(String userText, List<WillowTurn> turns) async {
+    // Rebuild the recent conversation as alternating user/model turns so the
+    // model has context to read the user's state (Gemini requires alternation).
+    final merged = <Map<String, String>>[];
+    for (final t in [...turns, WillowTurn(role: 'user', text: userText)]) {
+      if (merged.isNotEmpty && merged.last['role'] == t.role) {
+        merged.last['text'] = '${merged.last['text']}\n\n${t.text}';
+      } else {
+        merged.add({'role': t.role, 'text': t.text});
+      }
+    }
     final body = jsonEncode({
       'system_instruction': {
         'parts': [
@@ -188,12 +325,13 @@ class WillowApiService {
         ],
       },
       'contents': [
-        {
-          'role': 'user',
-          'parts': [
-            {'text': userText},
-          ],
-        },
+        for (final m in merged)
+          {
+            'role': m['role'],
+            'parts': [
+              {'text': m['text']},
+            ],
+          },
       ],
       'generationConfig': {
         'temperature': 0.7,
@@ -244,6 +382,30 @@ class WillowApiService {
         .trim();
   }
 
+  static List<String> _tokenizeWords(String text) => RegExp(
+        r"[a-zA-Z]+(?:'[a-zA-Z]+)?",
+      ).allMatches(text).map((m) => m.group(0)!).toList();
+
+  /// Whole-word phrase matching for English so "hi" never matches inside
+  /// "everything" and "rent" never matches inside "parents". Matches when a
+  /// phrase's words appear consecutively as complete tokens.
+  static bool _matchesWholeWord(String text, String phrase) {
+    final tokens = _tokenizeWords(text);
+    final words = phrase.split(' ');
+    if (words.length > tokens.length) return false;
+    for (var i = 0; i + words.length <= tokens.length; i++) {
+      var ok = true;
+      for (var j = 0; j < words.length; j++) {
+        if (tokens[i + j] != words[j]) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) return true;
+    }
+    return false;
+  }
+
   /// True when a message is predominantly Sinhala (used to route reply language).
   static bool _looksSinhala(String text) {
     if (text.isEmpty) return false;
@@ -254,24 +416,147 @@ class WillowApiService {
     return sinhala / text.runes.length >= 0.3;
   }
 
-  static String? _pickTopic(String q, bool isSi) {
+  /// True when any of the recent user texts contains a signal (used for
+  /// crisis: a danger statement anywhere in the window is never ignored).
+  static bool _hasSignal(List<String> signals, List<String> texts) {
+    for (final t in texts) {
+      final n = _normalize(t);
+      if (n.isEmpty) continue;
+      if (signals.any(n.contains)) return true;
+    }
+    return false;
+  }
+
+  /// A positive signal only counts when it is NOT negated, so "I'm not happy",
+  /// "not good" or "unhappy" never get a cheerful reply. English signals are
+  /// matched whole-word (so "happy" inside "unhappy" doesn't count); Sinhala
+  /// uses a short window around the match to catch "සතුටුයි නෑ".
+  static bool _hasUnnegatedPositive(List<String> signals, String q, bool isSi) {
+    if (isSi) {
+      for (final s in signals) {
+        if (!q.contains(s)) continue;
+        final idx = q.indexOf(s);
+        final from = idx > 12 ? idx - 12 : 0;
+        var to = idx + s.length + 12;
+        if (to > q.length) to = q.length;
+        final window = q.substring(from, to);
+        if (_negationWordsSi.any(window.contains)) return false;
+      }
+      return signals.any(q.contains);
+    }
+    final tokens = _tokenizeWords(q);
+    final negations = _negationWords.toSet();
+    for (final s in signals) {
+      final phrase = s.split(' ');
+      for (var i = 0; i + phrase.length <= tokens.length; i++) {
+        var ok = true;
+        for (var j = 0; j < phrase.length; j++) {
+          if (tokens[i + j] != phrase[j]) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) continue;
+        final before = i > 3 ? tokens.sublist(i - 3, i) : tokens.sublist(0, i);
+        final afterStart = i + phrase.length;
+        final afterEnd = afterStart + 3 < tokens.length
+            ? afterStart + 3
+            : tokens.length;
+        final context = [...before, ...tokens.sublist(afterStart, afterEnd)];
+        if (context.any(negations.contains)) return false;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static const List<String> _negationWords = [
+    'not',
+    "isn't",
+    'isnt',
+    'arent',
+    "aren't",
+    'wasnt',
+    "wasn't",
+    'werent',
+    "weren't",
+    "can't",
+    'cant',
+    "couldn't",
+    'couldnt',
+    "don't",
+    'dont',
+    "doesn't",
+    'doesnt',
+    "didn't",
+    'didnt',
+    "won't",
+    'wont',
+    'never',
+    'without',
+    'no',
+    'hardly',
+    'least',
+  ];
+
+  static const List<String> _negationWordsSi = [
+    ' නෑ', ' නැහැ ', ' නැ ', ' බෑ', ' බැරි ', ' නෙමෙයි ', 'කමක් නෑ',
+  ];
+
+  /// Picks the topic that dominates the whole recent conversation (used to see
+  /// whether a theme recurs, so the reply keeps following the user's mind).
+  static String? _pickTopicAcross(List<String> texts, bool isSi) {
+    if (texts.isEmpty) return null;
+    final bonus = <String, double>{};
+    for (final t in texts) {
+      _scoreText(t, isSi, bonus);
+    }
+    return _best(bonus);
+  }
+
+  /// Topic of the current message only — always wins over history so a clear
+  /// new message is answered on its own terms.
+  static String? _pickTopicForSingle(String q, bool isSi) {
     if (q.isEmpty) return null;
     final bonus = <String, double>{};
+    _scoreText(q, isSi, bonus);
+    return _best(bonus);
+  }
+
+  /// The recurring theme of the recent window, but only if it appears in at
+  /// least two user messages — that is the "mind identified over 5-6
+  /// messages" the bot should keep following.
+  static String? _recurringTopic(List<String> texts, bool isSi) {
+    final top = _pickTopicAcross(texts, isSi);
+    if (top == null) return null;
+    return _topicHits(top, texts, isSi) >= 2 ? top : null;
+  }
+
+  static void _scoreText(String text, bool isSi, Map<String, double> bonus) {
+    final n = _normalize(text);
+    if (n.isEmpty) return;
     for (final trigger in isSi ? _topicTriggers : _topicTriggersEn) {
       final word = trigger.$1;
-      if (q.contains(word)) {
+      // Sinhala uses substring matching (word stems like යාළු match යාළුවා);
+      // English uses whole-word matching so "rent" can't match "parents".
+      final matched =
+          isSi ? n.contains(word) : _matchesWholeWord(n, word);
+      if (matched) {
         final weight = trigger.$2;
-        for (final t in trigger.$3) {
-          bonus[t] = (bonus[t] ?? 0) + weight;
+        for (final tp in trigger.$3) {
+          bonus[tp] = (bonus[tp] ?? 0) + weight;
         }
       }
     }
+  }
+
+  static String? _best(Map<String, double> bonus) {
     String? best;
     var bestScore = 0.0;
-    bonus.forEach((t, s) {
+    bonus.forEach((tp, s) {
       if (s > bestScore) {
         bestScore = s;
-        best = t;
+        best = tp;
       }
     });
     return best;
@@ -281,10 +566,54 @@ class WillowApiService {
     final replies = isSi ? _topicReplies : _topicRepliesEn;
     final variants = topic == null ? null : replies[topic];
     if (variants == null || variants.isEmpty) {
-      return isSi ? _genericReply : _genericReplyEn;
+      // Untracked messages get an echo-reflection built from the user's own
+      // words, plus a rotating closer — so replies are never the same twice.
+      return _reflectReply(q, isSi);
     }
-    final idx = q.runes.fold<int>(0, (a, r) => a + r) % variants.length;
-    return variants[idx];
+    final base = _pickVariant(variants, q);
+    final closer = _pickVariant(
+      isSi ? _reflectionClosersSi : _reflectionClosersEn,
+      '$q#${replies.length}',
+    );
+    return '$base $closer';
+  }
+
+  /// Deterministic variant picker seeded by the message so different inputs
+  /// surface different reply phrasings.
+  static String _pickVariant(List<String> variants, String seed) {
+    if (variants.isEmpty) return '';
+    return variants[(seed.hashCode & 0x7fffffff) % variants.length];
+  }
+
+  /// Warm, natural reply for messages the topic rules don't cover. Each reply
+  /// is a complete sentence pair (no quoting back the user's words), picked
+  /// deterministically per message so no two inputs get the identical text.
+  static String _reflectReply(String q, bool isSi) {
+    final opener = _pickVariant(
+      isSi ? _reflectionOpenersSi : _reflectionOpenersEn,
+      '$q#o',
+    );
+    final closer = _pickVariant(
+      isSi ? _reflectionClosersSi : _reflectionClosersEn,
+      '$q#c',
+    );
+    return '$opener $closer';
+  }
+
+  /// How many recent user messages mention a trigger for this topic.
+  static int _topicHits(String topic, List<String> texts, bool isSi) {
+    var hits = 0;
+    for (final t in texts) {
+      final n = _normalize(t);
+      if (n.isEmpty) continue;
+      for (final trigger in isSi ? _topicTriggers : _topicTriggersEn) {
+        if (n.contains(trigger.$1) && trigger.$3.contains(topic)) {
+          hits++;
+          break;
+        }
+      }
+    }
+    return hits;
   }
 
   static const String _systemPrompt =
@@ -304,14 +633,66 @@ class WillowApiService {
       "සුබසාධන හෙල්ප්ලයින්), නැතහොත් ශ්රී ලංකාවේ ස්ත්රීන් සහ ළමයින් "
       "නතර කිරීමේ අංකය 1929 අමතන්න, නැතහොත් ළඟම රෝහලට යන්න. ඔයා වැදගත්.";
 
-  static const String _positiveReply =
-      "හොඳට අහන්න ගොඩක් සතුටුයි! ඔයාට මොනවා හරි උදව්වක් ඕන වුණොත්, "
-      "ඕනෑම වෙලාවක මෙතන කතා කරන්න.";
+  static const List<String> _greetingSignals = [
+    "හෙලෝ",
+    "ආයුබෝවන්",
+    "ආයුබෝ",
+    "සුභ",
+    "කොහොමද",
+  ];
 
-  static const String _genericReply =
-      "ඔයා මේ ගැන මට කිව්ව එක ලොකු ශක්තියක්. අපි පොඩි පියවරකින් පටන් "
-      "ගමු — හෙමින් හුස්ම ටිකක් ගන්න, නැතහොත් ඔයාට හොඳ දැනෙන දෙයක් "
-      "ටික වේලාවක් කරන්න. ඔයාට වැඩියෙන් කියන්න ඕන නම්, කියන්න.";
+  static const List<String> _greetingReplies = [
+    "ආයුබෝ! 😊 ඔයා කොහොමද ඉන්නේ? ඔයාගේ හිතේ ඇති දේ මට කියන්න.",
+    "හෙලෝ! 🌿 ඔයාව දැකීම සතුටක්. මොනවද අද හිතේ තියෙන්නේ?",
+    "ආයුබෝ! අද දවස කොහොමද? මම මෙතනම ඉන්නවා, ඕන ඕන දේ කියන්න.",
+  ];
+
+  static const List<String> _positiveReplies = [
+    "හොඳට අහන්න ගොඩක් සතුටුයි! ඔයාට මොනවා හරි උදව්වක් ඕන වුණොත්, ඕනෑම වෙලාවක මෙතන කතා කරන්න.",
+    "ඒක ඇහුනාම මට ලොකු සතුටක්. ඒ හොඳ හැඟීම ටිකක් රසවිඳින්න — ඔයා ඒකට වටිනවා.",
+    "සතුටුයි! ඔයා කැමති නම්, ඒ හොඳ දවස ගැනත් ටිකක් කියන්න.",
+  ];
+
+  static const List<String> _thanksSignalsEn = [
+    'thank',
+    'thanks',
+    'thank you',
+    'thx',
+  ];
+
+  static const List<String> _thanksRepliesEn = [
+    "You're so welcome! 💚 I'm here whenever you need me.",
+    "Anytime — that's what I'm here for. 💚",
+    "Of course. 🌿 Keep going; you're doing better than you think.",
+  ];
+
+  static const List<String> _thanksSignalsSi = [
+    'ස්තූතියි',
+    'ස්තූතිය',
+    'ස්තූත',
+  ];
+
+  static const List<String> _thanksRepliesSi = [
+    "ඔයාට පිළිගන්නම්! 💚 ඕනෑම වෙලාවක මම මෙතන ඉන්නවා.",
+    "සතුටක්! 🌿 මේ විදියට කතා කරන්න දිගටම එන්න.",
+  ];
+
+  static const String _continuitySi =
+      "අපි දිගටම මේ ගැන කතා කරනවා — ඒකට නමක් තියෙනවා. මම ඔයා එක්ක ඉන්නවා.";
+
+  static const List<String> _reflectionOpenersSi = [
+    "මම ඔයාට ඇහුම්කන් දෙනවා, ඒක ලොකු දෙයක්.",
+    "මේක මට කිව්ව එකට ස්තූතියි.",
+    "ඒක ඔයාට ලොකු බරක් වෙන්න ඇති.",
+    "මම දැන් මෙතනම ඉන්නවා, ඔයා එක්ක.",
+  ];
+
+  static const List<String> _reflectionClosersSi = [
+    "අද දවස වුණේ කොහොමද, පොඩ්ඩක් කියන්නකෝ?",
+    "ඒ ගැන තව ටිකක් කියන්න කැමතිද?",
+    "මේ දේවල් කොච්චර කාලයක් ඔයා එක්ක තියෙනවාද?",
+    "ඔයාට දැන්ම හොඳටම බරක් දැනෙන්නේ මොකක්ද?",
+  ];
 
   static const String _crisisReplyEn =
       "You're going through something very hard right now, and you don't "
@@ -320,30 +701,63 @@ class WillowApiService {
       "(National Child Protection Authority), or go to your nearest hospital. "
       "You matter, and people can help.";
 
-  static const String _positiveReplyEn =
-      "That's lovely to hear! I'm really glad. If you ever need someone to "
-      "talk to, I'm always here.";
+  static const List<String> _greetingSignalsEn = [
+    "hi",
+    "hello",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "how are you",
+  ];
 
-  static const String _genericReplyEn =
-      "Thank you for sharing that with me — it takes strength. Let's start "
-      "with one small step: take a few slow breaths or do something that "
-      "feels comforting. Tell me more whenever you're ready.";
+  static const List<String> _greetingRepliesEn = [
+    "Hey there! 😊 How are you doing today?",
+    "Hello! 🌿 Good to see you. What's on your mind?",
+    "Hi! How's your day going? I'm right here if you want to talk.",
+  ];
+
+  static const List<String> _positiveRepliesEn = [
+    "That's lovely to hear! If you ever need someone to talk to, I'm always here.",
+    "That genuinely makes me glad. Hold on to that good feeling for a moment — you deserve it.",
+    "Happy to hear that! If you'd like, tell me a little about what made it good.",
+    "You're so welcome! 💚 I'm here whenever you need someone to talk to.",
+  ];
+
+  static const String _continuityEn =
+      "We keep landing here, and that's worth naming — I'm right here with you.";
+
+  static const List<String> _reflectionOpenersEn = [
+    "I hear you, and that counts for a lot.",
+    "Thank you for trusting me with that.",
+    "That sounds like it carries real weight.",
+    "I'm right here with you in this moment.",
+  ];
+
+  static const List<String> _reflectionClosersEn = [
+    "How has today felt, one small bit at a time?",
+    "Would you like to say a little more about it?",
+    "How long has this been sitting with you?",
+    "If you had to name the hardest part, what would it be?",
+  ];
 
   static const List<String> _crisisSignals = [
     "සියදිවි",
     "මැරෙන්න",
+    "මැරෙනවා",
+    "මැරුණොත්",
     "මැරිලා",
     "ජීවත් වෙන්න ඕන නෑ",
     "ජීවත් වෙන්න බෑ",
     "කපාගන්න",
     "තුවාල කරගන්න",
+    "ඉවසන්න බැරි",
+    "මට ඉවසන්න බෑ",
     "මගෙන් කමක් නෑ",
   ];
 
   static const List<String> _positiveSignals = [
     "ස්තූතියි",
-    "හෙලෝ",
-    "ආයුබෝවන්",
     "හොඳින් ඉන්නවා",
     "සතුටුයි",
     "හොඳ දවසක්",
@@ -355,28 +769,50 @@ class WillowApiService {
     "suicide",
     "suicidal",
     "end my life",
+    "i want to die",
+    "want to die",
+    "wanna die",
+    "end it all",
+    "end everything",
+    "not worth living",
+    "better off dead",
     "don't want to live",
     "dont want to live",
-    "cut myself",
-    "hurt myself",
-    "self harm",
-    "worthless",
     "no reason to live",
+    "can't take it anymore",
+    "cant take it anymore",
     "can't go on",
     "cant go on",
+    "give up on life",
+"cut myself",
+    "hurt myself",
+    "self harm",
+    "better off without me",
+    "better off dead",
+    "no one would miss me",
+    "no one will miss me",
+    "nobody would miss me",
+    "nobody will miss me",
+    "wish i was dead",
+    "wish i wasn't here",
+    "i shouldn't be here",
+    "i don't want to be here",
+    "dont want to be here",
   ];
 
   static const List<String> _positiveSignalsEn = [
     "thank you",
     "thanks",
-    "hello",
-    "hi",
-    "good morning",
-    "good evening",
     "feeling good",
+    "feel good",
+    "feel better",
+    "feeling better",
+    "i'm fine",
+    "im fine",
+    "doing well",
     "happy",
     "great day",
-    "doing well",
+    "wonderful",
   ];
 
   static const Map<String, List<String>> _topicRecs = {
@@ -387,6 +823,8 @@ class WillowApiService {
     'loneliness': ['counsellorCall'],
     'sleep': ['breathing'],
     'relationships': ['journal'],
+    'breakup': ['journal', 'moodTracker'],
+    'family': ['journal'],
     'financial': ['resources'],
     'grief': ['counsellorCall'],
     'emotions': ['journal', 'moodTracker'],
@@ -415,6 +853,9 @@ class WillowApiService {
     ('තනිකම', 2.2, ['loneliness']),
     ('තනියම', 2.2, ['loneliness']),
     ('හුදෙකලා', 2.6, ['loneliness']),
+    ('කවුරුවත් නෑ', 2.8, ['loneliness']),
+    ('කතා කරන්නේ නෑ', 2.6, ['loneliness']),
+    ('කතා කරන්න කෙනෙක්', 2.6, ['loneliness']),
     ('මහන්සි', 3.0, ['burnout']),
     ('වෙහෙස', 2.6, ['burnout']),
     ('හෙම්බත්', 2.6, ['burnout']),
@@ -422,17 +863,27 @@ class WillowApiService {
     ('බිය', 2.2, ['anxiety']),
     ('කලබල', 2.6, ['anxiety']),
     ('භීතිය', 2.6, ['anxiety']),
+    ('අවුල්', 2.4, ['anxiety']),
     ('දුක', 3.0, ['depression']),
     ('කඳුළු', 2.6, ['depression']),
     ('අඬන', 2.6, ['depression']),
+    ('කන්න ඕන නෑ', 2.6, ['depression']),
     ('අහිමි', 3.0, ['grief']),
-    ('මිය', 2.2, ['grief']),
-    ('මරණ', 2.2, ['grief']),
+    ('මිය', 3.0, ['grief']),
+    ('මිය ගිය', 3.6, ['grief']),
+    ('මරණ', 2.6, ['grief']),
     ('යාළු', 2.2, ['relationships']),
     ('යහළු', 2.2, ['relationships']),
-    ('රණ්ඩු', 2.6, ['relationships']),
-    ('කේන්ති', 2.2, ['relationships']),
+    ('රණ්ඩු', 2.2, ['relationships']),
+    ('කේන්ති', 2.4, ['emotions']),
     ('බැඳීම්', 2.0, ['relationships']),
+    ('වෙන් වුණා', 2.8, ['breakup']),
+    ('වෙන් වෙන්න', 2.6, ['breakup']),
+    ('බිඳීම', 2.6, ['breakup']),
+    ('බිඳෙනවා', 2.6, ['breakup']),
+    ('අම්මා තාත්තා රණ්ඩු', 2.8, ['family']),
+    ('දෙමාපියන් රණ්ඩු', 2.8, ['family']),
+    ('දික්කසාද', 3.0, ['family']),
     ('රිදුම', 2.6, ['emotions']),
     ('රිදෙනවා', 2.2, ['emotions']),
     ('මුදල්', 2.2, ['financial']),
@@ -445,6 +896,7 @@ class WillowApiService {
     ('අයිති නෑ', 2.6, ['imposter']),
     ('වැරදුණොත්', 2.6, ['fear_of_failure']),
     ('fail', 2.6, ['fear_of_failure']),
+    ('ඉගෙන ගන්න බැරි', 2.6, ['academic_stress']),
     ('අනුගත', 3.0, ['transitions']),
     ('අලුත් තැන', 2.6, ['transitions']),
     ('මුල් දවස්', 2.6, ['transitions']),
@@ -461,6 +913,9 @@ class WillowApiService {
     ('campus', 2.2, ['academic_stress']),
     ('assignment', 2.2, ['academic_stress', 'time_management']),
     ('deadline', 2.4, ['academic_stress']),
+    ('deadlines', 2.4, ['academic_stress']),
+    ('assignments', 2.2, ['academic_stress', 'time_management']),
+    ('subjects', 2.2, ['academic_stress']),
     ('subject', 2.2, ['academic_stress']),
     ('lecture', 2.0, ['academic_stress']),
     ('sleep', 2.2, ['sleep']),
@@ -468,13 +923,20 @@ class WillowApiService {
     ('insomnia', 2.6, ['sleep']),
     ('awake', 2.2, ['sleep']),
     ('bed', 2.0, ['sleep']),
+    ("can't sleep", 2.6, ['sleep']),
+    ('cant sleep', 2.6, ['sleep']),
+    ('trouble sleeping', 2.4, ['sleep']),
     ('lonely', 2.6, ['loneliness']),
     ('loneliness', 2.6, ['loneliness']),
     ('alone', 2.2, ['loneliness']),
     ('isolated', 2.4, ['loneliness']),
     ('no friends', 2.6, ['loneliness']),
+    ('any friends', 2.6, ['loneliness']),
+    ('have no friends', 2.6, ['loneliness']),
+    ('friendless', 2.6, ['loneliness']),
     ('tired', 3.0, ['burnout']),
     ('exhausted', 3.0, ['burnout']),
+    ('exhausting', 2.8, ['burnout']),
     ('burnout', 3.0, ['burnout']),
     ('burned out', 3.0, ['burnout']),
     ('drained', 2.6, ['burnout']),
@@ -494,11 +956,16 @@ class WillowApiService {
     ('hopeless', 3.0, ['depression']),
     ('empty', 2.4, ['depression']),
     ('crying', 2.4, ['depression']),
-    ('lost', 3.0, ['grief']),
+    ('pointless', 3.0, ['depression']),
+    ('meaningless', 2.8, ['depression']),
+    ('no point', 2.8, ['depression']),
+    ('numb', 2.6, ['depression']),
     ('grief', 3.0, ['grief']),
     ('died', 2.6, ['grief']),
     ('death', 2.4, ['grief']),
     ('passed away', 3.0, ['grief']),
+    ('loss', 2.6, ['grief']),
+    ('funeral', 2.6, ['grief']),
     ('friend', 2.2, ['relationships']),
     ('friends', 2.2, ['relationships']),
     ('relationship', 2.2, ['relationships']),
@@ -506,10 +973,18 @@ class WillowApiService {
     ('boyfriend', 2.2, ['relationships']),
     ('argued', 2.4, ['relationships']),
     ('argument', 2.4, ['relationships']),
+    ('fighting', 2.4, ['relationships']),
+    ('fights', 2.4, ['relationships']),
     ('fight', 2.2, ['relationships']),
-    ('angry', 2.2, ['relationships']),
+    ('angry', 2.4, ['emotions']),
     ('miss him', 2.2, ['relationships']),
     ('miss her', 2.2, ['relationships']),
+    ('broke up', 3.0, ['breakup']),
+    ('break up', 2.6, ['breakup']),
+    ('breakup', 2.6, ['breakup']),
+    ('broken up', 2.8, ['breakup']),
+    ('dumped', 2.6, ['breakup']),
+    ('broke my heart', 3.0, ['breakup']),
     ('hurt', 2.4, ['emotions']),
     ('feelings', 2.4, ['emotions']),
     ('emotion', 2.2, ['emotions']),
@@ -521,6 +996,7 @@ class WillowApiService {
     ('debt', 2.6, ['financial']),
     ('loan', 2.6, ['financial']),
     ('brok', 2.4, ['financial']),
+    ('broke', 2.4, ['financial']),
     ('afford', 2.4, ['financial']),
     ('self esteem', 2.6, ['self_esteem']),
     ('self confidence', 2.6, ['self_esteem']),
@@ -559,10 +1035,12 @@ class WillowApiService {
     ('new place', 2.6, ['transitions']),
     ('new city', 2.6, ['transitions']),
     ('starting over', 2.6, ['transitions']),
-    ('change', 2.2, ['transitions']),
     ('settling in', 2.6, ['transitions']),
     ('fail', 2.4, ['fear_of_failure']),
     ('failing', 2.6, ['fear_of_failure']),
+    ('failed', 2.6, ['fear_of_failure']),
+    ('fails', 2.6, ['fear_of_failure']),
+    ('failure', 2.6, ['fear_of_failure']),
     ("afraid of failing", 3.0, ['fear_of_failure']),
     ('let down', 2.6, ['fear_of_failure', 'self_esteem']),
   ];
@@ -595,6 +1073,14 @@ class WillowApiService {
     'relationships': [
       "යාළුවෙක් එක්ක ගැටුමක් ආවම, හිතට අමාරුයි. ඒක සාමාන්‍යයි. සන්සුන් වුණාට පස්සේ, 'මට තේරුණ අයුරින්...' කියලා ඒ ගැන කතා කරන්න උත්සාහ කරමු.",
       "බැඳීම්වල ගැටුම් ඇති වෙනවා, ඒවා ඔයාගේ හැඟීම් අඩු කරන්නේ නෑ. ඔයාට බරක් වෙන දේක් බෙදගන්න කෙනෙක් හොයලා බලමු.",
+    ],
+    'breakup': [
+      "බිඳීමක් සැබෑ වේදනාවක්. දැන් ඔයාට දැනෙන ඕනෑම හැඟීමක් — වේදනාව, අවුල, සහනය — ඒගොල්ලෝ හැම එකක්ම වලංගුයි. අද දවසේ පොඩි පියවරකින් ඔයාටම කරුණාවන්ත වෙන්න.",
+      "වෙන්වීමකට පස්සේ හිතට සැහැල්ලු වෙන්න කාලය ඕන. ඔයා කවුද කියන දේ ඒ සම්බන්ධය තීරණය කරන්නේ නෑ. විශ්වාස කරන කෙනෙක් එක්ක ඒ ගැන කතා කරන්න.",
+    ],
+    'family': [
+      "ආදරය කරන අය අතර ගැටුම් දකිනකොට, හිතට ලොකු බරක් දැනෙනවා. ඒක ඔයාගේ වරදක් නෙමෙයි. මේ කාලයේ ඔයාටම කරුණාවන්ත වෙන්න.",
+      "අම්මා තාත්තා අතර වෙනස්කම් දකින එක අසරණ වෙන සුළු දෙයක්. පොඩි නිස්කලංක මොහොතක් ගන්න, පුළුවන් නම් විශ්වාස කරන කෙනෙක් එක්ක ඒ ගැන කතා කරන්න.",
     ],
     'financial': [
       "මුදල් ප්‍රශ්න ඕනෑම කෙනෙකුට බරක්. මුලින්ම වියදම් ලියලා බලමු — කුඩා ඉතුරුමක් වත් කරන්න පුළුවන් තැනක් පේනවා. ලැජ්ජා වෙන්න එපා, ඔයා තනියම නෙමෙයි.",
@@ -669,6 +1155,14 @@ class WillowApiService {
     'relationships': [
       "A disagreement with someone you care about hurts. That's natural. Once you're both a little calmer, try saying 'what I heard was…' and give each other space to explain.",
       "Friction in close bonds doesn't erase your worth. It's okay to ask for what you need; relationships survive honesty.",
+    ],
+    'breakup': [
+      "Breakups are genuinely painful, and there's no wrong way to feel right now — hurt, confusion, even relief are all valid. Be gentle with yourself today, hour by hour.",
+      "A breakup rearranges things, but it doesn't define who you are. You're still you — worthy of love and respect. Talk it through with someone you trust, and take the hurt one day at a time.",
+    ],
+    'family': [
+      "When the people you love clash, it can feel out of your hands, and that weight is real. You're not responsible for fixing it — be kind to yourself while it settles.",
+      "Watching your family argue is unsettling. Give yourself a few quiet minutes, and if you can, tell someone you trust how it's affecting you.",
     ],
     'financial': [
       "Money worries weigh on anyone, and you're not failing for having them. Write down your spending for a week — clarity is the first step, and small wins count.",

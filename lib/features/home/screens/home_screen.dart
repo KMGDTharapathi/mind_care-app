@@ -145,46 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
               iconColor: isDark ? Colors.white70 : Colors.white,
               layout: _CardLayout.iconTop,
             ),
-            _Feature(
-              title: 'දිනපොත',
-              icon: Icons.book_outlined,
-              color: isDark ? const Color(0xFF2A3D3D) : const Color(0xFFB2DFDB),
-              onTap: (ctx) => ctx.push(AppRouter.journal),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF1A4A4A),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'මානසික\nසම්පත්',
-              icon: Icons.menu_book_outlined,
-              color: isDark ? const Color(0xFF3D2A2A) : const Color(0xFFF8BBD0),
-              onTap: (ctx) => ctx.push(AppRouter.resources),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF880E4F),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'මනෝභාවය\nනිරීක්ෂණය',
-              icon: Icons.mood_outlined,
-              color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFC8E6C9),
-              onTap: (ctx) => ctx.push(AppRouter.moodTracker),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF1B5E20),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'සිතුවම්\nකිරීම',
-              icon: Icons.palette_outlined,
-              color: isDark ? const Color(0xFF2A2A3D) : const Color(0xFFFFF9C4),
-              onTap: (ctx) => ctx.push(AppRouter.painting),
-              iconColor: isDark ? Colors.white70 : const Color(0xFFF57F17),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'වෛද්‍යවරයකු\nසොයන්න',
-              icon: Icons.local_hospital_outlined,
-              color: isDark ? const Color(0xFF3D2A3D) : const Color(0xFFD1C4E9),
-              onTap: (ctx) => ctx.push(AppRouter.findDoctor),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF311B92),
-              layout: _CardLayout.iconTop,
-            ),
+            
           ]
         : [
             _Feature(
@@ -257,46 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
               iconColor: isDark ? Colors.white70 : Colors.white,
               layout: _CardLayout.iconTop,
             ),
-            _Feature(
-              title: 'Journal',
-              icon: Icons.book_outlined,
-              color: isDark ? const Color(0xFF2A3D3D) : const Color(0xFFB2DFDB),
-              onTap: (ctx) => ctx.push(AppRouter.journal),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF1A4A4A),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Resources',
-              icon: Icons.menu_book_outlined,
-              color: isDark ? const Color(0xFF3D2A2A) : const Color(0xFFF8BBD0),
-              onTap: (ctx) => ctx.push(AppRouter.resources),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF880E4F),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Mood\nTracker',
-              icon: Icons.mood_outlined,
-              color: isDark ? const Color(0xFF2A3D2A) : const Color(0xFFC8E6C9),
-              onTap: (ctx) => ctx.push(AppRouter.moodTracker),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF1B5E20),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Painting',
-              icon: Icons.palette_outlined,
-              color: isDark ? const Color(0xFF2A2A3D) : const Color(0xFFFFF9C4),
-              onTap: (ctx) => ctx.push(AppRouter.painting),
-              iconColor: isDark ? Colors.white70 : const Color(0xFFF57F17),
-              layout: _CardLayout.iconTop,
-            ),
-            _Feature(
-              title: 'Find Doctor',
-              icon: Icons.local_hospital_outlined,
-              color: isDark ? const Color(0xFF3D2A3D) : const Color(0xFFD1C4E9),
-              onTap: (ctx) => ctx.push(AppRouter.findDoctor),
-              iconColor: isDark ? Colors.white70 : const Color(0xFF311B92),
-              layout: _CardLayout.iconTop,
-            ),
+            
           ];
 
     return Scaffold(

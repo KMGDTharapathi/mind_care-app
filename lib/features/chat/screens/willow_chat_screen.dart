@@ -170,7 +170,21 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     _persist(userMsg);
     _scrollToBottom();
 
-    final response = await _engine.respond(userMsg);
+    // Send the last ~6 turns as context so the bot can read the user's state
+    // and keep the thread going. The current message is already in _messages.
+    final contextStart = math.max(0, _messages.length - 7);
+    final turns = (_messages.length > 1
+            ? _messages.sublist(contextStart, _messages.length - 1)
+            : const <ChatMessage>[])
+        .where((m) => m.type == MessageType.text)
+        .map(
+          (m) => WillowTurn(
+            role: m.sender == MessageSender.willow ? 'model' : 'user',
+            text: m.content,
+          ),
+        ).toList();
+
+    final response = await _engine.respond(userMsg, turns: turns);
     if (!mounted) return;
     setState(() => _isTyping = false);
     _addWillowMessage(response);
