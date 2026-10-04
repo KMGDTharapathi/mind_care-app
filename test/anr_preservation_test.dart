@@ -46,7 +46,7 @@ class _StubAuthService implements AuthService {
   Future<AuthUser> signInWithGoogle() async =>
       const AuthUser(uid: 'stub', isAnonymous: false);
   @override
-  Future<AuthUser> createAccountWithEmail(String email, String password) async =>
+  Future<AuthUser> createAccountWithEmail(String email, String password, {String? displayName}) async =>
       const AuthUser(uid: 'stub', isAnonymous: false);
   @override
   Future<void> sendPasswordResetEmail(String email) async {}

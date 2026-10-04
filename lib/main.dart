@@ -68,7 +68,10 @@ Future<void> main() async {
   // rendered before we touch any platform channels (Hive, SharedPreferences).
   WidgetsBinding.instance.addPostFrameCallback((_) {
     Future.delayed(const Duration(milliseconds: 100), () {
-      _heavyInit(firebaseOk).catchError((e) => debugPrint('_heavyInit error: $e'));
+      _heavyInit(firebaseOk).catchError((e) {
+        debugPrint('_heavyInit error: $e');
+        return const _InitResult(firebaseOk: false);
+      });
     });
   });
 }
