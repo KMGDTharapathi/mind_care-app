@@ -11,6 +11,7 @@ class NotificationService {
   static const _channelId = 'mindcare_daily';
   static const _channelName = 'Reminders';
   static const _baseId = 100; // IDs 100-106 for Mon-Sun
+  static const _accentColor = Color(0xFF5BA8A0);
 
   static Future<void> init({
     required GlobalKey<NavigatorState> navigatorKey,
