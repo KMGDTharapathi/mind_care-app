@@ -22,6 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthStarted>(_onAuthStarted);
     on<AuthSignInWithEmail>(_onSignInWithEmail);
     on<AuthSignInWithGoogle>(_onSignInWithGoogle);
+    on<AuthSignInAnonymously>(_onSignInAnonymously);
     on<AuthSignOut>(_onSignOut);
     on<AuthCreateAccount>(_onCreateAccount);
     on<AuthSendPasswordReset>(_onSendPasswordReset);
@@ -79,8 +80,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         parameters: {'method': 'email'},
       );
       emit(AuthAuthenticated(user));
-    } on AuthException catch (e) {
-      emit(AuthError(message: e.message, type: e.type));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
     }
   }
 
@@ -102,8 +105,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await _crashlyticsService?.setUserId(null);
       }
       emit(user.isAnonymous ? AuthAnonymous(user) : AuthAuthenticated(user));
-    } on AuthException catch (e) {
-      emit(AuthError(message: e.message, type: e.type));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
+    }
+  }
+
+  Future<void> _onSignInAnonymously(
+    AuthSignInAnonymously event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    try {
+      final user = await _authService.signInAnonymously();
+      await _analyticsService?.setUserId(null);
+      await _crashlyticsService?.setUserId(null);
+      emit(AuthAnonymous(user));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
     }
   }
 
@@ -133,8 +155,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         parameters: {'method': 'email'},
       );
       emit(AuthAuthenticated(user));
-    } on AuthException catch (e) {
-      emit(AuthError(message: e.message, type: e.type));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
     }
   }
 

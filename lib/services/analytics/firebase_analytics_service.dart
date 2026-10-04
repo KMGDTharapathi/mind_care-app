@@ -1,19 +1,25 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:mind_care_app/services/analytics/analytics_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
 
-/// No-op implementation when running without Firebase.
 class FirebaseAnalyticsService implements AnalyticsService {
   final ConsentService consentService;
+  final FirebaseAnalytics _analytics;
 
-  FirebaseAnalyticsService({required this.consentService});
+  FirebaseAnalyticsService({
+    required this.consentService,
+    FirebaseAnalytics? analytics,
+  }) : _analytics = analytics ?? FirebaseAnalytics.instance;
 
   @override
   Future<void> logEvent(String name, {Map<String, Object>? parameters}) async {
-    // No-op when Firebase is not configured
+    if (!await consentService.isAnalyticsEnabled()) return;
+    await _analytics.logEvent(name: name, parameters: parameters);
   }
 
   @override
   Future<void> setUserId(String? uid) async {
-    // No-op when Firebase is not configured
+    if (!await consentService.isAnalyticsEnabled()) return;
+    await _analytics.setUserId(id: uid);
   }
 }
