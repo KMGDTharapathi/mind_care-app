@@ -109,6 +109,32 @@ class NotificationService {
   static Future<void> scheduleDailyNotification(TimeOfDay time) =>
       scheduleReminder(time: time);
 
+  /// Shows a notification confirming an event was added to the device calendar.
+  static Future<void> showEventAddedNotification({
+    required String eventTitle,
+    required String provider,
+  }) async {
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'mindcare_calendar',
+        'Calendar',
+        channelDescription: 'Calendar confirmation notifications',
+        importance: Importance.high,
+        priority: Priority.high,
+        color: _accentColor,
+      );
+      const notifDetails = NotificationDetails(android: androidDetails);
+      await flutterLocalNotificationsPlugin.show(
+        500,
+        'Event Added to $provider',
+        eventTitle,
+        notifDetails,
+      );
+    } catch (e) {
+      debugPrint('Event notification failed: $e');
+    }
+  }
+
   static Future<void> cancelAll() async {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
