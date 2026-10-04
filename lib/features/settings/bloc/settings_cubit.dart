@@ -40,8 +40,6 @@ class SettingsCubit extends Cubit<SettingsState> {
       repeatDays: repeatList.map((e) => int.tryParse(e) ?? 0).toSet()
         ..remove(0),
       reminderMessage: message,
-      chatTheme: prefs.getString('chat_theme') ?? 'spring',
-      chatFont: prefs.getString('chat_font') ?? 'normal',
     ));
 
     // Also attempt to restore cloud reminder preferences from Firestore
@@ -134,18 +132,6 @@ class SettingsCubit extends Cubit<SettingsState> {
     } catch (e) {
       debugPrint('Firestore reminder sync failed: $e');
     }
-  }
-
-  Future<void> setChatTheme(String themeId) async {
-    final prefs = await PreferencesService.getSharedPreferences();
-    await prefs.setString('chat_theme', themeId);
-    emit(state.copyWith(chatTheme: themeId));
-  }
-
-  Future<void> setChatFont(String fontId) async {
-    final prefs = await PreferencesService.getSharedPreferences();
-    await prefs.setString('chat_font', fontId);
-    emit(state.copyWith(chatFont: fontId));
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

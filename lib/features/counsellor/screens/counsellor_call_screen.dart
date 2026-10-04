@@ -6,45 +6,9 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import '../models/doctor_model.dart';
 import '../data/doctor_seed_service.dart';
 import '../data/doctor_seed_data.dart';
-import '../widgets/book_appointment_sheet.dart';
-import '../widgets/appointments_tab.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDark = Color(0xFF1A4A4A);
-
-/// Best location text for a doctor — hospital + full address when present,
-/// else just the hospital/clinic name. Includes the hospital so Google Maps
-/// can geocode the place instead of a bare street address.
-String _doctorLocationQuery(Doctor doctor) {
-  final address = doctor.address?.trim() ?? '';
-  if (address.isNotEmpty) {
-    return '$address, ${doctor.hospital}';
-  }
-  return doctor.hospital;
-}
-
-/// Opens Google Maps for the given place query. Uses the official Maps
-/// deep link so it opens the Maps app (not a browser) and geocodes the text.
-///
-/// Note: on Android 11+, `canLaunchUrl` can return false due to package
-/// visibility even though the intent would resolve — so we try `launchUrl`
-/// directly and only report when it actually throws.
-Future<void> _openInMaps(BuildContext context, String query) async {
-  final encoded = Uri.encodeComponent(query);
-  final uri = Uri.parse(
-    'https://www.google.com/maps/search/?api=1&query=$encoded',
-  );
-  try {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (e) {
-    debugPrint('Failed to open maps: $e');
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open Google Maps')),
-      );
-    }
-  }
-}
 
 class CounsellorCallScreen extends StatefulWidget {
   const CounsellorCallScreen({super.key});
@@ -66,7 +30,7 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     DoctorSeedService.seedIfEmpty();
   }
 
@@ -98,10 +62,6 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
           tabs: [
             Tab(icon: const Icon(Icons.people_outline), text: s.doctorsTab),
             Tab(icon: const Icon(Icons.phone_outlined), text: s.hotlinesTab),
-            Tab(
-              icon: const Icon(Icons.calendar_month_outlined),
-              text: s.isSinhala ? 'වෙන්කිරීම්' : 'Appointments',
-            ),
           ],
         ),
       ),
@@ -120,10 +80,6 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
             onLangChanged: (v) => setState(() => _filterLang = v),
           ),
           _HotlineTab(strings: s),
-          AppointmentsTab(
-            strings: s,
-            onFindDoctor: () => _tabController.animateTo(0),
-          ),
         ],
       ),
     );
@@ -630,36 +586,6 @@ class _DoctorCard extends StatelessWidget {
                           .map((l) => _Chip(label: l))
                           .toList(),
                     ),
-                    const SizedBox(height: 6),
-                    // Tappable location → opens Google Maps
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          _openInMaps(context, _doctorLocationQuery(doctor)),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 14,
-                            color: Colors.orange,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              _doctorLocationQuery(doctor),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.orange,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Colors.orange,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -819,7 +745,11 @@ class _DoctorProfileSheet extends StatelessWidget {
                 icon: Icons.location_on_outlined,
                 label: doctor.address!,
                 color: Colors.orange,
-                onTap: () => _openInMaps(context, _doctorLocationQuery(doctor)),
+                onTap: () async {
+                  final encoded = Uri.encodeComponent(doctor.address!);
+                  final uri = Uri.parse('https://maps.google.com/?q=$encoded');
+                  if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
               ),
             if (doctor.clinicHours != null && doctor.clinicHours!.isNotEmpty)
               Padding(
@@ -838,46 +768,6 @@ class _DoctorProfileSheet extends StatelessWidget {
                   ],
                 ),
               ),
-            const SizedBox(height: 20),
-
-            // ── Book Appointment Button ────────────────────────────────
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.calendar_today_rounded, size: 18),
-                label: Text(
-                  strings.isSinhala
-                      ? 'වෙන්කරවා ගන්න (Book Appointment)'
-                      : 'Book Appointment',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTeal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 2,
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => BookAppointmentSheet(
-                      doctorId: doctor.id,
-                      doctorName: doctor.name,
-                      doctorSpecialization: doctor.specialization,
-                      doctorHospital: doctor.hospital,
-                      photoUrl: doctor.photoUrl,
-                      strings: strings,
-                    ),
-                  );
-                },
-              ),
-            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -1154,6 +1044,31 @@ class _SectionTitle extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: _kDark)),
     );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color iconColor;
+  const _StatBox(
+      {required this.label,
+      required this.value,
+      required this.icon,
+      required this.iconColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, color: iconColor, size: 22),
+      const SizedBox(height: 4),
+      Text(value,
+          style: const TextStyle(
+              fontWeight: FontWeight.w700, fontSize: 14, color: _kDark)),
+      Text(label,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+    ]);
   }
 }
 

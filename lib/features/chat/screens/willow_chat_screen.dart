@@ -1,23 +1,20 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
-import '../models/chat_style.dart';
-import '../models/wellness_feature.dart';
-import '../services/chat_mood.dart';
 import '../services/willow_engine.dart';
 import '../services/willow_api_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDarkTeal = Color(0xFF1A4A4A);
+const _kBg = Color(0xFFF0F9F9);
+const _kUserBubble = Color(0xFFDCF8C6);
+const _kWillowBubble = Colors.white;
 
 class WillowChatScreen extends StatefulWidget {
   final String lang;
@@ -71,19 +68,13 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       final msgs = snapshot.docs.map((doc) {
         final data = doc.data();
         return ChatMessage(
-          id: data['id'] as String? ?? _uuid.v4(),
-          senderName: data['senderName'] as String? ?? 'willow',
+          id: data['id'] as String,
+          senderName: data['senderName'] as String,
           typeName: data['typeName'] as String? ?? 'text',
-          content: data['content'] as String? ?? '',
+          content: data['content'] as String,
           fileName: data['fileName'] as String?,
           durationSeconds: data['durationSeconds'] as int? ?? 0,
-          timestamp: data['timestamp'] != null
-              ? (data['timestamp'] as Timestamp).toDate()
-              : DateTime.now(),
-          recommendations: (data['recommendations'] as List<dynamic>?)
-                  ?.map((e) => e.toString())
-                  .toList() ??
-              const [],
+          timestamp: (data['timestamp'] as Timestamp).toDate(),
         );
       }).toList();
 
@@ -96,13 +87,20 @@ class _WillowChatScreenState extends State<WillowChatScreen>
 
       // If no messages, seed the welcome message in Firestore
       if (msgs.isEmpty) {
-        _addWillowMessageToFirestore(WillowReply(text: _engine.welcomeMessage()));
+        _addWillowMessageToFirestore(_engine.welcomeMessage());
       }
     }, onError: (error) {
-      debugPrint('Firestore subscription error: ');
+      debugPrint('Firestore subscription error: $error');
       // FALLBACK: Load local welcome message if database access fails
       if (_messages.isEmpty) {
-        _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: 'welcome-local',
+            sender: MessageSender.willow,
+            text: _engine.welcomeMessage(),
+            timestamp: DateTime.now(),
+          ));
+        });
       }
     });
   }
@@ -132,32 +130,18 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     });
   }
 
-  void _addWillowMessage(WillowReply reply) {
-    final msg = ChatMessage.text(
-      id: _uuid.v4(),
-      sender: MessageSender.willow,
-      text: reply.text,
-      timestamp: DateTime.now(),
-      recommendations: reply.recommendations,
-    );
-    setState(() => _messages.add(msg));
-    _scrollToBottom();
-  }
-
-  Future<void> _addWillowMessageToFirestore(WillowReply reply) async {
+  Future<void> _addWillowMessageToFirestore(String text) async {
     try {
       final id = _uuid.v4();
       await _chatCollection.doc(id).set({
         'id': id,
         'senderName': 'willow',
         'typeName': 'text',
-        'content': reply.text,
-        'recommendations': reply.recommendations,
+        'content': text,
         'timestamp': Timestamp.fromDate(DateTime.now()),
       });
     } catch (e) {
       debugPrint('Failed to save willow response to Firestore: $e');
-      _addWillowMessage(reply);
     }
   }
 
@@ -195,17 +179,30 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     setState(() => _isTyping = true);
     _scrollToBottom();
 
+    // Send the last ~6 turns as context so the bot can read the user's state
+    // and keep the thread going. The current message is already in _messages.
+    final contextStart = (_messages.length > 7) ? _messages.length - 7 : 0;
+    final turns = (_messages.length > 1
+            ? _messages.sublist(contextStart, _messages.length - 1)
+            : const <ChatMessage>[])
+        .where((m) => m.type == MessageType.text)
+        .map(
+          (m) => WillowTurn(
+            role: m.sender == MessageSender.willow ? 'model' : 'user',
+            text: m.content,
+          ),
+        ).toList();
+
     // Generate response
-    final response = await _engine.respond(userMsg);
+    final response = await _engine.respond(userMsg, turns: turns);
     if (saveSuccess) {
-      await _addWillowMessageToFirestore(response);
+      await _addWillowMessageToFirestore(response.text);
     } else {
       setState(() {
         _messages.add(ChatMessage.text(
           id: _uuid.v4(),
           sender: MessageSender.willow,
           text: response.text,
-          recommendations: response.recommendations,
           timestamp: DateTime.now(),
         ));
       });
@@ -299,9 +296,16 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       
       final response = await _engine.respond(userMsg);
       if (saveSuccess) {
-        await _addWillowMessageToFirestore(response);
+        await _addWillowMessageToFirestore(response.text);
       } else {
-        _addWillowMessage(response);
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: _uuid.v4(),
+            sender: MessageSender.willow,
+            text: response.text,
+            timestamp: DateTime.now(),
+          ));
+        });
       }
       if (mounted) setState(() => _isTyping = false);
     } else {
@@ -341,9 +345,16 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       
       final response = await _engine.respond(userMsg);
       if (saveSuccess) {
-        await _addWillowMessageToFirestore(response);
+        await _addWillowMessageToFirestore(response.text);
       } else {
-        _addWillowMessage(response);
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: _uuid.v4(),
+            sender: MessageSender.willow,
+            text: response.text,
+            timestamp: DateTime.now(),
+          ));
+        });
       }
       if (mounted) setState(() => _isTyping = false);
     }
@@ -353,15 +364,11 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSi = appLanguage.value.isSinhala;
-    final settings = context.watch<SettingsCubit>().state;
-    final chatTheme = ChatTheme.fromId(settings.chatTheme);
-    final chatFont = ChatFont.fromId(settings.chatFont);
-    final accent = chatTheme.accent(isDark);
-    final bg = isDark ? chatTheme.backgroundDark : chatTheme.backgroundLight;
+    final bg = isDark ? const Color(0xFF0D1A1A) : _kBg;
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: _buildAppBar(isDark, isSi, chatTheme, chatFont),
+      appBar: _buildAppBar(isDark, isSi),
       body: Column(
         children: [
           // API config banner — shown when ngrok URL not set
@@ -376,15 +383,11 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                   itemCount: _messages.length + (_isTyping ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (_isTyping && index == _messages.length) {
-                      return _TypingIndicator(accent: accent);
+                      return _TypingIndicator();
                     }
                     return _MessageBubble(
                       message: _messages[index],
                       isDark: isDark,
-                      accent: accent,
-                      fontFamily: chatFont.family,
-                      userLight: chatTheme.userBubbleLight,
-                      userDark: chatTheme.userBubbleDark,
                     );
                   },
                 ),
@@ -393,7 +396,7 @@ class _WillowChatScreenState extends State<WillowChatScreen>
                     bottom: 8,
                     right: 12,
                     child: FloatingActionButton.small(
-                      backgroundColor: accent,
+                      backgroundColor: _kTeal,
                       onPressed: () => _scrollToBottom(),
                       child: const Icon(Icons.keyboard_arrow_down_rounded,
                           color: Colors.white),
@@ -407,8 +410,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             hasText: _hasText,
             isDark: isDark,
             isSinhala: isSi,
-            accent: accent,
-            fontFamily: chatFont.family,
             onSend: _sendText,
             onAttach: _pickAttachment,
           ),
@@ -417,15 +418,9 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-    bool isDark,
-    bool isSi,
-    ChatTheme theme,
-    ChatFont font,
-  ) {
-    final headerColor = theme.header(isDark);
+  PreferredSizeWidget _buildAppBar(bool isDark, bool isSi) {
     return AppBar(
-      backgroundColor: headerColor,
+      backgroundColor: _kTeal,
       foregroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
@@ -453,20 +448,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         ],
       ),
       actions: [
-        // Clear chat history
-        IconButton(
-          tooltip: isSi ? 'සංවාදය මකන්න' : 'Clear Chat',
-          icon: const Icon(Icons.delete_outline_rounded),
-          color: Colors.white,
-          onPressed: () => _confirmClearChat(isSi),
-        ),
-        // Pick chat theme + font face
-        IconButton(
-          tooltip: isSi ? 'තේමාව සහ අකුරු' : 'Chat theme & font',
-          icon: const Icon(Icons.palette_outlined),
-          color: Colors.white,
-          onPressed: () => _showStyleSheet(isSi, theme, font),
-        ),
         // Tap to update API URL
         GestureDetector(
           onTap: () {
@@ -507,64 +488,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Future<void> _confirmClearChat(bool isSi) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(isSi ? 'සංවාදය මකන්නද?' : 'Clear Chat?'),
-        content: Text(
-          isSi
-              ? 'ඔබට මෙම සංවාදයේ සියලු පණිවිඩ මකා දැමීමට අවශ්‍ය බව සහතිකද?'
-              : 'Are you sure you want to delete all messages in this conversation?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(isSi ? 'අවලංගු කරන්න' : 'Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(isSi ? 'මකන්න' : 'Clear'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        final snap = await _chatCollection.get();
-        final batch = FirebaseFirestore.instance.batch();
-        for (final doc in snap.docs) {
-          batch.delete(doc.reference);
-        }
-        await batch.commit();
-        setState(() => _messages.clear());
-        await _addWillowMessageToFirestore(WillowReply(text: _engine.welcomeMessage()));
-      } catch (e) {
-        debugPrint('Error clearing chat: $e');
-        setState(() => _messages.clear());
-        _addWillowMessage(WillowReply(text: _engine.welcomeMessage()));
-      }
-    }
-  }
-
-  void _showStyleSheet(bool isSi, ChatTheme currentTheme, ChatFont currentFont) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ChatStyleSheet(
-        isSinhala: isSi,
-        currentTheme: currentTheme.id,
-        currentFont: currentFont.id,
-      ),
     );
   }
 }
@@ -637,37 +560,15 @@ class _WillowAvatar extends StatelessWidget {
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isDark;
-  final Color accent;
-  final String? fontFamily;
-  final Color userLight;
-  final Color userDark;
-
-  const _MessageBubble({
-    required this.message,
-    required this.isDark,
-    required this.accent,
-    this.fontFamily,
-    required this.userLight,
-    required this.userDark,
-  });
+  const _MessageBubble({required this.message, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     final isUser = message.sender == MessageSender.user;
-    final mood = isUser
-        ? ChatMood.neutral
-        : ChatMoodDetector.detect(
-            message.content,
-            isSinhala: appLanguage.value.isSinhala,
-          );
-    final palette = ChatMoodDetector.paletteFor(mood);
     final bubbleColor = isUser
-        ? (isDark ? userDark : userLight)
-        : (isDark ? palette.bubbleDark : palette.bubbleLight);
-    final textColor = isUser
-        ? (isDark ? Colors.white : _kDarkTeal)
-        : (isDark ? palette.textDark : palette.textLight);
-    final accentColor = isUser ? accent : palette.accent;
+        ? (isDark ? const Color(0xFF1B5E20) : _kUserBubble)
+        : (isDark ? const Color(0xFF1E3535) : _kWillowBubble);
+    final textColor = isDark ? Colors.white : _kDarkTeal;
     final timeColor = isDark ? Colors.white38 : Colors.black38;
 
     return Padding(
@@ -706,16 +607,7 @@ class _MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildContent(textColor, accentColor),
-                  if (!isUser && message.recommendations.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    _RecommendationChips(
-                      recommendations: message.recommendations,
-                      isDark: isDark,
-                      accent: accent,
-                      fontFamily: fontFamily,
-                    ),
-                  ],
+                  _buildContent(textColor),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -728,7 +620,8 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       if (isUser) ...[
                         const SizedBox(width: 3),
-Icon(Icons.done_all_rounded, size: 13, color: accent),
+                        Icon(Icons.done_all_rounded,
+                            size: 13, color: _kTeal),
                       ],
                     ],
                   ),
@@ -742,16 +635,12 @@ Icon(Icons.done_all_rounded, size: 13, color: accent),
     );
   }
 
-  Widget _buildContent(Color textColor, Color accentColor) {
+  Widget _buildContent(Color textColor) {
     switch (message.type) {
       case MessageType.text:
-return _StyledMessageText(
-          text: message.content,
-          textColor: textColor,
-          accentColor: accentColor,
-          isUser: message.sender == MessageSender.user,
-          isDark: isDark,
-          fontFamily: fontFamily,
+        return Text(
+          message.content,
+          style: TextStyle(fontSize: 14, color: textColor, height: 1.4),
         );
       case MessageType.image:
         return ClipRRect(
@@ -775,13 +664,11 @@ return _StyledMessageText(
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-color: accent.withValues(alpha: 0.15),
+                color: _kTeal.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                Icons.insert_drive_file_outlined,
-                color: accent,
-              ),
+              child: const Icon(Icons.insert_drive_file_outlined,
+                  color: _kTeal, size: 22),
             ),
             const SizedBox(width: 8),
             Flexible(
@@ -869,101 +756,9 @@ class _VoiceBubble extends StatelessWidget {
   }
 }
 
-// ── Recommendation Chips ──────────────────────────────────────────────────────
-
-class _RecommendationChips extends StatelessWidget {
-  final List<String> recommendations;
-  final bool isDark;
-  final Color accent;
-  final String? fontFamily;
-
-  const _RecommendationChips({
-    required this.recommendations,
-    required this.isDark,
-    required this.accent,
-    this.fontFamily,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isSinhala = appLanguage.value.isSinhala;
-    final features = recommendations
-        .map((id) => WellnessFeature.all[id])
-        .whereType<WellnessFeature>()
-        .toList();
-    if (features.isEmpty) return const SizedBox.shrink();
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isSinhala ? 'ඔබට ගැළපෙන දේ:' : 'Suggested for you:',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white54 : accent,
-              fontFamily: fontFamily,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: features.map((feature) {
-              return Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => feature.open(context),
-                  child: Ink(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF2E4A4A)
-                          : const Color(0xFFE0F2F1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: accent.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(feature.icon, size: 14, color: accent),
-                        const SizedBox(width: 4),
-                        Text(
-                          feature.label(isSinhala),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: accent,
-                            fontFamily: fontFamily,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Typing Indicator ──────────────────────────────────────────────────────────
 
 class _TypingIndicator extends StatefulWidget {
-  final Color accent;
-  const _TypingIndicator({required this.accent});
   @override
   State<_TypingIndicator> createState() => _TypingIndicatorState();
 }
@@ -1029,7 +824,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
                       height: 7,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-color: widget.accent.withValues(alpha: opacity),
+                        color: _kTeal.withOpacity(opacity),
                         shape: BoxShape.circle,
                       ),
                     );
@@ -1051,8 +846,6 @@ class _InputBar extends StatelessWidget {
   final bool hasText;
   final bool isDark;
   final bool isSinhala;
-  final Color accent;
-  final String? fontFamily;
   final VoidCallback onSend;
   final VoidCallback onAttach;
 
@@ -1061,8 +854,6 @@ class _InputBar extends StatelessWidget {
     required this.hasText,
     required this.isDark,
     required this.isSinhala,
-    required this.accent,
-    this.fontFamily,
     required this.onSend,
     required this.onAttach,
   });
@@ -1097,7 +888,7 @@ class _InputBar extends StatelessWidget {
             // Attach button
             _IconBtn(
               icon: Icons.attach_file_rounded,
-              color: accent,
+              color: _kTeal,
               onTap: onAttach,
             ),
             const SizedBox(width: 6),
@@ -1114,20 +905,12 @@ class _InputBar extends StatelessWidget {
                   controller: controller,
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textColor,
-                    fontFamily: fontFamily,
-                  ),
+                  style: TextStyle(fontSize: 14, color: textColor),
                   decoration: InputDecoration(
                     hintText: isSinhala
                         ? 'පණිවිඩයක් ටයිප් කරන්න...'
                         : 'Type a message...',
-                    hintStyle: TextStyle(
-                      color: hintColor,
-                      fontSize: 14,
-                      fontFamily: fontFamily,
-                    ),
+                    hintStyle: TextStyle(color: hintColor, fontSize: 14),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -1143,16 +926,8 @@ class _InputBar extends StatelessWidget {
               transitionBuilder: (child, anim) =>
                   ScaleTransition(scale: anim, child: child),
               child: hasText
-                  ? _SendBtn(
-                      key: const ValueKey('send'),
-                      accent: accent,
-                      onTap: onSend,
-                    )
-                  : const SizedBox(
-                      key: ValueKey('empty'),
-                      width: 44,
-                      height: 44,
-                    ),
+                  ? _SendBtn(key: const ValueKey('send'), onTap: onSend)
+                  : _MicBtn(key: const ValueKey('mic')),
             ),
           ],
         ),
@@ -1186,8 +961,7 @@ class _IconBtn extends StatelessWidget {
 
 class _SendBtn extends StatelessWidget {
   final VoidCallback onTap;
-  final Color accent;
-  const _SendBtn({super.key, required this.onTap, required this.accent});
+  const _SendBtn({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1196,9 +970,29 @@ class _SendBtn extends StatelessWidget {
       child: Container(
         width: 44,
         height: 44,
-decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+        decoration: const BoxDecoration(
+          color: _kTeal,
+          shape: BoxShape.circle,
+        ),
         child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
       ),
+    );
+  }
+}
+
+class _MicBtn extends StatelessWidget {
+  const _MicBtn({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: const BoxDecoration(
+        color: _kTeal,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
     );
   }
 }
@@ -1301,424 +1095,4 @@ class _ApiConfigBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Styled Message Text with Colorful Formatting ──────────────────────────────
-
-class _StyledMessageText extends StatelessWidget {
-  final String text;
-  final Color textColor;
-  final Color accentColor;
-  final bool isUser;
-  final bool isDark;
-  final String? fontFamily;
-
-  const _StyledMessageText({
-    required this.text,
-    required this.textColor,
-    required this.accentColor,
-    required this.isUser,
-    required this.isDark,
-    this.fontFamily,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Accent colors derived from the mood palette so quotes/bullets match the
-    // bubble's color instead of always using the brand teal.
-    final primaryColor = accentColor;
-    final base = accentColor;
-    final accentColors = <Color>[
-      base,
-      base.withValues(alpha: 0.85),
-      base.withValues(alpha: 0.7),
-      base.withValues(alpha: 0.6),
-      base.withValues(alpha: 0.5),
-    ];
-
-    // Parse markdown-like formatting for emphasis
-    final segments = _parseSegments(text);
-
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: 14,
-          color: textColor,
-          height: 1.5,
-          fontFamily: fontFamily,
-        ),
-        children: segments.map((seg) {
-          Color segColor = textColor;
-          FontWeight weight = FontWeight.normal;
-          FontStyle style = FontStyle.normal;
-          double size = 14;
-
-          switch (seg.type) {
-            case _SegmentType.bold:
-              weight = FontWeight.bold;
-              segColor = isUser ? Colors.white : primaryColor;
-              break;
-            case _SegmentType.italic:
-              style = FontStyle.italic;
-              segColor = textColor.withValues(alpha: 0.85);
-              break;
-            case _SegmentType.highlight:
-              return WidgetSpan(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    seg.text,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : primaryColor,
-                      fontFamily: fontFamily,
-                    ),
-                  ),
-                ),
-              );
-            case _SegmentType.emoji:
-              size = 18;
-              break;
-            case _SegmentType.quote:
-              return WidgetSpan(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 4, bottom: 4, left: 4),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: accentColors[math.Random().nextInt(accentColors.length)].withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: accentColors[math.Random().nextInt(accentColors.length)].withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    seg.text,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: textColor.withValues(alpha: 0.85),
-                      height: 1.4,
-                      fontFamily: fontFamily,
-                    ),
-                  ),
-                ),
-              );
-            case _SegmentType.listItem:
-              return WidgetSpan(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 2, bottom: 2),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 6, right: 8),
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: accentColors[math.Random().nextInt(accentColors.length)],
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      Flexible(
-                        child: Text(
-                            seg.text,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: textColor,
-                              height: 1.4,
-                              fontFamily: fontFamily,
-                            ),
-                          ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            case _SegmentType.normal:
-              break;
-          }
-
-          return TextSpan(
-            text: seg.text,
-            style: TextStyle(
-              fontSize: size,
-              fontWeight: weight,
-              fontStyle: style,
-              color: segColor,
-              height: 1.5,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  List<_TextSegment> _parseSegments(String input) {
-    final segments = <_TextSegment>[];
-    // Fixed regex: removed invalid emoji range, using separate emoji detection
-    final regex = RegExp(r'(\*\*.*?\*\*|__.*?__|\*.*?\*|_.*?_|`.*?`|>.*?(?=\n|$)|\n[-•]\s.*?(?=\n|$))');
-    int lastEnd = 0;
-
-    for (final match in regex.allMatches(input)) {
-      if (match.start > lastEnd) {
-        segments.add(_TextSegment(
-          text: input.substring(lastEnd, match.start),
-          type: _SegmentType.normal,
-        ));
-      }
-
-      final matched = match.group(0)!;
-      _SegmentType type;
-      String displayText = matched;
-
-      if (matched.startsWith('**') && matched.endsWith('**')) {
-        type = _SegmentType.bold;
-        displayText = matched.substring(2, matched.length - 2);
-      } else if (matched.startsWith('__') && matched.endsWith('__')) {
-        type = _SegmentType.bold;
-        displayText = matched.substring(2, matched.length - 2);
-      } else if (matched.startsWith('*') && matched.endsWith('*') && matched.length > 2) {
-        type = _SegmentType.italic;
-        displayText = matched.substring(1, matched.length - 1);
-      } else if (matched.startsWith('_') && matched.endsWith('_') && matched.length > 2) {
-        type = _SegmentType.italic;
-        displayText = matched.substring(1, matched.length - 1);
-      } else if (matched.startsWith('`') && matched.endsWith('`')) {
-        type = _SegmentType.highlight;
-        displayText = matched.substring(1, matched.length - 1);
-      } else if (matched.startsWith('>')) {
-        type = _SegmentType.quote;
-        displayText = matched.substring(1).trim();
-      } else if (matched.startsWith('\n-') || matched.startsWith('\n•')) {
-        type = _SegmentType.listItem;
-        displayText = matched.substring(2).trim();
-      } else {
-        type = _SegmentType.normal;
-      }
-
-      segments.add(_TextSegment(text: displayText, type: type));
-      lastEnd = match.end;
-    }
-
-    if (lastEnd < input.length) {
-      // Check remaining text for emojis
-      final remaining = input.substring(lastEnd);
-      // Emoji range: \u{1F600}-\u{1F64F} (emoticons)
-      final emojiRegex = RegExp(r'[\uD83D[\uDE00-\uDE4F]]');
-      int emojiLastEnd = 0;
-      for (final emojiMatch in emojiRegex.allMatches(remaining)) {
-        if (emojiMatch.start > emojiLastEnd) {
-          segments.add(_TextSegment(
-            text: remaining.substring(emojiLastEnd, emojiMatch.start),
-            type: _SegmentType.normal,
-          ));
-        }
-        segments.add(_TextSegment(
-          text: emojiMatch.group(0)!,
-          type: _SegmentType.emoji,
-        ));
-        emojiLastEnd = emojiMatch.end;
-      }
-      if (emojiLastEnd < remaining.length) {
-        segments.add(_TextSegment(
-          text: remaining.substring(emojiLastEnd),
-          type: _SegmentType.normal,
-        ));
-      }
-    }
-
-    return segments;
-  }
-}
-
-enum _SegmentType {
-  normal,
-  bold,
-  italic,
-  highlight,
-  emoji,
-  quote,
-  listItem,
-}
-
-class _TextSegment {
-  final String text;
-  final _SegmentType type;
-
-  const _TextSegment({required this.text, required this.type});
-}
-
-// ── Chat Theme & Font Picker ─────────────────────────────────────────────────
-
-class _ChatStyleSheet extends StatelessWidget {
-  final bool isSinhala;
-  final String currentTheme;
-  final String currentFont;
-
-  const _ChatStyleSheet({
-    required this.isSinhala,
-    required this.currentTheme,
-    required this.currentFont,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cubit = context.read<SettingsCubit>();
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isSinhala ? 'චැට් පෙනුම' : 'Chat look',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isSinhala ? 'තේමාව තෝරන්න' : 'Choose a theme',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 14,
-              runSpacing: 12,
-              children: ChatTheme.byId.values.map((theme) {
-                final selected = theme.id == currentTheme;
-                return GestureDetector(
-                  onTap: () => cubit.setChatTheme(theme.id),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: theme.accentLight,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: selected
-                                ? Colors.grey.shade900
-                                : Colors.grey.shade300,
-                            width: selected ? 3 : 1,
-                          ),
-                        ),
-                        child: selected
-                            ? const Icon(Icons.check_rounded,
-                                color: Colors.white)
-                            : null,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isSinhala ? theme.siName : theme.enName,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              isSinhala ? 'අකුරු (font) තෝරන්න' : 'Choose a font',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            ...ChatFont.byId.values.map((font) {
-              final selected = font.id == currentFont;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () => cubit.setChatFont(font.id),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? themeAccent(context).withValues(alpha: 0.12)
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: selected
-                            ? themeAccent(context)
-                            : Colors.grey.shade300,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          isSinhala ? font.siName : font.enName,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: font.family,
-                          ),
-                        ),
-                        if (selected)
-                          Icon(
-                            Icons.check_rounded,
-                            color: themeAccent(context),
-                            size: 18,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 8),
-            Text(
-              isSinhala
-                  ? 'අකුරු ආකෘතිය පණිවිඩවලට යොදවයි'
-                  : 'Font face applies to the messages',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color themeAccent(BuildContext context) =>
-      ChatTheme.fromId(currentTheme).accent(
-        Theme.of(context).brightness == Brightness.dark,
-      );
 }

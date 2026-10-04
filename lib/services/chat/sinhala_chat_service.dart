@@ -16,13 +16,9 @@ class SinhalaChatResponse {
   });
 
   factory SinhalaChatResponse.fromJson(Map<String, dynamic> json) {
-    final response = json['response'];
-    if (response is! String || response.isEmpty) {
-      throw const FormatException('Server response missing "response".');
-    }
     return SinhalaChatResponse(
-      response: response,
-      sessionId: (json['session_id'] as String?) ?? '',
+      response: json['response'] as String,
+      sessionId: json['session_id'] as String,
       safeMessagingChecked: json['safe_messaging_checked'] as bool? ?? true,
       crisisDetected: json['crisis_detected'] as bool? ?? false,
     );

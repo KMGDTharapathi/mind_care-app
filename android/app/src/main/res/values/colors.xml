@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors AppColors.gradientStart / gradientEnd so the native launch
+         window matches the Flutter loading page exactly. -->
+    <color name="launch_gradient_start">#B2DFDB</color>
+    <color name="launch_gradient_end">#A5D6A7</color>
+</resources>

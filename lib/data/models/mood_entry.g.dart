@@ -64,13 +64,14 @@ class MoodEntryAdapter extends TypeAdapter<MoodEntry> {
       mood: fields[1] as MoodType,
       note: fields[2] as String?,
       timestamp: fields[3] as DateTime,
+      levelValue: fields[4] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MoodEntry obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -78,7 +79,9 @@ class MoodEntryAdapter extends TypeAdapter<MoodEntry> {
       ..writeByte(2)
       ..write(obj.note)
       ..writeByte(3)
-      ..write(obj.timestamp);
+      ..write(obj.timestamp)
+      ..writeByte(4)
+      ..write(obj.levelValue);
   }
 
   @override

@@ -23,6 +23,7 @@ import 'package:mind_care_app/core/service_locator.dart';
 import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/models/journal_entry.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
+import 'package:mind_care_app/features/chat/models/chat_message.dart';
 import 'package:mind_care_app/features/motivational/data/quotes_data.dart';
 import 'package:mind_care_app/features/motivational/screens/motivational_screen.dart';
 import 'package:mind_care_app/services/auth/auth_service.dart';
@@ -71,6 +72,8 @@ class _StubSyncService implements SyncService {
   Future<void> enqueueSettings(Map<String, dynamic> settings) async {}
   @override
   Future<void> enqueueStreak(int count, String lastActiveDate) async {}
+  @override
+  Future<void> enqueueChatMessage(ChatMessage message) async {}
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
