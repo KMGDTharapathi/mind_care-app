@@ -72,21 +72,37 @@ class FirebaseAuthService implements AuthService {
   @override
   Future<AuthUser> signInWithGoogle() async {
     try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        // User cancelled — return current user (anonymous) without error.
-        final current = _auth.currentUser;
-        if (current != null) return _mapUser(current)!;
-        return signInAnonymously();
+      final UserCredential result;
+      if (kIsWeb) {
+        try {
+          final googleProvider = GoogleAuthProvider();
+          result = await _auth.signInWithPopup(googleProvider);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'popup-closed-by-user') {
+            final current = _auth.currentUser;
+            if (current != null) return _mapUser(current)!;
+            return signInAnonymously();
+          }
+          rethrow;
+        }
+      } else {
+        final googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          // User cancelled — return current user (anonymous) without error.
+          final current = _auth.currentUser;
+          if (current != null) return _mapUser(current)!;
+          return signInAnonymously();
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        result = await _auth.signInWithCredential(credential);
       }
 
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final result = await _auth.signInWithCredential(credential);
       final user = _requireUser(result.user);
       unawaited(_userRepo.syncUser(
         uid: user.uid,
@@ -139,7 +155,9 @@ class FirebaseAuthService implements AuthService {
   @override
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
+      }
     } catch (_) {
       // Google sign-out is best-effort; ignore errors.
     }
