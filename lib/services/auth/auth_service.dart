@@ -1,10 +1,6 @@
 /// Domain model representing an authenticated (or anonymous) Firebase user.
 class AuthUser {
-  const AuthUser({
-    required this.uid,
-    this.email,
-    required this.isAnonymous,
-  });
+  const AuthUser({required this.uid, this.email, required this.isAnonymous});
 
   final String uid;
   final String? email;

@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
-import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
 import 'package:mind_care_app/data/repositories/mood_repository.dart';
@@ -49,23 +48,37 @@ String _moodEmoji(MoodType mood) {
 String _moodLabel(MoodType mood, {bool isSinhala = false}) {
   if (isSinhala) {
     switch (mood) {
-      case MoodType.happy: return 'සතුටු';
-      case MoodType.sad: return 'දුකින්';
-      case MoodType.anxious: return 'කනස්සල්ලෙන්';
-      case MoodType.frustrated: return 'කලකිරීමෙන්';
-      case MoodType.calm: return 'සන්සුන්';
-      case MoodType.excited: return 'උද්යෝගිමත්';
-      case MoodType.tired: return 'වෙහෙසට';
+      case MoodType.happy:
+        return 'සතුටු';
+      case MoodType.sad:
+        return 'දුකින්';
+      case MoodType.anxious:
+        return 'කනස්සල්ලෙන්';
+      case MoodType.frustrated:
+        return 'කලකිරීමෙන්';
+      case MoodType.calm:
+        return 'සන්සුන්';
+      case MoodType.excited:
+        return 'උද්යෝගිමත්';
+      case MoodType.tired:
+        return 'වෙහෙසට';
     }
   }
   switch (mood) {
-    case MoodType.happy: return 'Happy';
-    case MoodType.sad: return 'Sad';
-    case MoodType.anxious: return 'Anxious';
-    case MoodType.frustrated: return 'Frustrated';
-    case MoodType.calm: return 'Calm';
-    case MoodType.excited: return 'Excited';
-    case MoodType.tired: return 'Tired';
+    case MoodType.happy:
+      return 'Happy';
+    case MoodType.sad:
+      return 'Sad';
+    case MoodType.anxious:
+      return 'Anxious';
+    case MoodType.frustrated:
+      return 'Frustrated';
+    case MoodType.calm:
+      return 'Calm';
+    case MoodType.excited:
+      return 'Excited';
+    case MoodType.tired:
+      return 'Tired';
   }
 }
 
@@ -129,10 +142,9 @@ class _AppBar extends StatelessWidget {
           ),
           Text(
             s.moodHistory,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -188,20 +200,16 @@ class _HistoryContent extends StatelessWidget {
         children: [
           Text(
             s.last7Days,
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             s.moodOverPastWeek,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withOpacity(0.6),
-                ),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
           ),
           const SizedBox(height: 24),
           _MoodChart(dayMap: dayMap, dayLabels: dayLabels),
@@ -223,11 +231,10 @@ class _HistoryContent extends StatelessWidget {
                     s.startLoggingMood,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.6),
-                        ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ),
@@ -262,11 +269,9 @@ class _MoodChart extends StatelessWidget {
             toY: value,
             color: entry != null
                 ? colorScheme.primary
-                : colorScheme.primary.withOpacity(0.15),
+                : colorScheme.primary.withValues(alpha: 0.15),
             width: 22,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(6),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           ),
         ],
       );
@@ -276,7 +281,7 @@ class _MoodChart extends StatelessWidget {
       height: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withOpacity(0.3),
+        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
       ),
       child: BarChart(
@@ -289,7 +294,7 @@ class _MoodChart extends StatelessWidget {
             drawVerticalLine: false,
             horizontalInterval: 2,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: colorScheme.onSurface.withOpacity(0.08),
+              color: colorScheme.onSurface.withValues(alpha: 0.08),
               strokeWidth: 1,
             ),
           ),
@@ -311,8 +316,7 @@ class _MoodChart extends StatelessWidget {
                   };
                   final emoji = labels[value];
                   if (emoji == null) return const SizedBox.shrink();
-                  return Text(emoji,
-                      style: const TextStyle(fontSize: 14));
+                  return Text(emoji, style: const TextStyle(fontSize: 14));
                 },
               ),
             ),
@@ -335,8 +339,8 @@ class _MoodChart extends StatelessWidget {
                     child: Text(
                       dayLabels[idx],
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                          ),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                   );
                 },
@@ -384,17 +388,19 @@ class _MoodLegend extends StatelessWidget {
       spacing: 12,
       runSpacing: 8,
       children: _items
-          .map((item) => Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(item.$1, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${item.$2} (${item.$3})',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ))
+          .map(
+            (item) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(item.$1, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 4),
+                Text(
+                  '${item.$2} (${item.$3})',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          )
           .toList(),
     );
   }
@@ -415,10 +421,9 @@ class _RecentEntries extends StatelessWidget {
       children: [
         Text(
           s.recentEntries,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         ...reversed.map((entry) => _EntryTile(entry: entry)),
@@ -441,7 +446,7 @@ class _EntryTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withOpacity(0.35),
+        color: colorScheme.primaryContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -454,10 +459,9 @@ class _EntryTile extends StatelessWidget {
               children: [
                 Text(
                   '${_moodLabel(mood, isSinhala: s.isSinhala)} (Level ${entry.level})',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (entry.note != null && entry.note!.isNotEmpty)
                   Text(
@@ -465,8 +469,8 @@ class _EntryTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.6),
-                        ),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
               ],
             ),
@@ -474,8 +478,8 @@ class _EntryTile extends StatelessWidget {
           Text(
             _formatTime(entry.timestamp, s),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.5),
-                ),
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
           ),
         ],
       ),

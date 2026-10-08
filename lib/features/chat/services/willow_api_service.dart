@@ -25,11 +25,7 @@ class WillowChatResult {
 /// the chat always responds. Crisis statements are handled locally and
 /// deterministically in every path for speed and safety.
 class WillowApiService {
-  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static final Uri _endpoint = Uri.parse(
-    'https://generativelanguage.googleapis.com/v1beta/models/'
-    'gemini-3.8-flash:generateContent',
-  );
+  static const String _apiKey = '';
 
   /// The fine-tuned model server. Defaults to the local `serve_qwen.py`
   /// instance (Android emulators reach the host via 10.0.2.2); paste a
@@ -59,8 +55,6 @@ class WillowApiService {
     _serverReachable = false;
   }
 
-  /// Connect to a model server (fine-tuned Qwen). When set, hosted model
-  /// replies are used first; Gemini/curated replies remain the fallback.
   static void setBaseUrl(String url) {
     _baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
     _serverMode = true;
@@ -69,7 +63,7 @@ class WillowApiService {
 
   static String get baseUrl => _baseUrl;
 
-  /// Always true: the in-app Willow brain (server, Gemini or curated) can reply.
+  /// Always true: the in-app Willow brain (curated) can reply.
   static bool get isConfigured => true;
 
   /// Send a message to Willow and get a response. Never returns null when
@@ -80,6 +74,17 @@ class WillowApiService {
   /// scanned across the whole recent window (a danger statement is never
   /// ignored), while the reply topic is accumulated over every user message so
   /// the conversation follows the user's mind.
+  // Session-level mood identification - track across conversation
+  static String? _identifiedMindState;
+  static int _userMessageCount = 0;
+  static DateTime? _sessionStartTime;
+
+  static void resetSession() {
+    _identifiedMindState = null;
+    _userMessageCount = 0;
+    _sessionStartTime = null;
+  }
+
   static Future<WillowChatResult?> chat(
     String message, {
     List<WillowTurn> turns = const [],
@@ -92,6 +97,39 @@ class WillowApiService {
       ...turns.where((t) => t.role == 'user').map((t) => t.text),
       message,
     ];
+
+    // Count user messages in this session
+    _userMessageCount = userTexts.length;
+    _sessionStartTime ??= DateTime.now();
+
+    // Identify mind/mood after seeing at least 5-6 user messages
+    if (_identifiedMindState == null && userTexts.length >= 5) {
+      final dominantTopic = _pickTopicAcross(userTexts, isSi);
+      if (dominantTopic != null) {
+        _identifiedMindState = dominantTopic;
+      } else {
+        // Fallback to most frequent topic if no clear dominant
+        final topicCounts = <String, int>{};
+        for (final t in userTexts) {
+          final n = _normalize(t);
+          if (n.isEmpty) continue;
+          for (final trigger in isSi ? _topicTriggers : _topicTriggersEn) {
+            if ((isSi
+                ? n.contains(trigger.$1)
+                : _matchesWholeWord(n, trigger.$1))) {
+              for (final tp in trigger.$3) {
+                topicCounts[tp] = (topicCounts[tp] ?? 0) + 1;
+              }
+            }
+          }
+        }
+        if (topicCounts.isNotEmpty) {
+          _identifiedMindState = topicCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
+        }
+      }
+    }
 
     // Suggestions should be sparse, not on every message. Chips are only shown
     // the first time a topic is raised (a new theme worth acting on), and for
@@ -139,22 +177,9 @@ class WillowApiService {
     // override a clear new direction: the current message's own topic wins;
     // a recurring theme (2+ mentions) is only used when the current message
     // doesn't name a topic.
-    final topic = singleTopic ?? _recurringTopic(userTexts, isSi);
+    final topic =
+        singleTopic ?? _recurringTopic(userTexts, isSi) ?? _identifiedMindState;
     final recs = topicRecsForFirstMention();
-
-    // Fallback two: Gemini (online), only when the trained server is
-    // unreachable and an API key was compiled in. Same contract: the model
-    // authors every non-crisis message; curated templates are offline-only.
-    if (_apiKey.isNotEmpty) {
-      try {
-        var text =
-            await _callGemini(message, turns).timeout(const Duration(seconds: 90));
-        if (text.trim().isEmpty) throw Exception('empty Gemini reply');
-        return WillowChatResult(text: text.trim(), recommendations: recs);
-      } catch (e) {
-        debugPrint('Gemini unavailable, using curated reply: $e');
-      }
-    }
 
     final bool isGreeting = isSi
         ? _greetingSignals.any(q.contains)
@@ -185,20 +210,24 @@ class WillowApiService {
     if ((isSi && _thanksSignalsSi.any(q.contains)) ||
         (!isSi && _thanksSignalsEn.any((s) => _matchesWholeWord(q, s)))) {
       return WillowChatResult(
-        text: _pickVariant(
-          isSi ? _thanksRepliesSi : _thanksRepliesEn,
-          '$q#t',
-        ),
+        text: _pickVariant(isSi ? _thanksRepliesSi : _thanksRepliesEn, '$q#t'),
       );
     }
 
     String text = _curatedReply(topic, q, isSi);
     // The bot keeps following the user's mind: when the same dominant topic
     // recurs across the recent window, name it and carry the thread forward.
-    if (topic != null && _topicHits(topic, userTexts, isSi) > 1) {
+    if (topic != null &&
+        (_topicHits(topic, userTexts, isSi) > 1 ||
+            topic == _identifiedMindState)) {
       text = '${isSi ? _continuitySi : _continuityEn} $text';
+    } else if (_identifiedMindState != null && userTexts.length >= 5) {
+      // After identifying mind state (5+ messages), continue conversation in line with it
+      text = _curatedReply(_identifiedMindState, q, isSi);
     }
-    debugPrint('Willow topic=$topic sinhala=$isSi gemini=${_apiKey.isNotEmpty}');
+    debugPrint(
+      'Willow topic=$topic identified=$_identifiedMindState msgCount=$_userMessageCount sinhala=$isSi gemini=${_apiKey.isNotEmpty}',
+    );
     return WillowChatResult(text: text, recommendations: recs);
   }
 
@@ -239,9 +268,21 @@ class WillowApiService {
               'message': message,
               'lang': _looksSinhala(message) ? 'si' : 'en',
               'history': [
-                for (final t in turns)
-                  {'role': t.role, 'content': t.text},
+                for (final t in turns) {'role': t.role, 'content': t.text},
               ],
+              if (_identifiedMindState != null &&
+                  (_userMessageCount >= 5 ||
+                      turns.where((t) => t.role == 'user').length + 1 >= 5))
+                'mind_state': _identifiedMindState,
+              if (_identifiedMindState != null &&
+                  (_userMessageCount >= 5 ||
+                      turns.where((t) => t.role == 'user').length + 1 >= 5))
+                'identified_mind_state': _identifiedMindState,
+              if (_identifiedMindState != null &&
+                  (_userMessageCount >= 5 ||
+                      turns.where((t) => t.role == 'user').length + 1 >= 5))
+                'context':
+                    'USER_MIND_STATE: $_identifiedMindState (identified after first $_userMessageCount messages)',
             }),
           )
           .timeout(const Duration(seconds: 30));
@@ -260,10 +301,7 @@ class WillowApiService {
       final recommendations = raw is List
           ? raw.whereType<String>().toList()
           : const <String>[];
-      return WillowChatResult(
-        text: text,
-        recommendations: recommendations,
-      );
+      return WillowChatResult(text: text, recommendations: recommendations);
     } catch (e) {
       debugPrint('Hosted server unreachable: $e');
       return null;
@@ -280,7 +318,9 @@ class WillowApiService {
   static bool _looksUsable(String text) {
     final s = text.trim();
     if (s.runes.length < 6) return false;
-    if (s.contains('&') || s.contains('#') || s.contains('\uFFFD')) return false;
+    if (s.contains('&') || s.contains('#') || s.contains('\uFFFD')) {
+      return false;
+    }
     final runes = s.runes.toList();
     var sinhala = 0;
     var latin = 0;
@@ -307,60 +347,6 @@ class WillowApiService {
     return true;
   }
 
-  static Future<String> _callGemini(String userText, List<WillowTurn> turns) async {
-    // Rebuild the recent conversation as alternating user/model turns so the
-    // model has context to read the user's state (Gemini requires alternation).
-    final merged = <Map<String, String>>[];
-    for (final t in [...turns, WillowTurn(role: 'user', text: userText)]) {
-      if (merged.isNotEmpty && merged.last['role'] == t.role) {
-        merged.last['text'] = '${merged.last['text']}\n\n${t.text}';
-      } else {
-        merged.add({'role': t.role, 'text': t.text});
-      }
-    }
-    final body = jsonEncode({
-      'system_instruction': {
-        'parts': [
-          {'text': _systemPrompt},
-        ],
-      },
-      'contents': [
-        for (final m in merged)
-          {
-            'role': m['role'],
-            'parts': [
-              {'text': m['text']},
-            ],
-          },
-      ],
-      'generationConfig': {
-        'temperature': 0.7,
-        'maxOutputTokens': 800,
-        'topP': 0.9,
-      },
-    });
-    final uri = _endpoint.replace(queryParameters: {'key': _apiKey});
-    for (var attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) {
-        await Future.delayed(Duration(seconds: 4 * attempt));
-      }
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
-      if (response.statusCode == 503 || response.statusCode == 429) continue;
-      if (response.statusCode != 200) {
-        throw Exception('Gemini HTTP ${response.statusCode}: ${response.body}');
-      }
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final text = _extractText(data);
-      if (text == null) throw Exception('Gemini returned no text');
-      return text;
-    }
-    throw Exception('Gemini unavailable (503/429)');
-  }
-
   static String? _extractText(Map<String, dynamic> data) {
     final candidates = data['candidates'] as List<dynamic>?;
     if (candidates == null || candidates.isEmpty) return null;
@@ -383,8 +369,8 @@ class WillowApiService {
   }
 
   static List<String> _tokenizeWords(String text) => RegExp(
-        r"[a-zA-Z]+(?:'[a-zA-Z]+)?",
-      ).allMatches(text).map((m) => m.group(0)!).toList();
+    r"[a-zA-Z]+(?:'[a-zA-Z]+)?",
+  ).allMatches(text).map((m) => m.group(0)!).toList();
 
   /// Whole-word phrase matching for English so "hi" never matches inside
   /// "everything" and "rent" never matches inside "parents". Matches when a
@@ -500,7 +486,13 @@ class WillowApiService {
   ];
 
   static const List<String> _negationWordsSi = [
-    ' නෑ', ' නැහැ ', ' නැ ', ' බෑ', ' බැරි ', ' නෙමෙයි ', 'කමක් නෑ',
+    ' නෑ',
+    ' නැහැ ',
+    ' නැ ',
+    ' බෑ',
+    ' බැරි ',
+    ' නෙමෙයි ',
+    'කමක් නෑ',
   ];
 
   /// Picks the topic that dominates the whole recent conversation (used to see
@@ -539,8 +531,7 @@ class WillowApiService {
       final word = trigger.$1;
       // Sinhala uses substring matching (word stems like යාළු match යාළුවා);
       // English uses whole-word matching so "rent" can't match "parents".
-      final matched =
-          isSi ? n.contains(word) : _matchesWholeWord(n, word);
+      final matched = isSi ? n.contains(word) : _matchesWholeWord(n, word);
       if (matched) {
         final weight = trigger.$2;
         for (final tp in trigger.$3) {
@@ -666,11 +657,7 @@ class WillowApiService {
     "Of course. 🌿 Keep going; you're doing better than you think.",
   ];
 
-  static const List<String> _thanksSignalsSi = [
-    'ස්තූතියි',
-    'ස්තූතිය',
-    'ස්තූත',
-  ];
+  static const List<String> _thanksSignalsSi = ['ස්තූතියි', 'ස්තූතිය', 'ස්තූත'];
 
   static const List<String> _thanksRepliesSi = [
     "ඔයාට පිළිගන්නම්! 💚 ඕනෑම වෙලාවක මම මෙතන ඉන්නවා.",
@@ -784,7 +771,7 @@ class WillowApiService {
     "can't go on",
     "cant go on",
     "give up on life",
-"cut myself",
+    "cut myself",
     "hurt myself",
     "self harm",
     "better off without me",

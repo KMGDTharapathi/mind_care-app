@@ -6,7 +6,6 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -50,13 +49,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) {
         final s = LanguageProvider.read(ctx);
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(children: [
-            const Icon(Icons.person_outline_rounded,
-                color: Color(0xFF5BA8A0), size: 22),
-            const SizedBox(width: 10),
-            Text(s.changeName),
-          ]),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.person_outline_rounded,
+                color: Color(0xFF5BA8A0),
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Text(s.changeName),
+            ],
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -71,7 +77,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF5BA8A0), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF5BA8A0),
+                  width: 1.5,
+                ),
               ),
             ),
             onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
@@ -83,7 +92,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF5BA8A0)),
+                backgroundColor: const Color(0xFF5BA8A0),
+              ),
               onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
               child: Text(s.save),
             ),
@@ -117,9 +127,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Builder(
-          builder: (ctx) => Text(LanguageProvider.of(ctx).settingsTitle),
-        )),
+        appBar: AppBar(
+          title: Builder(
+            builder: (ctx) => Text(LanguageProvider.of(ctx).settingsTitle),
+          ),
+        ),
         body: BlocBuilder<SettingsCubit, SettingsState>(
           builder: (context, state) {
             final s = LanguageProvider.of(context);
@@ -136,22 +148,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: Text(s.yourName),
                   subtitle: ValueListenableBuilder<String?>(
                     valueListenable: appUserName,
-                    builder: (_, name, __) => Text(
+                    builder: (_, name, _) => Text(
                       name != null && name.isNotEmpty ? name : s.nameNotSet,
                       style: TextStyle(
-                        color: name != null && name.isNotEmpty ? null : Colors.grey,
+                        color: name != null && name.isNotEmpty
+                            ? null
+                            : Colors.grey,
                       ),
                     ),
                   ),
-                  trailing: const Icon(Icons.edit_outlined,
-                      size: 18, color: Color(0xFF5BA8A0)),
+                  trailing: const Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: Color(0xFF5BA8A0),
+                  ),
                   onTap: () => _changeName(context),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.person_add_outlined,
-                      color: Color(0xFFE57373)),
-                  title: Text(s.logAsNewUser,
-                      style: const TextStyle(color: Color(0xFFE57373))),
+                  leading: const Icon(
+                    Icons.person_add_outlined,
+                    color: Color(0xFFE57373),
+                  ),
+                  title: Text(
+                    s.logAsNewUser,
+                    style: const TextStyle(color: Color(0xFFE57373)),
+                  ),
                   subtitle: Text(s.logAsNewUserSubtitle),
                   onTap: () => _confirmNewUser(context),
                 ),
@@ -242,7 +263,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<bool> _showPermissionExplanation(
-      BuildContext context, AppStrings s) async {
+    BuildContext context,
+    AppStrings s,
+  ) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -270,10 +293,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) async {
     final initial =
         state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked != null) {
       await cubit.setNotificationTime(picked);
     }
@@ -285,12 +305,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) {
         final s = LanguageProvider.read(ctx);
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(children: [
-            const Icon(Icons.person_add_outlined, color: Color(0xFFE57373), size: 22),
-            const SizedBox(width: 10),
-            Text(s.logAsNewUser),
-          ]),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.person_add_outlined,
+                color: Color(0xFFE57373),
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Text(s.logAsNewUser),
+            ],
+          ),
           content: Text(
             s.logAsNewUserContent,
             style: const TextStyle(height: 1.5),
@@ -301,7 +329,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(s.cancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE57373)),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE57373),
+              ),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(s.continueBtn),
             ),
@@ -333,9 +363,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -356,7 +386,9 @@ class _LanguageSwitcher extends StatelessWidget {
           leading: const Icon(Icons.language_rounded),
           title: Text(s.sectionLanguage),
           subtitle: Text(
-            strings.languageCode == 'en' ? s.languageEnglish : s.languageSinhala,
+            strings.languageCode == 'en'
+                ? s.languageEnglish
+                : s.languageSinhala,
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _showLanguageSheet(context, strings.languageCode),
@@ -453,9 +485,7 @@ Future<void> _onLanguageSelected(
     appLanguage.value = previousCode == 'si' ? AppStrings.si : AppStrings.en;
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(LanguageProvider.of(context).languageSaveError),
-        ),
+        SnackBar(content: Text(LanguageProvider.of(context).languageSaveError)),
       );
     }
   }
@@ -522,7 +552,9 @@ class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture updated successfully!')),
+          const SnackBar(
+            content: Text('Profile picture updated successfully!'),
+          ),
         );
       }
     } catch (e) {
@@ -530,9 +562,9 @@ class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
         _uploading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload image: $e')));
       }
     }
   }
@@ -554,13 +586,10 @@ class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
                 height: 110,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF5BA8A0),
-                    width: 3,
-                  ),
+                  border: Border.all(color: const Color(0xFF5BA8A0), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -576,18 +605,19 @@ class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
                           ),
                         )
                       : _localBytes != null
-                          ? Image.memory(
-                              _localBytes!,
-                              fit: BoxFit.cover,
-                            )
-                          : hasImage
-                              ? Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.person, size: 60, color: Colors.grey),
-                                )
-                              : const Icon(Icons.person, size: 60, color: Colors.grey),
+                      ? Image.memory(_localBytes!, fit: BoxFit.cover)
+                      : hasImage
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.grey,
+                              ),
+                        )
+                      : const Icon(Icons.person, size: 60, color: Colors.grey),
                 ),
               );
             },

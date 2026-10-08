@@ -55,7 +55,15 @@ class SettingsState extends Equatable {
   /// Human-readable repeat label
   String get repeatLabel {
     if (repeatDays.isEmpty) return 'Every day';
-    const names = {1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun'};
+    const names = {
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+      7: 'Sun',
+    };
     final sorted = repeatDays.toList()..sort();
     if (sorted.length == 5 && !sorted.contains(6) && !sorted.contains(7)) {
       return 'Weekdays';
@@ -68,15 +76,15 @@ class SettingsState extends Equatable {
 
   @override
   List<Object?> get props => [
-        themeMode,
-        notificationsEnabled,
-        notificationTime,
-        repeatDays,
-        reminderMessage,
-        userEmail,
-        isAuthenticated,
-        analyticsConsent,
-        chatTheme,
-        chatFont,
-      ];
+    themeMode,
+    notificationsEnabled,
+    notificationTime,
+    repeatDays,
+    reminderMessage,
+    userEmail,
+    isAuthenticated,
+    analyticsConsent,
+    chatTheme,
+    chatFont,
+  ];
 }

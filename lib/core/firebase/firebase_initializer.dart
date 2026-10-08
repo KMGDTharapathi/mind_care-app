@@ -38,27 +38,36 @@ class FirebaseInitializer {
     try {
       // Use a timeout shorter than Android's 5s ANR threshold.
       // Firebase.initializeApp() can block on slow/first-launch devices.
-      await Firebase.initializeApp()
-          .timeout(const Duration(seconds: 4));
+      await Firebase.initializeApp().timeout(const Duration(seconds: 4));
 
       // Re-enable collection now that Firebase is initialized on the Dart side.
       // These were disabled in AndroidManifest.xml to prevent auto-init from
       // blocking the main thread before Flutter starts.
-      unawaited(FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true)
-          .catchError((_) {}));
-      unawaited(FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true)
-          .catchError((_) {}));
-      unawaited(FirebaseMessaging.instance.setAutoInitEnabled(true)
-          .catchError((_) {}));
+      unawaited(
+        FirebaseAnalytics.instance
+            .setAnalyticsCollectionEnabled(true)
+            .catchError((_) {}),
+      );
+      unawaited(
+        FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(true)
+            .catchError((_) {}),
+      );
+      unawaited(
+        FirebaseMessaging.instance.setAutoInitEnabled(true).catchError((_) {}),
+      );
 
       bool enableCloudSync = true;
       bool enableAnalytics = true;
 
       if (remoteConfigService != null) {
         // Fetch in the background — don't block startup on a network call.
-        remoteConfigService.fetchAndActivate().then((_) {
-          // Flags will be picked up on next read after the background fetch.
-        }).catchError((_) {});
+        remoteConfigService
+            .fetchAndActivate()
+            .then((_) {
+              // Flags will be picked up on next read after the background fetch.
+            })
+            .catchError((_) {});
         // Read cached/default values immediately (no await).
         enableCloudSync = remoteConfigService.getBool('enable_cloud_sync');
         enableAnalytics = remoteConfigService.getBool('enable_analytics');

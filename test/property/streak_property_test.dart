@@ -41,25 +41,31 @@ void main() {
   group('Property 8: Streak increment on consecutive days', () {
     // Feature: mind-care-app, Property 8: Streak increment on consecutive days
     // Validates: Requirements 2.2
-    test('when lastActiveDate is yesterday, new streak equals old streak + 1', () {
-      final rng = Random(42);
+    test(
+      'when lastActiveDate is yesterday, new streak equals old streak + 1',
+      () {
+        final rng = Random(42);
 
-      for (int i = 0; i < 100; i++) {
-        final currentStreak = 1 + rng.nextInt(100); // 1–100
-        final today = DateTime(2024, 6, 15); // fixed reference date
-        final yesterday = today.subtract(const Duration(days: 1));
-        final lastActiveDateStr = _formatDate(yesterday);
+        for (int i = 0; i < 100; i++) {
+          final currentStreak = 1 + rng.nextInt(100); // 1–100
+          final today = DateTime(2024, 6, 15); // fixed reference date
+          final yesterday = today.subtract(const Duration(days: 1));
+          final lastActiveDateStr = _formatDate(yesterday);
 
-        final newStreak = calculateStreak(
-          currentStreak: currentStreak,
-          lastActiveDateStr: lastActiveDateStr,
-          today: today,
-        );
+          final newStreak = calculateStreak(
+            currentStreak: currentStreak,
+            lastActiveDateStr: lastActiveDateStr,
+            today: today,
+          );
 
-        expect(newStreak, equals(currentStreak + 1),
+          expect(
+            newStreak,
+            equals(currentStreak + 1),
             reason:
-                'Iteration $i: streak $currentStreak with lastActive=yesterday should become ${currentStreak + 1}');
-      }
-    });
+                'Iteration $i: streak $currentStreak with lastActive=yesterday should become ${currentStreak + 1}',
+          );
+        }
+      },
+    );
   });
 }

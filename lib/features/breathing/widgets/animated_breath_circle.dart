@@ -41,15 +41,21 @@ class _AnimatedBreathCircleState extends State<AnimatedBreathCircle>
   void _setupAnimation() {
     if (widget.isHold) {
       final holdSize = widget.isInhale ? _minSize : _maxSize;
-      _sizeAnimation = Tween<double>(begin: holdSize, end: holdSize)
-          .animate(_controller);
+      _sizeAnimation = Tween<double>(
+        begin: holdSize,
+        end: holdSize,
+      ).animate(_controller);
     } else if (widget.isInhale) {
-      _sizeAnimation =
-          Tween<double>(begin: _minSize, end: _maxSize).animate(_controller);
+      _sizeAnimation = Tween<double>(
+        begin: _minSize,
+        end: _maxSize,
+      ).animate(_controller);
     } else {
       // exhale
-      _sizeAnimation =
-          Tween<double>(begin: _maxSize, end: _minSize).animate(_controller);
+      _sizeAnimation = Tween<double>(
+        begin: _maxSize,
+        end: _minSize,
+      ).animate(_controller);
     }
   }
 

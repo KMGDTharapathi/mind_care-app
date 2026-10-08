@@ -31,7 +31,7 @@ class AppColors {
 
   // ── Gradient ───────────────────────────────────────────────────────────────
   static const Color gradientStart = Color(0xFFB2DFDB); // mint
-  static const Color gradientEnd = Color(0xFFA5D6A7);   // light green
+  static const Color gradientEnd = Color(0xFFA5D6A7); // light green
 
   static const LinearGradient onboardingGradient = LinearGradient(
     begin: Alignment.topLeft,

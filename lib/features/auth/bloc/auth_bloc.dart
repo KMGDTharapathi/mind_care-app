@@ -15,10 +15,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required AuthService authService,
     AnalyticsService? analyticsService,
     CrashlyticsService? crashlyticsService,
-  })  : _authService = authService,
-        _analyticsService = analyticsService,
-        _crashlyticsService = crashlyticsService,
-        super(const AuthInitial()) {
+  }) : _authService = authService,
+       _analyticsService = analyticsService,
+       _crashlyticsService = crashlyticsService,
+       super(const AuthInitial()) {
     on<AuthStarted>(_onAuthStarted);
     on<AuthSignInWithEmail>(_onSignInWithEmail);
     on<AuthSignInWithGoogle>(_onSignInWithGoogle);
@@ -56,10 +56,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
         _analyticsService?.setUserId(user.uid);
         _crashlyticsService?.setUserId(user.uid);
-        _analyticsService?.logEvent(
-          'sign_in',
-          parameters: {'method': 'email'},
-        );
+        _analyticsService?.logEvent('sign_in', parameters: {'method': 'email'});
         return AuthAuthenticated(user);
       },
     );
@@ -71,8 +68,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      final user =
-          await _authService.signInWithEmail(event.email, event.password);
+      final user = await _authService.signInWithEmail(
+        event.email,
+        event.password,
+      );
       await _analyticsService?.setUserId(user.uid);
       await _crashlyticsService?.setUserId(user.uid);
       await _analyticsService?.logEvent(
@@ -129,10 +128,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onSignOut(
-    AuthSignOut event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onSignOut(AuthSignOut event, Emitter<AuthState> emit) async {
     // signOut() immediately restores an anonymous session; the authStateChanges
     // stream (subscribed via AuthStarted) will emit the new anonymous user.
     await _analyticsService?.setUserId(null);
@@ -147,7 +143,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     try {
       final user = await _authService.createAccountWithEmail(
-          event.email, event.password);
+        event.email,
+        event.password,
+      );
       await _analyticsService?.setUserId(user.uid);
       await _crashlyticsService?.setUserId(user.uid);
       await _analyticsService?.logEvent(

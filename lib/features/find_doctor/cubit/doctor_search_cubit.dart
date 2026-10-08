@@ -40,12 +40,12 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
     required GeocoderService geocoderService,
     required OverpassService overpassService,
     required Connectivity connectivity,
-  })  : _firestoreService = firestoreService,
-        _locationService = locationService,
-        _geocoderService = geocoderService,
-        _overpassService = overpassService,
-        _connectivity = connectivity,
-        super(const DoctorSearchInitial());
+  }) : _firestoreService = firestoreService,
+       _locationService = locationService,
+       _geocoderService = geocoderService,
+       _overpassService = overpassService,
+       _connectivity = connectivity,
+       super(const DoctorSearchInitial());
 
   /// Called once when the screen is first built.
   ///
@@ -73,18 +73,22 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
       if (doctors.isEmpty) {
         emit(DoctorSearchEmpty(radiusKm: _radiusKm));
       } else {
-        emit(DoctorSearchLoaded(
-          doctors: doctors,
-          center: const LatLng(7.8731, 80.7718), // Sri Lanka centre
-          radiusKm: _radiusKm,
-          totalFound: doctors.length,
-        ));
+        emit(
+          DoctorSearchLoaded(
+            doctors: doctors,
+            center: const LatLng(7.8731, 80.7718), // Sri Lanka centre
+            radiusKm: _radiusKm,
+            totalFound: doctors.length,
+          ),
+        );
       }
     } catch (e) {
-      emit(DoctorSearchError(
-        message: 'Could not load doctors. Please try again.',
-        canRetry: true,
-      ));
+      emit(
+        DoctorSearchError(
+          message: 'Could not load doctors. Please try again.',
+          canRetry: true,
+        ),
+      );
     }
   }
 
@@ -132,11 +136,13 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
 
     final LatLng? result = await _geocoderService.geocode(district);
     if (result == null) {
-      emit(DoctorSearchError(
-        message:
-            'No location found for "$district". Please try a different name.',
-        canRetry: false,
-      ));
+      emit(
+        DoctorSearchError(
+          message:
+              'No location found for "$district". Please try a different name.',
+          canRetry: false,
+        ),
+      );
       return;
     }
 
@@ -194,8 +200,9 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
 
       // Merge: Firestore doctors first, then Overpass results not already
       // represented by name in the Firestore list
-      final firestoreNames =
-          firestoreDoctors.map((d) => d.name.toLowerCase()).toSet();
+      final firestoreNames = firestoreDoctors
+          .map((d) => d.name.toLowerCase())
+          .toSet();
       final uniqueOverpass = overpassDoctors
           .where((d) => !firestoreNames.contains(d.name.toLowerCase()))
           .toList();
@@ -205,20 +212,24 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
       if (merged.isEmpty) {
         emit(DoctorSearchEmpty(radiusKm: radiusKm));
       } else {
-        emit(DoctorSearchLoaded(
-          doctors: merged,
-          center: center,
-          radiusKm: radiusKm,
-          totalFound: merged.length,
-        ));
+        emit(
+          DoctorSearchLoaded(
+            doctors: merged,
+            center: center,
+            radiusKm: radiusKm,
+            totalFound: merged.length,
+          ),
+        );
       }
     } on OverpassException {
       // Overpass failed — still show Firestore list
       await _loadFromFirestore();
     } on GeocoderException {
-      emit(const DoctorSearchError(
-        message: 'Could not reach the geocoding service. Please try again.',
-      ));
+      emit(
+        const DoctorSearchError(
+          message: 'Could not reach the geocoding service. Please try again.',
+        ),
+      );
     }
   }
 

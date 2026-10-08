@@ -192,11 +192,7 @@ class ChatFont {
   });
 
   static const Map<String, ChatFont> byId = {
-    'normal': ChatFont(
-      id: 'normal',
-      enName: 'Default',
-      siName: 'සම්මත',
-    ),
+    'normal': ChatFont(id: 'normal', enName: 'Default', siName: 'සම්මත'),
     'serif': ChatFont(
       id: 'serif',
       enName: 'Serif',

@@ -13,10 +13,12 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> loadSettings() async {
     final prefs = await PreferencesService.getSharedPreferences();
     final themeModeStr = prefs.getString('theme_mode') ?? 'light';
-    final notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
+    final notificationsEnabled =
+        prefs.getBool('notifications_enabled') ?? false;
     final timeStr = prefs.getString('notification_time');
     final repeatList = prefs.getStringList('repeat_days') ?? [];
-    final message = prefs.getString('reminder_message') ??
+    final message =
+        prefs.getString('reminder_message') ??
         'Time for your daily wellness check-in 🌿';
 
     TimeOfDay? notificationTime;
@@ -30,19 +32,22 @@ class SettingsCubit extends Cubit<SettingsState> {
       }
     }
 
-    emit(state.copyWith(
-      themeMode: themeModeStr == 'dark' ? ThemeMode.dark : ThemeMode.light,
-      notificationsEnabled: notificationsEnabled,
-      notificationTime: notificationTime,
-      repeatDays: repeatList.map((e) => int.tryParse(e) ?? 0).toSet()
-        ..remove(0),
-      reminderMessage: message,
-    ));
+    emit(
+      state.copyWith(
+        themeMode: themeModeStr == 'dark' ? ThemeMode.dark : ThemeMode.light,
+        notificationsEnabled: notificationsEnabled,
+        notificationTime: notificationTime,
+        repeatDays: repeatList.map((e) => int.tryParse(e) ?? 0).toSet()
+          ..remove(0),
+        reminderMessage: message,
+      ),
+    );
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     await PreferencesService.setThemeMode(
-        mode == ThemeMode.dark ? 'dark' : 'light');
+      mode == ThemeMode.dark ? 'dark' : 'light',
+    );
     emit(state.copyWith(themeMode: mode));
   }
 
@@ -81,7 +86,9 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setRepeatDays(Set<int> days) async {
     final prefs = await PreferencesService.getSharedPreferences();
     await prefs.setStringList(
-        'repeat_days', days.map((d) => d.toString()).toList());
+      'repeat_days',
+      days.map((d) => d.toString()).toList(),
+    );
     emit(state.copyWith(repeatDays: days));
     if (state.notificationsEnabled) await _reschedule();
   }

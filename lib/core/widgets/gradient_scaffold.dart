@@ -3,11 +3,7 @@ import '../theme/app_colors.dart';
 
 /// A [Scaffold] wrapper that fills the background with [AppColors.onboardingGradient].
 class GradientScaffold extends StatelessWidget {
-  const GradientScaffold({
-    super.key,
-    required this.body,
-    this.appBar,
-  });
+  const GradientScaffold({super.key, required this.body, this.appBar});
 
   final Widget body;
   final PreferredSizeWidget? appBar;
@@ -18,9 +14,7 @@ class GradientScaffold extends StatelessWidget {
       backgroundColor: AppColors.gradientStart,
       appBar: appBar,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.onboardingGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.onboardingGradient),
         child: body,
       ),
     );

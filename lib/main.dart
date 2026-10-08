@@ -8,7 +8,6 @@ import 'package:mind_care_app/firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/firebase/firebase_error_screen.dart';
-import 'package:mind_care_app/core/firebase/firebase_initializer.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
@@ -18,7 +17,6 @@ import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
-import 'package:mind_care_app/features/onboarding/screens/consent_prompt_screen.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/services/auth/firebase_auth_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
@@ -57,16 +55,19 @@ Future<void> main() async {
   }
 
   // Start the app immediately — router shows /splash at once.
-  runApp(MindCareApp(
-    initFuture: Future.value(_InitResult(firebaseOk: firebaseOk)),
-  ));
+  runApp(
+    MindCareApp(initFuture: Future.value(_InitResult(firebaseOk: firebaseOk))),
+  );
 
   // Defer heavy init until after the first frame is painted.
   // Using a microtask + Future.delayed ensures the engine has actually
   // rendered before we touch any platform channels (Hive, SharedPreferences).
   WidgetsBinding.instance.addPostFrameCallback((_) {
     Future.delayed(const Duration(milliseconds: 100), () {
-      _heavyInit(firebaseOk).catchError((e) => debugPrint('_heavyInit error: $e'));
+      _heavyInit(firebaseOk).catchError((e) {
+        debugPrint('_heavyInit error: $e');
+        return _InitResult(firebaseOk: firebaseOk);
+      });
     });
   });
 }
@@ -77,20 +78,25 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
   await Future.delayed(const Duration(milliseconds: 50));
 
   final consentService = ConsentService();
-  final crashlyticsService =
-      FirebaseCrashlyticsService(consentService: consentService);
+  final crashlyticsService = FirebaseCrashlyticsService(
+    consentService: consentService,
+  );
 
-  bool _firebaseReady = false;
+  bool firebaseReady = false;
 
   FlutterError.onError = (details) {
-    if (_firebaseReady) {
-      crashlyticsService.recordError(details.exception, details.stack, fatal: true);
+    if (firebaseReady) {
+      crashlyticsService.recordError(
+        details.exception,
+        details.stack,
+        fatal: true,
+      );
     } else {
       FlutterError.presentError(details);
     }
   };
   PlatformDispatcher.instance.onError = (error, stack) {
-    if (_firebaseReady) {
+    if (firebaseReady) {
       crashlyticsService.recordError(error, stack, fatal: true);
     }
     return true;
@@ -111,12 +117,15 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
   // Yield to the event loop first so the UI stays responsive.
   await Future.delayed(Duration.zero);
   final prefsResult = await Future.wait<dynamic>([
-    HiveService.init()
-        .timeout(const Duration(seconds: 4))
-        .catchError((e) { debugPrint('Hive failed: $e'); }),
+    HiveService.init().timeout(const Duration(seconds: 4)).catchError((e) {
+      debugPrint('Hive failed: $e');
+    }),
     PreferencesService.isOnboardingComplete()
         .timeout(const Duration(seconds: 3))
-        .catchError((e) { debugPrint('Prefs failed: $e'); return false; }),
+        .catchError((e) {
+          debugPrint('Prefs failed: $e');
+          return false;
+        }),
   ]);
 
   // Pre-fetch name + language while still in _heavyInit so the splash screen
@@ -141,27 +150,40 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
 
   // Firebase is already initialized synchronously.
   if (firebaseOk) {
-    unawaited(ServiceLocator.init(
-      remoteConfig: remoteConfig,
-      analytics: FirebaseAnalyticsService(consentService: consentService),
-      crashlytics: crashlyticsService,
-    ).catchError((e) => debugPrint('ServiceLocator failed: $e')));
+    unawaited(
+      ServiceLocator.init(
+        remoteConfig: remoteConfig,
+        analytics: FirebaseAnalyticsService(consentService: consentService),
+        crashlytics: crashlyticsService,
+      ).catchError((e) => debugPrint('ServiceLocator failed: $e')),
+    );
   }
 
-  unawaited(NotificationService.init(navigatorKey: navigatorKey)
-      .catchError((e) => debugPrint('Notifications failed: $e')));
+  unawaited(
+    NotificationService.init(
+      navigatorKey: navigatorKey,
+    ).catchError((e) => debugPrint('Notifications failed: $e')),
+  );
 
-  unawaited(consentService.hasConsentBeenDecided().then((decided) {
-    if (!decided) consentService.setAnalyticsConsent(true);
-  }));
+  unawaited(
+    consentService.hasConsentBeenDecided().then((decided) {
+      if (!decided) consentService.setAnalyticsConsent(true);
+    }),
+  );
 
-  return _InitResult(firebaseOk: firebaseOk, onboardingComplete: onboardingComplete);
+  return _InitResult(
+    firebaseOk: firebaseOk,
+    onboardingComplete: onboardingComplete,
+  );
 }
 
 class _InitResult {
   final bool firebaseOk;
   final bool onboardingComplete;
-  const _InitResult({required this.firebaseOk, this.onboardingComplete = false});
+  const _InitResult({
+    required this.firebaseOk,
+    this.onboardingComplete = false,
+  });
 }
 
 class MindCareApp extends StatefulWidget {
@@ -199,7 +221,8 @@ class _MindCareAppState extends State<MindCareApp> {
             BlocProvider<AuthBloc>(
               lazy: true,
               create: (_) => AuthBloc(
-                authService: ServiceLocator.authService ?? FirebaseAuthService(),
+                authService:
+                    ServiceLocator.authService ?? FirebaseAuthService(),
                 analyticsService: ServiceLocator.analyticsService,
                 crashlyticsService: ServiceLocator.crashlyticsService,
               ),
@@ -208,8 +231,9 @@ class _MindCareAppState extends State<MindCareApp> {
               lazy: true,
               create: (_) {
                 final cubit = SettingsCubit();
-                WidgetsBinding.instance
-                    .addPostFrameCallback((_) => cubit.loadSettings());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => cubit.loadSettings(),
+                );
                 return cubit;
               },
             ),
@@ -228,10 +252,8 @@ class _MindCareAppState extends State<MindCareApp> {
                 builder: (context, child) {
                   return ValueListenableBuilder<AppStrings>(
                     valueListenable: appLanguage,
-                    builder: (context, strings, _) => LanguageProvider(
-                      strings: strings,
-                      child: child!,
-                    ),
+                    builder: (context, strings, _) =>
+                        LanguageProvider(strings: strings, child: child!),
                   );
                 },
               );
@@ -268,15 +290,23 @@ class _EarlySplash extends StatelessWidget {
               children: [
                 Icon(Icons.eco_rounded, size: 72, color: Color(0xFF004D40)),
                 SizedBox(height: 20),
-                Text('MindCare',
-                    style: TextStyle(
-                        fontSize: 34, fontWeight: FontWeight.bold,
-                        color: Color(0xFF004D40), letterSpacing: 0.5)),
+                Text(
+                  'MindCare',
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF004D40),
+                    letterSpacing: 0.5,
+                  ),
+                ),
                 SizedBox(height: 12),
                 SizedBox(
-                  width: 24, height: 24,
+                  width: 24,
+                  height: 24,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2.5, color: Color(0xFF004D40)),
+                    strokeWidth: 2.5,
+                    color: Color(0xFF004D40),
+                  ),
                 ),
               ],
             ),

@@ -4,11 +4,9 @@ import '../../models/mood_entry.dart';
 import '../mood_repository.dart';
 
 class FirestoreMoodRepository implements MoodRepository {
-  FirestoreMoodRepository({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  FirestoreMoodRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -64,7 +62,10 @@ class FirestoreMoodRepository implements MoodRepository {
       final today = DateTime.now();
       final startOfToday = DateTime(today.year, today.month, today.day);
       final snapshot = await _collection
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .where(
+            'timestamp',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday),
+          )
           .orderBy('timestamp', descending: true)
           .limit(1)
           .get();

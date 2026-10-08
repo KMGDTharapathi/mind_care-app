@@ -64,6 +64,15 @@ class NearbyDoctor extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, name, address, lat, lng, distanceKm, phone, website, type];
+  List<Object?> get props => [
+    id,
+    name,
+    address,
+    lat,
+    lng,
+    distanceKm,
+    phone,
+    website,
+    type,
+  ];
 }

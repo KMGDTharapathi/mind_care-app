@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '384910835517',
     projectId: 'mine-care',
     storageBucket: 'mine-care.firebasestorage.app',
-    iosClientId: '384910835517-qu8q4u53dnt0ds2kgmuakdsqmath6e9n.apps.googleusercontent.com',
+    iosClientId:
+        '384910835517-qu8q4u53dnt0ds2kgmuakdsqmath6e9n.apps.googleusercontent.com',
     iosBundleId: 'com.mindcare.mindCareApp',
   );
   static const FirebaseOptions macos = FirebaseOptions(
@@ -72,7 +73,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '384910835517',
     projectId: 'mine-care',
     storageBucket: 'mine-care.firebasestorage.app',
-    iosClientId: '384910835517-qu8q4u53dnt0ds2kgmuakdsqmath6e9n.apps.googleusercontent.com',
+    iosClientId:
+        '384910835517-qu8q4u53dnt0ds2kgmuakdsqmath6e9n.apps.googleusercontent.com',
     iosBundleId: 'com.mindcare.mindCareApp',
   );
 

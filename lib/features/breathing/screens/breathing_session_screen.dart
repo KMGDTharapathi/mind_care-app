@@ -29,15 +29,18 @@ class BreathingSessionScreen extends StatelessWidget {
       );
     }
     // Use localized name for the pattern
-    final localName = {
-      'box': s.boxBreathingName,
-      '478': s.breathing478Name,
-      'deep-calm': s.deepCalmName,
-    }[patternId] ?? pattern.name;
+    final localName =
+        {
+          'box': s.boxBreathingName,
+          '478': s.breathing478Name,
+          'deep-calm': s.deepCalmName,
+        }[patternId] ??
+        pattern.name;
 
     return BlocProvider(
-      create: (_) => BreathingBloc(analyticsService: analyticsService)
-        ..add(StartSession(pattern)),
+      create: (_) =>
+          BreathingBloc(analyticsService: analyticsService)
+            ..add(StartSession(pattern)),
       child: _BreathingSessionView(patternName: localName),
     );
   }
@@ -99,10 +102,14 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
 
           String localLabel(String l) {
             switch (l) {
-              case 'Inhale': return s.phaseInhale;
-              case 'Hold': return s.phaseHold;
-              case 'Exhale': return s.phaseExhale;
-              default: return l;
+              case 'Inhale':
+                return s.phaseInhale;
+              case 'Hold':
+                return s.phaseHold;
+              case 'Exhale':
+                return s.phaseExhale;
+              default:
+                return l;
             }
           }
 
@@ -155,18 +162,14 @@ class _CompletionOverlay extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(s.wellDone,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          Text(
+            s.wellDone,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: onRepeat,
-            child: Text(s.practiceAgain),
-          ),
+          ElevatedButton(onPressed: onRepeat, child: Text(s.practiceAgain)),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onGoHome,
-            child: Text(s.navHome),
-          ),
+          OutlinedButton(onPressed: onGoHome, child: Text(s.navHome)),
         ],
       ),
     );

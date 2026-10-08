@@ -24,7 +24,13 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
   String _filterLang = 'All';
 
   // Canonical English values used for Firestore filtering
-  static const _specValues = ['All', 'Clinical Psychologist', 'Counsellor', 'Psychiatrist', 'GP'];
+  static const _specValues = [
+    'All',
+    'Clinical Psychologist',
+    'Counsellor',
+    'Psychiatrist',
+    'GP',
+  ];
   static const _langValues = ['All', 'Sinhala', 'English', 'Tamil'];
 
   @override
@@ -43,7 +49,13 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
   @override
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
-    final specLabels = [s.specAll, s.specClinicalPsychologist, s.specCounsellor, s.specPsychiatrist, s.specGP];
+    final specLabels = [
+      s.specAll,
+      s.specClinicalPsychologist,
+      s.specCounsellor,
+      s.specPsychiatrist,
+      s.specGP,
+    ];
     final langLabels = [s.langAll, s.langSinhala, s.langEnglish, s.langTamil];
 
     return Scaffold(
@@ -51,8 +63,10 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
       appBar: AppBar(
         backgroundColor: _kTeal,
         foregroundColor: Colors.white,
-        title: Text(s.counsellorCallTitle,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          s.counsellorCallTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
@@ -132,13 +146,55 @@ const List<String> _kProvinces = [
 /// Keywords in doctor addresses that map to each province.
 /// Used to filter the Firebase doctor list by selected province.
 const Map<String, List<String>> _kProvinceKeywords = {
-  'Western Province': ['Colombo', 'Gampaha', 'Kalutara', 'Angoda', 'Dehiwala', 'Maharagama', 'Wattala', 'Ragama', 'Kelaniya', 'Western Province'],
-  'Central Province': ['Kandy', 'Peradeniya', 'Matale', 'Nuwara Eliya', 'Central Province'],
-  'Southern Province': ['Galle', 'Matara', 'Hambantota', 'Karapitiya', 'Southern Province'],
-  'Northern Province': ['Jaffna', 'Vavuniya', 'Kilinochchi', 'Mannar', 'Northern Province'],
-  'Eastern Province': ['Batticaloa', 'Trincomalee', 'Ampara', 'Eastern Province'],
-  'North Western Province': ['Kurunegala', 'Puttalam', 'North Western Province'],
-  'North Central Province': ['Anuradhapura', 'Polonnaruwa', 'North Central Province'],
+  'Western Province': [
+    'Colombo',
+    'Gampaha',
+    'Kalutara',
+    'Angoda',
+    'Dehiwala',
+    'Maharagama',
+    'Wattala',
+    'Ragama',
+    'Kelaniya',
+    'Western Province',
+  ],
+  'Central Province': [
+    'Kandy',
+    'Peradeniya',
+    'Matale',
+    'Nuwara Eliya',
+    'Central Province',
+  ],
+  'Southern Province': [
+    'Galle',
+    'Matara',
+    'Hambantota',
+    'Karapitiya',
+    'Southern Province',
+  ],
+  'Northern Province': [
+    'Jaffna',
+    'Vavuniya',
+    'Kilinochchi',
+    'Mannar',
+    'Northern Province',
+  ],
+  'Eastern Province': [
+    'Batticaloa',
+    'Trincomalee',
+    'Ampara',
+    'Eastern Province',
+  ],
+  'North Western Province': [
+    'Kurunegala',
+    'Puttalam',
+    'North Western Province',
+  ],
+  'North Central Province': [
+    'Anuradhapura',
+    'Polonnaruwa',
+    'North Central Province',
+  ],
   'Uva Province': ['Badulla', 'Monaragala', 'Uva Province'],
   'Sabaragamuwa Province': ['Ratnapura', 'Kegalle', 'Sabaragamuwa Province'],
 };
@@ -190,7 +246,8 @@ class _DoctorListTabState extends State<_DoctorListTab> {
             onSelected: _onProvinceSelected,
             fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
               // Sync external controller text when province is cleared
-              if (_selectedProvince == 'All Provinces' && controller.text.isNotEmpty) {
+              if (_selectedProvince == 'All Provinces' &&
+                  controller.text.isNotEmpty) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) controller.clear();
                 });
@@ -202,11 +259,22 @@ class _DoctorListTabState extends State<_DoctorListTab> {
                 onSubmitted: (_) => onSubmitted(),
                 decoration: InputDecoration(
                   hintText: 'Type a province (e.g. Western, Kandy...)',
-                  hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                  prefixIcon: const Icon(Icons.map_outlined, color: _kTeal, size: 20),
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade500,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.map_outlined,
+                    color: _kTeal,
+                    size: 20,
+                  ),
                   suffixIcon: _selectedProvince != 'All Provinces'
                       ? IconButton(
-                          icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           tooltip: 'Clear province filter',
                           onPressed: () {
                             controller.clear();
@@ -216,7 +284,10 @@ class _DoctorListTabState extends State<_DoctorListTab> {
                       : null,
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey.shade300),
@@ -250,15 +321,24 @@ class _DoctorListTabState extends State<_DoctorListTab> {
                           onTap: () => onSelected(province),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             child: Row(
                               children: [
-                                const Icon(Icons.location_on_outlined,
-                                    size: 16, color: _kTeal),
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 16,
+                                  color: _kTeal,
+                                ),
                                 const SizedBox(width: 10),
-                                Text(province,
-                                    style: const TextStyle(
-                                        fontSize: 14, color: _kDark)),
+                                Text(
+                                  province,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: _kDark,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -280,19 +360,27 @@ class _DoctorListTabState extends State<_DoctorListTab> {
               children: [
                 const Icon(Icons.filter_alt_outlined, size: 14, color: _kTeal),
                 const SizedBox(width: 4),
-                Text('Showing doctors in: ',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                Text(
+                  'Showing doctors in: ',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: _kTeal.withOpacity(0.12),
+                    color: _kTeal.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(_selectedProvince,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: _kTeal,
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    _selectedProvince,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: _kTeal,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -352,9 +440,11 @@ class _FirebaseDoctorList extends StatelessWidget {
     final keywords = _kProvinceKeywords[filterProvince] ?? [];
     final address = (doctor.address ?? '').toLowerCase();
     final hospital = doctor.hospital.toLowerCase();
-    return keywords.any((kw) =>
-        address.contains(kw.toLowerCase()) ||
-        hospital.contains(kw.toLowerCase()));
+    return keywords.any(
+      (kw) =>
+          address.contains(kw.toLowerCase()) ||
+          hospital.contains(kw.toLowerCase()),
+    );
   }
 
   @override
@@ -406,15 +496,20 @@ class _FirebaseDoctorList extends StatelessWidget {
             })
             .where((d) {
               if (d.id == '__seed_meta__') return false;
-              if (filterSpec != 'All' && d.specialization != filterSpec) return false;
-              if (filterLang != 'All' && !d.languages.contains(filterLang)) return false;
+              if (filterSpec != 'All' && d.specialization != filterSpec) {
+                return false;
+              }
+              if (filterLang != 'All' && !d.languages.contains(filterLang)) {
+                return false;
+              }
               if (!_matchesProvince(d)) return false;
               return true;
             })
             .toList();
 
-        doctors.sort((a, b) =>
-            (b.isAvailable ? 1 : 0).compareTo(a.isAvailable ? 1 : 0));
+        doctors.sort(
+          (a, b) => (b.isAvailable ? 1 : 0).compareTo(a.isAvailable ? 1 : 0),
+        );
 
         if (doctors.isEmpty) {
           return Center(
@@ -423,8 +518,11 @@ class _FirebaseDoctorList extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.person_search_outlined,
-                      size: 48, color: Colors.grey),
+                  const Icon(
+                    Icons.person_search_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     filterProvince == 'All Provinces'
@@ -478,7 +576,7 @@ class _FilterBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         itemCount: options.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
         itemBuilder: (_, i) {
           final opt = options[i];
           final label = labels[i];
@@ -492,14 +590,17 @@ class _FilterBar extends StatelessWidget {
                 color: isSelected ? _kTeal : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                    color: isSelected ? _kTeal : Colors.grey.shade300),
+                  color: isSelected ? _kTeal : Colors.grey.shade300,
+                ),
               ),
-              child: Text(label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  )),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
             ),
           );
         },
@@ -531,7 +632,7 @@ class _DoctorCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: _kTeal.withOpacity(0.15),
+                    backgroundColor: _kTeal.withValues(alpha: 0.15),
                     backgroundImage: doctor.photoUrl.isNotEmpty
                         ? NetworkImage(doctor.photoUrl)
                         : null,
@@ -564,21 +665,31 @@ class _DoctorCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(doctor.name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: _kDark)),
+                          child: Text(
+                            doctor.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: _kDark,
+                            ),
+                          ),
                         ),
                         if (doctor.isVerified)
-                          const Icon(Icons.verified_rounded,
-                              size: 16, color: _kTeal),
+                          const Icon(
+                            Icons.verified_rounded,
+                            size: 16,
+                            color: _kTeal,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(doctor.specialization,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600)),
+                    Text(
+                      doctor.specialization,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
@@ -634,8 +745,9 @@ class _DoctorProfileSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2)),
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -644,7 +756,7 @@ class _DoctorProfileSheet extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 36,
-                  backgroundColor: _kTeal.withOpacity(0.15),
+                  backgroundColor: _kTeal.withValues(alpha: 0.15),
                   backgroundImage: doctor.photoUrl.isNotEmpty
                       ? NetworkImage(doctor.photoUrl)
                       : null,
@@ -657,24 +769,40 @@ class _DoctorProfileSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        Expanded(
-                          child: Text(doctor.name,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              doctor.name,
                               style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: _kDark)),
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: _kDark,
+                              ),
+                            ),
+                          ),
+                          if (doctor.isVerified)
+                            const Icon(
+                              Icons.verified_rounded,
+                              color: _kTeal,
+                              size: 18,
+                            ),
+                        ],
+                      ),
+                      Text(
+                        doctor.specialization,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
                         ),
-                        if (doctor.isVerified)
-                          const Icon(Icons.verified_rounded,
-                              color: _kTeal, size: 18),
-                      ]),
-                      Text(doctor.specialization,
-                          style: TextStyle(
-                              color: Colors.grey.shade600, fontSize: 13)),
-                      Text(doctor.hospital,
-                          style: TextStyle(
-                              color: Colors.grey.shade500, fontSize: 12)),
+                      ),
+                      Text(
+                        doctor.hospital,
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -683,60 +811,72 @@ class _DoctorProfileSheet extends StatelessWidget {
             const SizedBox(height: 16),
             // Availability badge
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: doctor.isAvailable
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.1),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.circle,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.circle,
                     size: 10,
-                    color:
-                        doctor.isAvailable ? Colors.green : Colors.grey),
-                const SizedBox(width: 6),
-                Text(
-                  doctor.isAvailable ? strings.availableNow : strings.currentlyUnavailable,
-                  style: TextStyle(
+                    color: doctor.isAvailable ? Colors.green : Colors.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    doctor.isAvailable
+                        ? strings.availableNow
+                        : strings.currentlyUnavailable,
+                    style: TextStyle(
                       fontSize: 13,
-                      color: doctor.isAvailable
-                          ? Colors.green
-                          : Colors.grey,
-                      fontWeight: FontWeight.w600),
-                ),
-              ]),
+                      color: doctor.isAvailable ? Colors.green : Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             _SectionTitle(strings.aboutSection),
-            Text(doctor.bio,
-                style: const TextStyle(
-                    fontSize: 14, color: Colors.black87, height: 1.5)),
+            Text(
+              doctor.bio,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 14),
             _SectionTitle(strings.qualificationsSection),
-            ...doctor.qualifications.map((q) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(children: [
-                    const Icon(Icons.school_outlined,
-                        size: 16, color: _kTeal),
+            ...doctor.qualifications.map(
+              (q) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.school_outlined, size: 16, color: _kTeal),
                     const SizedBox(width: 8),
                     Expanded(
-                        child: Text(q,
-                            style: const TextStyle(fontSize: 13))),
-                  ]),
-                )),
+                      child: Text(q, style: const TextStyle(fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 14),
             _SectionTitle(strings.languagesSection),
             Wrap(
               spacing: 6,
-              children:
-                  doctor.languages.map((l) => _Chip(label: l)).toList(),
+              children: doctor.languages.map((l) => _Chip(label: l)).toList(),
             ),
             const SizedBox(height: 6),
-            Text('Reg. No: ${doctor.registrationNo}',
-                style: TextStyle(
-                    fontSize: 12, color: Colors.grey.shade500)),
+            Text(
+              'Reg. No: ${doctor.registrationNo}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
             const SizedBox(height: 16),
             // ── Contact & Location ─────────────────────────────────────
             _SectionTitle(strings.contactSection),
@@ -748,7 +888,9 @@ class _DoctorProfileSheet extends StatelessWidget {
                 onTap: () async {
                   final encoded = Uri.encodeComponent(doctor.address!);
                   final uri = Uri.parse('https://maps.google.com/?q=$encoded');
-                  if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (await canLaunchUrl(uri)) {
+                    launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
                 },
               ),
             if (doctor.clinicHours != null && doctor.clinicHours!.isNotEmpty)
@@ -757,12 +899,20 @@ class _DoctorProfileSheet extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.access_time_outlined, size: 18, color: _kTeal),
+                    const Icon(
+                      Icons.access_time_outlined,
+                      size: 18,
+                      color: _kTeal,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         doctor.clinicHours!,
-                        style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.5),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -802,8 +952,7 @@ class _HotlineTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final catLabels = _categoryLabels();
     return FutureBuilder<QuerySnapshot>(
-      future:
-          FirebaseFirestore.instance.collection('hotlines').get(),
+      future: FirebaseFirestore.instance.collection('hotlines').get(),
       builder: (context, snapshot) {
         List<Hotline> hotlines;
 
@@ -832,16 +981,18 @@ class _HotlineTab extends StatelessWidget {
                 color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(children: [
-                const Icon(Icons.info_outline, color: Colors.green, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    strings.hotlineInfoNote,
-                    style: const TextStyle(fontSize: 13, color: Colors.green),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.green, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      strings.hotlineInfoNote,
+                      style: const TextStyle(fontSize: 13, color: Colors.green),
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
             for (final entry in grouped.entries) ...[
               Padding(
@@ -856,11 +1007,12 @@ class _HotlineTab extends StatelessWidget {
                   ),
                 ),
               ),
-              ...entry.value.map((h) => _HotlineCard(
-                    hotline: h,
-                    accentColor:
-                        _categoryColors[h.category] ?? Colors.grey,
-                  )),
+              ...entry.value.map(
+                (h) => _HotlineCard(
+                  hotline: h,
+                  accentColor: _categoryColors[h.category] ?? Colors.grey,
+                ),
+              ),
             ],
           ],
         );
@@ -896,7 +1048,7 @@ class _HotlineCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.12),
+                color: accentColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.phone_outlined, color: accentColor, size: 22),
@@ -906,40 +1058,58 @@ class _HotlineCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(hotline.localName(isSinhala),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: _kDark)),
+                  Text(
+                    hotline.localName(isSinhala),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: _kDark,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(hotline.localDescription(isSinhala),
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600)),
+                  Text(
+                    hotline.localDescription(isSinhala),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
                   const SizedBox(height: 4),
-                  Row(children: [
-                    Icon(Icons.access_time_outlined,
-                        size: 12, color: Colors.grey.shade500),
-                    const SizedBox(width: 4),
-                    Text(hotline.available,
-                        style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade500)),
-                    if (hotline.isFree) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text('FREE',
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.green,
-                                fontWeight: FontWeight.w700)),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time_outlined,
+                        size: 12,
+                        color: Colors.grey.shade500,
                       ),
+                      const SizedBox(width: 4),
+                      Text(
+                        hotline.available,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      if (hotline.isFree) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'FREE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ]),
+                  ),
                 ],
               ),
             ),
@@ -947,16 +1117,21 @@ class _HotlineCard extends StatelessWidget {
               onTap: _call,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: accentColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(hotline.number,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13)),
+                child: Text(
+                  hotline.number,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ),
           ],
@@ -1020,12 +1195,17 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _kTeal.withOpacity(0.1),
+        color: _kTeal.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(label,
-          style: const TextStyle(
-              fontSize: 10, color: _kTeal, fontWeight: FontWeight.w600)),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          color: _kTeal,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -1038,11 +1218,14 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(title,
-          style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: _kDark)),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: _kDark,
+        ),
+      ),
     );
   }
 }
@@ -1052,23 +1235,34 @@ class _StatBox extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color iconColor;
-  const _StatBox(
-      {required this.label,
-      required this.value,
-      required this.icon,
-      required this.iconColor});
+  const _StatBox({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, color: iconColor, size: 22),
-      const SizedBox(height: 4),
-      Text(value,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: iconColor, size: 22),
+        const SizedBox(height: 4),
+        Text(
+          value,
           style: const TextStyle(
-              fontWeight: FontWeight.w700, fontSize: 14, color: _kDark)),
-      Text(label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-    ]);
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+            color: _kDark,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+        ),
+      ],
+    );
   }
 }
 
@@ -1080,14 +1274,19 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
-        const SizedBox(height: 12),
-        Text(strings.couldNotLoadDoctors,
-            style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 8),
-        TextButton(onPressed: onRetry, child: Text(strings.retry)),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
+          const SizedBox(height: 12),
+          Text(
+            strings.couldNotLoadDoctors,
+            style: const TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          TextButton(onPressed: onRetry, child: Text(strings.retry)),
+        ],
+      ),
     );
   }
 }

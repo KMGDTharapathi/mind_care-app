@@ -8,11 +8,9 @@ import 'auth_service.dart';
 /// After every [signOut] call the service immediately starts an anonymous
 /// session so [authStateChanges] never emits `null`.
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({
-    FirebaseAuth? firebaseAuth,
-    GoogleSignIn? googleSignIn,
-  })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+  FirebaseAuthService({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
+    : _auth = firebaseAuth ?? FirebaseAuth.instance,
+      _googleSignIn = googleSignIn ?? GoogleSignIn();
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
@@ -76,8 +74,7 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Future<AuthUser> createAccountWithEmail(
-      String email, String password) async {
+  Future<AuthUser> createAccountWithEmail(String email, String password) async {
     try {
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -141,8 +138,7 @@ class FirebaseAuthService implements AuthService {
       'invalid-email' => AuthErrorType.invalidEmail,
       'wrong-password' ||
       'user-not-found' ||
-      'invalid-credential' =>
-        AuthErrorType.wrongPassword,
+      'invalid-credential' => AuthErrorType.wrongPassword,
       'email-already-in-use' => AuthErrorType.emailInUse,
       'network-request-failed' => AuthErrorType.networkError,
       _ => AuthErrorType.unknown,

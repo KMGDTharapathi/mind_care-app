@@ -16,15 +16,15 @@ void main() {
       routes: [
         GoRoute(
           path: '/onboarding',
-          builder: (_, __) => const OnboardingScreen(),
+          builder: (_, _) => const OnboardingScreen(),
         ),
         GoRoute(
           path: '/home',
-          builder: (_, __) => const Scaffold(body: Text('Home')),
+          builder: (_, _) => const Scaffold(body: Text('Home')),
         ),
         GoRoute(
           path: '/language-select',
-          builder: (_, __) => const Scaffold(body: Text('Language')),
+          builder: (_, _) => const Scaffold(body: Text('Language')),
         ),
       ],
     );
@@ -39,17 +39,17 @@ void main() {
       expect(find.text('MindCare'), findsOneWidget);
     });
 
-testWidgets('tapping Next moves to the name input page', (tester) async {
-    await tester.pumpWidget(buildOnboardingScreen());
-    await tester.pumpAndSettle();
+    testWidgets('tapping Next moves to the name input page', (tester) async {
+      await tester.pumpWidget(buildOnboardingScreen());
+      await tester.pumpAndSettle();
 
-    // Navigation is button-driven, so the page advances via the Next button.
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
+      // Navigation is button-driven, so the page advances via the Next button.
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
 
-    // Page 2 should show the name prompt
-    expect(find.text('Who am I chatting with?'), findsOneWidget);
-  });
+      // Page 2 should show the name prompt
+      expect(find.text('Who am I chatting with?'), findsOneWidget);
+    });
 
     testWidgets('"Get Started" button is visible on last page', (tester) async {
       await tester.pumpWidget(buildOnboardingScreen());
@@ -70,7 +70,9 @@ testWidgets('tapping Next moves to the name input page', (tester) async {
       expect(find.text('Find Your Calm'), findsOneWidget);
     });
 
-    testWidgets('"Get Started" button calls setOnboardingComplete', (tester) async {
+    testWidgets('"Get Started" button calls setOnboardingComplete', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildOnboardingScreen());
       await tester.pumpAndSettle();
 

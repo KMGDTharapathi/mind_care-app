@@ -61,7 +61,8 @@ class Doctor {
       photoUrl: '',
       specialization: 'Clinical Psychologist',
       languages: ['Sinhala', 'English'],
-      bio: '10+ years experience in anxiety, depression, and trauma therapy. '
+      bio:
+          '10+ years experience in anxiety, depression, and trauma therapy. '
           'Trained at University of Colombo and NIMH.',
       qualifications: [
         'MBBS – University of Colombo',
@@ -81,7 +82,8 @@ class Doctor {
       photoUrl: '',
       specialization: 'Counsellor',
       languages: ['Sinhala', 'English', 'Tamil'],
-      bio: 'Specialist in grief counselling, relationship issues, and stress '
+      bio:
+          'Specialist in grief counselling, relationship issues, and stress '
           'management. Fluent in all three national languages.',
       qualifications: [
         'BSc Psychology – University of Kelaniya',
@@ -101,7 +103,8 @@ class Doctor {
       photoUrl: '',
       specialization: 'Psychiatrist',
       languages: ['Sinhala', 'English'],
-      bio: 'Consultant Psychiatrist with expertise in mood disorders, OCD, '
+      bio:
+          'Consultant Psychiatrist with expertise in mood disorders, OCD, '
           'and PTSD. Available for medication review and therapy.',
       qualifications: [
         'MBBS – University of Sri Jayewardenepura',
@@ -121,11 +124,10 @@ class Doctor {
       photoUrl: '',
       specialization: 'GP',
       languages: ['Sinhala', 'Tamil'],
-      bio: 'General Practitioner with a focus on mental wellness and holistic '
+      bio:
+          'General Practitioner with a focus on mental wellness and holistic '
           'health. Provides initial assessments and referrals.',
-      qualifications: [
-        'MBBS – University of Ruhuna',
-      ],
+      qualifications: ['MBBS – University of Ruhuna'],
       registrationNo: 'SLMC-11223',
       hospital: 'Asiri Medical Hospital',
       address: '181 Kirula Road, Colombo 5',
@@ -140,7 +142,8 @@ class Doctor {
       photoUrl: '',
       specialization: 'Clinical Psychologist',
       languages: ['Sinhala', 'English'],
-      bio: 'Specialises in child and adolescent mental health, ADHD, and '
+      bio:
+          'Specialises in child and adolescent mental health, ADHD, and '
           'behavioural therapy. Works with families and schools.',
       qualifications: [
         'BSc Psychology – University of Peradeniya',
@@ -187,8 +190,8 @@ class Hotline {
 
   String localDescription(bool isSinhala) =>
       (isSinhala && descriptionSi != null && descriptionSi!.isNotEmpty)
-          ? descriptionSi!
-          : description;
+      ? descriptionSi!
+      : description;
 
   factory Hotline.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;

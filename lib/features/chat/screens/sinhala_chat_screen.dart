@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/features/chat/bloc/sinhala_chat_bloc.dart';
@@ -73,7 +73,8 @@ class _SinhalaChatViewState extends State<_SinhalaChatView> {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Clear chat',
-            onPressed: () => context.read<SinhalaChatBloc>().add(ClearChatEvent()),
+            onPressed: () =>
+                context.read<SinhalaChatBloc>().add(ClearChatEvent()),
           ),
         ],
       ),
@@ -93,7 +94,10 @@ class _SinhalaChatViewState extends State<_SinhalaChatView> {
                     ? _buildEmptyState()
                     : ListView.builder(
                         controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         itemCount: state.messages.length,
                         itemBuilder: (context, index) =>
                             _MessageBubble(message: state.messages[index]),
@@ -109,7 +113,9 @@ class _SinhalaChatViewState extends State<_SinhalaChatView> {
                       (m) => m.sender == MessageSender.user,
                       orElse: () => state.messages.last,
                     );
-                    context.read<SinhalaChatBloc>().add(SendMessageEvent(lastUser.content));
+                    context.read<SinhalaChatBloc>().add(
+                      SendMessageEvent(lastUser.content),
+                    );
                   },
                 ),
 
@@ -121,11 +127,15 @@ class _SinhalaChatViewState extends State<_SinhalaChatView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 20, height: 20,
+                        width: 20,
+                        height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       SizedBox(width: 8),
-                      Text('Willow is typing...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(
+                        'Willow is typing...',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
@@ -148,7 +158,11 @@ class _SinhalaChatViewState extends State<_SinhalaChatView> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey.shade300),
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 12),
           Text(
             'ආයුබෝවන්! මම Willow.\nඔබට කොහොමද?',
@@ -173,7 +187,9 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         decoration: BoxDecoration(
           color: isUser ? AppColors.primaryLight : Colors.grey.shade100,
           borderRadius: BorderRadius.only(
@@ -212,7 +228,13 @@ class _InputBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, -1))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: const Offset(0, -1),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -233,13 +255,18 @@ class _InputBar extends StatelessWidget {
                   ),
                   filled: true,
                   fillColor: Colors.grey.shade100,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 8),
             CircleAvatar(
-              backgroundColor: enabled ? AppColors.primaryLight : Colors.grey.shade300,
+              backgroundColor: enabled
+                  ? AppColors.primaryLight
+                  : Colors.grey.shade300,
               child: IconButton(
                 icon: const Icon(Icons.send, color: Colors.white, size: 20),
                 onPressed: enabled ? onSend : null,
@@ -269,7 +296,10 @@ class _ErrorBanner extends StatelessWidget {
           Icon(Icons.error_outline, color: Colors.orange.shade700, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message, style: TextStyle(color: Colors.orange.shade800, fontSize: 13)),
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.orange.shade800, fontSize: 13),
+            ),
           ),
           TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],

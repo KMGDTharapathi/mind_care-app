@@ -33,11 +33,6 @@ class FirebaseCrashlyticsService implements CrashlyticsService {
   }) async {
     if (kIsWeb) return;
     if (!await consentService.isAnalyticsEnabled()) return;
-    await _crashlytics.recordError(
-      error,
-      stack,
-      reason: reason,
-      fatal: fatal,
-    );
+    await _crashlytics.recordError(error, stack, reason: reason, fatal: fatal);
   }
 }

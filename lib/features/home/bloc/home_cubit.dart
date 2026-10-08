@@ -45,18 +45,16 @@ class HomeCubit extends Cubit<HomeState> {
       final streak = await _calculateStreak();
       final todayEntry = _getTodayMoodEntry();
 
-      emit(HomeState(
-        streakCount: streak,
-        todayMoodEntry: todayEntry,
-        isLoading: false,
-      ));
+      emit(
+        HomeState(
+          streakCount: streak,
+          todayMoodEntry: todayEntry,
+          isLoading: false,
+        ),
+      );
     } catch (e) {
       // Emit non-loading state even on error so UI doesn't stay blank
-      emit(HomeState(
-        streakCount: 1,
-        todayMoodEntry: null,
-        isLoading: false,
-      ));
+      emit(HomeState(streakCount: 1, todayMoodEntry: null, isLoading: false));
     }
   }
 
@@ -101,8 +99,10 @@ class HomeCubit extends Cubit<HomeState> {
     }
 
     // Push the current streak to the cloud so it restores after a re-login.
-    ServiceLocator.syncService
-        ?.enqueueStreak(newStreak, _formatDate(effectiveDate));
+    ServiceLocator.syncService?.enqueueStreak(
+      newStreak,
+      _formatDate(effectiveDate),
+    );
 
     return newStreak;
   }

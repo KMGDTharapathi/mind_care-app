@@ -68,8 +68,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     context.read<AuthBloc>().add(
-          AuthCreateAccount(email: email, password: password),
-        );
+      AuthCreateAccount(email: email, password: password),
+    );
+  }
+
+  void _onGoogleSignIn() {
+    _clearErrors();
+    context.read<AuthBloc>().add(AuthSignInWithGoogle());
   }
 
   void _handleAuthError(AuthError state) {
@@ -98,15 +103,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textDark),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textDark,
+            ),
             onPressed: () => context.pop(),
           ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -153,6 +159,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 24),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) =>
+                      _Divider(isLoading: state is AuthLoading),
+                ),
+                const SizedBox(height: 24),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state is AuthLoading;
+                    return _GoogleSignInButton(
+                      isLoading: isLoading,
+                      onPressed: isLoading ? null : _onGoogleSignIn,
+                    );
+                  },
+                ),
                 const SizedBox(height: 28),
                 _SignInLink(),
               ],
@@ -175,11 +196,11 @@ class _Header extends StatelessWidget {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
+            color: Colors.white.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryLight.withOpacity(0.3),
+                color: AppColors.primaryLight.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -241,10 +262,12 @@ class _EmailField extends StatelessWidget {
         labelText: 'Email',
         hintText: 'you@example.com',
         errorText: errorText,
-        prefixIcon:
-            const Icon(Icons.email_outlined, color: AppColors.primaryDark),
+        prefixIcon: const Icon(
+          Icons.email_outlined,
+          color: AppColors.primaryDark,
+        ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.9),
+        fillColor: Colors.white.withValues(alpha: 0.9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -263,8 +286,10 @@ class _EmailField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: AppColors.primaryDark, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryDark,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -301,8 +326,10 @@ class _PasswordField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         errorText: errorText,
-        prefixIcon:
-            const Icon(Icons.lock_outline, color: AppColors.primaryDark),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          color: AppColors.primaryDark,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             obscureText
@@ -313,7 +340,7 @@ class _PasswordField extends StatelessWidget {
           onPressed: onToggleVisibility,
         ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.9),
+        fillColor: Colors.white.withValues(alpha: 0.9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -332,8 +359,10 @@ class _PasswordField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: AppColors.primaryDark, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryDark,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -375,8 +404,10 @@ class _ErrorBanner extends StatelessWidget {
 // ── Create account button ─────────────────────────────────────────────────────
 
 class _CreateAccountButton extends StatelessWidget {
-  const _CreateAccountButton(
-      {required this.isLoading, required this.onPressed});
+  const _CreateAccountButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
 
   final bool isLoading;
   final VoidCallback? onPressed;
@@ -406,9 +437,74 @@ class _CreateAccountButton extends StatelessWidget {
               )
             : const Text(
                 'Create Account',
-                style:
-                    TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
               ),
+      ),
+    );
+  }
+}
+
+// ── Divider ───────────────────────────────────────────────────────────────────
+
+class _Divider extends StatelessWidget {
+  const _Divider({this.isLoading = false});
+
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: AppColors.textDark.withValues(alpha: 0.2))),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            isLoading ? 'Signing in\u2026' : 'or',
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondaryDark),
+          ),
+        ),
+        Expanded(child: Divider(color: AppColors.textDark.withValues(alpha: 0.2))),
+      ],
+    );
+  }
+}
+
+// ── Google Sign-In button ─────────────────────────────────────────────────────
+
+class _GoogleSignInButton extends StatelessWidget {
+  const _GoogleSignInButton({required this.isLoading, required this.onPressed});
+
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primaryDark,
+                ),
+              )
+            : const Icon(Icons.g_mobiledata_rounded, size: 26),
+        label: const Text(
+          'Continue with Google',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textDark,
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
+          side: BorderSide(color: AppColors.textDark.withValues(alpha: 0.2)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+        ),
       ),
     );
   }
@@ -424,10 +520,7 @@ class _SignInLink extends StatelessWidget {
       children: [
         const Text(
           'Already have an account?',
-          style: TextStyle(
-            color: AppColors.textSecondaryDark,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
         ),
         TextButton(
           onPressed: () => context.pop(),

@@ -40,7 +40,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
 
   void _initFromState(JournalState state) {
     if (_initialized || !_isEditing) return;
-    final entry = state.entries.where((e) => e.id == widget.entryId).firstOrNull;
+    final entry = state.entries
+        .where((e) => e.id == widget.entryId)
+        .firstOrNull;
     if (entry != null) {
       _existingEntry = entry;
       _titleController.text = entry.title;
@@ -66,7 +68,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Entry'),
-        content: const Text('Are you sure you want to permanently delete this entry?'),
+        content: const Text(
+          'Are you sure you want to permanently delete this entry?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -106,14 +110,16 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           context.pop();
         }
         if (state.validationError != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.validationError!)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.validationError!)));
         }
       },
       builder: (context, state) {
         if (_isEditing && !_initialized && state.entries.isEmpty) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         return Scaffold(

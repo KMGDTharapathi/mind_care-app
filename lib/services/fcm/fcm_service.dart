@@ -10,11 +10,9 @@ class FCMService {
   final FirebaseMessaging _messaging;
   final FirebaseFirestore _firestore;
 
-  FCMService({
-    FirebaseMessaging? messaging,
-    FirebaseFirestore? firestore,
-  })  : _messaging = messaging ?? FirebaseMessaging.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  FCMService({FirebaseMessaging? messaging, FirebaseFirestore? firestore})
+    : _messaging = messaging ?? FirebaseMessaging.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Initialises FCM:
   /// - Requests notification permissions.
@@ -25,11 +23,7 @@ class FCMService {
   ///   a terminated state and applies the same navigation logic.
   Future<void> init({required GlobalKey<NavigatorState> navigatorKey}) async {
     try {
-      await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      await _messaging.requestPermission(alert: true, badge: true, sound: true);
     } catch (e) {
       debugPrint('FCMService: requestPermission failed: $e');
     }
@@ -126,10 +120,10 @@ class FCMService {
         .collection('fcm_tokens')
         .doc(token)
         .set({
-      'token': token,
-      'platform': Platform.operatingSystem,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+          'token': token,
+          'platform': Platform.operatingSystem,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 
   /// Retrieves the current FCM token and deletes its document from Firestore

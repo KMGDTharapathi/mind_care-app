@@ -19,8 +19,9 @@ class NotificationService {
       tz.initializeTimeZones();
     } catch (_) {}
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -28,8 +29,7 @@ class NotificationService {
     );
 
     await flutterLocalNotificationsPlugin.initialize(
-      const InitializationSettings(
-          android: androidSettings, iOS: iosSettings),
+      const InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         final context = navigatorKey.currentContext;
         if (context != null) GoRouter.of(context).go('/home');
@@ -38,27 +38,35 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(const AndroidNotificationChannel(
-          _channelId,
-          _channelName,
-          importance: Importance.high,
-        ));
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _channelId,
+            _channelName,
+            importance: Importance.high,
+          ),
+        );
   }
 
   static Future<bool> requestPermissions() async {
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin != null) {
       return await androidPlugin.requestNotificationsPermission() ?? false;
     }
     final iosPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (iosPlugin != null) {
       return await iosPlugin.requestPermissions(
-              alert: true, badge: true, sound: true) ??
+            alert: true,
+            badge: true,
+            sound: true,
+          ) ??
           false;
     }
     return true;
@@ -120,7 +128,13 @@ class NotificationService {
     final now = tz.TZDateTime.now(tz.local);
     // Dart weekday: 1=Mon…7=Sun — same as our convention
     var candidate = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day, time.hour, time.minute);
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      time.hour,
+      time.minute,
+    );
 
     // Advance until we hit the right weekday
     while (candidate.weekday != weekday || candidate.isBefore(now)) {

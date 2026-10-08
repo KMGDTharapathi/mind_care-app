@@ -8,7 +8,7 @@ class FirestoreDoctorService {
   final FirebaseFirestore _firestore;
 
   FirestoreDoctorService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Returns all verified doctors from Firestore, sorted by availability
   /// (available first) then by name.
@@ -22,39 +22,38 @@ class FirestoreDoctorService {
         .where('is_verified', isEqualTo: true)
         .get();
 
-    final doctors = snapshot.docs
-        .where((doc) => doc.id != '__seed_meta__')
-        .map((doc) {
-          final data = doc.data();
+    final doctors = snapshot.docs.where((doc) => doc.id != '__seed_meta__').map(
+      (doc) {
+        final data = doc.data();
 
-          // Merge address/clinicHours from seed data if missing in Firestore
-          String address = data['address'] as String? ?? '';
-          if (address.isEmpty) {
-            final match = kRealDoctors
-                .where((s) => s['name'] == data['name'])
-                .firstOrNull;
-            if (match != null) {
-              address = match['address'] as String? ?? '';
-            }
+        // Merge address/clinicHours from seed data if missing in Firestore
+        String address = data['address'] as String? ?? '';
+        if (address.isEmpty) {
+          final match = kRealDoctors
+              .where((s) => s['name'] == data['name'])
+              .firstOrNull;
+          if (match != null) {
+            address = match['address'] as String? ?? '';
           }
+        }
 
-          final specialization =
-              data['specialization'] as String? ?? 'healthcare';
-          final type = _specializationToType(specialization);
+        final specialization =
+            data['specialization'] as String? ?? 'healthcare';
+        final type = _specializationToType(specialization);
 
-          return NearbyDoctor(
-            id: doc.id,
-            name: data['name'] as String? ?? 'Unknown',
-            address: address,
-            lat: 0.0,
-            lng: 0.0,
-            distanceKm: 0.0,
-            phone: null,
-            website: null,
-            type: type,
-          );
-        })
-        .toList();
+        return NearbyDoctor(
+          id: doc.id,
+          name: data['name'] as String? ?? 'Unknown',
+          address: address,
+          lat: 0.0,
+          lng: 0.0,
+          distanceKm: 0.0,
+          phone: null,
+          website: null,
+          type: type,
+        );
+      },
+    ).toList();
 
     // Available doctors first, then alphabetical
     doctors.sort((a, b) {

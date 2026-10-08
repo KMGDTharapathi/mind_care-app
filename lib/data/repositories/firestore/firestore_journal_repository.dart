@@ -2,10 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mind_care_app/data/models/journal_entry.dart';
 
 class FirestoreJournalRepository {
-  FirestoreJournalRepository({
-    FirebaseFirestore? firestore,
-    required this.uid,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreJournalRepository({FirebaseFirestore? firestore, required this.uid})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
   final String uid;

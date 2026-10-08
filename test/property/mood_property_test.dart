@@ -29,11 +29,12 @@ class InMemoryMoodRepository implements MoodRepository {
   @override
   Future<List<MoodEntry>> getLast7Days() async {
     final now = DateTime.now();
-    final cutoff = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 6));
-    return _store.values
-        .where((e) => !e.timestamp.isBefore(cutoff))
-        .toList()
+    final cutoff = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 6));
+    return _store.values.where((e) => !e.timestamp.isBefore(cutoff)).toList()
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
   }
 
@@ -72,39 +73,57 @@ void main() {
   group('Property 1: Mood entry round-trip persistence', () {
     // Feature: mind-care-app, Property 1: Mood entry round-trip persistence
     // Validates: Requirements 3.2
-    test('saving a MoodEntry and retrieving today\'s entry returns same mood and note', () async {
-      final rng = Random(42);
-      final repo = InMemoryMoodRepository();
+    test(
+      'saving a MoodEntry and retrieving today\'s entry returns same mood and note',
+      () async {
+        final rng = Random(42);
+        final repo = InMemoryMoodRepository();
 
-      for (int i = 0; i < 100; i++) {
-        repo.clear();
+        for (int i = 0; i < 100; i++) {
+          repo.clear();
 
-        final mood = _randomMoodType(rng);
-        final hasNote = rng.nextBool();
-        final noteLength = hasNote ? rng.nextInt(200) + 1 : 0;
-        final note = hasNote ? _randomString(rng, noteLength) : null;
-        final now = DateTime.now();
-        final timestamp = DateTime(now.year, now.month, now.day,
-            rng.nextInt(24), rng.nextInt(60), rng.nextInt(60));
+          final mood = _randomMoodType(rng);
+          final hasNote = rng.nextBool();
+          final noteLength = hasNote ? rng.nextInt(200) + 1 : 0;
+          final note = hasNote ? _randomString(rng, noteLength) : null;
+          final now = DateTime.now();
+          final timestamp = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            rng.nextInt(24),
+            rng.nextInt(60),
+            rng.nextInt(60),
+          );
 
-        final entry = MoodEntry(
-          id: 'test-$i',
-          mood: mood,
-          note: note,
-          timestamp: timestamp,
-        );
+          final entry = MoodEntry(
+            id: 'test-$i',
+            mood: mood,
+            note: note,
+            timestamp: timestamp,
+          );
 
-        await repo.saveMoodEntry(entry);
-        final retrieved = await repo.getTodayEntry();
+          await repo.saveMoodEntry(entry);
+          final retrieved = await repo.getTodayEntry();
 
-        expect(retrieved, isNotNull,
-            reason: 'Iteration $i: getTodayEntry should return the saved entry');
-        expect(retrieved!.mood, equals(mood),
-            reason: 'Iteration $i: mood should match');
-        expect(retrieved.note, equals(note),
-            reason: 'Iteration $i: note should match');
-      }
-    });
+          expect(
+            retrieved,
+            isNotNull,
+            reason: 'Iteration $i: getTodayEntry should return the saved entry',
+          );
+          expect(
+            retrieved!.mood,
+            equals(mood),
+            reason: 'Iteration $i: mood should match',
+          );
+          expect(
+            retrieved.note,
+            equals(note),
+            reason: 'Iteration $i: note should match',
+          );
+        }
+      },
+    );
   });
 
   group('Property 2: Mood note length validation', () {
@@ -130,13 +149,22 @@ void main() {
         await repo.saveMoodEntry(entry);
         final retrieved = await repo.getTodayEntry();
 
-        expect(retrieved, isNotNull,
-            reason: 'Iteration $i: entry should be stored');
-        expect(retrieved!.note, isNotNull,
-            reason: 'Iteration $i: note should not be null');
-        expect(retrieved.note!.length, lessThanOrEqualTo(200),
-            reason:
-                'Iteration $i: stored note length ${retrieved.note!.length} exceeds 200');
+        expect(
+          retrieved,
+          isNotNull,
+          reason: 'Iteration $i: entry should be stored',
+        );
+        expect(
+          retrieved!.note,
+          isNotNull,
+          reason: 'Iteration $i: note should not be null',
+        );
+        expect(
+          retrieved.note!.length,
+          lessThanOrEqualTo(200),
+          reason:
+              'Iteration $i: stored note length ${retrieved.note!.length} exceeds 200',
+        );
       }
     });
   });

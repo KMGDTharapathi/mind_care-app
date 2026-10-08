@@ -47,9 +47,7 @@ class _FindDoctorScreenState extends State<FindDoctorScreen> {
   void _navigateToDetail(BuildContext context, NearbyDoctor doctor) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => DoctorDetailScreen(doctor: doctor),
-      ),
+      MaterialPageRoute(builder: (_) => DoctorDetailScreen(doctor: doctor)),
     );
   }
 
@@ -123,9 +121,7 @@ class _FindDoctorScreenState extends State<FindDoctorScreen> {
                         selectedRadius: state.radiusKm,
                         onRadiusChanged: (km) => cubit.changeRadius(km),
                       ),
-                      Expanded(
-                        child: EmptyView(radiusKm: state.radiusKm),
-                      ),
+                      Expanded(child: EmptyView(radiusKm: state.radiusKm)),
                     ],
                   );
                 }
@@ -140,7 +136,10 @@ class _FindDoctorScreenState extends State<FindDoctorScreen> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(
-                            left: 16, right: 16, bottom: 4),
+                          left: 16,
+                          right: 16,
+                          bottom: 4,
+                        ),
                         child: Text(
                           '${state.totalFound} provider${state.totalFound == 1 ? '' : 's'} found',
                           style: TextStyle(
@@ -152,14 +151,15 @@ class _FindDoctorScreenState extends State<FindDoctorScreen> {
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
                           itemCount: state.doctors.length,
                           itemBuilder: (context, index) {
                             final doctor = state.doctors[index];
                             return DoctorCardWidget(
                               doctor: doctor,
-                              onTap: () =>
-                                  _navigateToDetail(context, doctor),
+                              onTap: () => _navigateToDetail(context, doctor),
                               onCallTap: doctor.phone != null
                                   ? () => _launchPhone(doctor.phone!)
                                   : null,
@@ -192,20 +192,12 @@ class _InitialHintView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.local_hospital_outlined,
-              size: 64,
-              color: _kTeal,
-            ),
+            Icon(Icons.local_hospital_outlined, size: 64, color: _kTeal),
             SizedBox(height: 16),
             Text(
               'Search by district or use GPS to find nearby mental health professionals',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey,
-                height: 1.5,
-              ),
+              style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.5),
             ),
           ],
         ),

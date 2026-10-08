@@ -55,8 +55,8 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     context.read<AuthBloc>().add(
-          AuthSignInWithEmail(email: email, password: password),
-        );
+      AuthSignInWithEmail(email: email, password: password),
+    );
   }
 
   void _onGoogleSignIn() {
@@ -189,11 +189,11 @@ class _Header extends StatelessWidget {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
+            color: Colors.white.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryLight.withOpacity(0.3),
+                color: AppColors.primaryLight.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -255,9 +255,12 @@ class _EmailField extends StatelessWidget {
         labelText: 'Email',
         hintText: 'you@example.com',
         errorText: errorText,
-        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryDark),
+        prefixIcon: const Icon(
+          Icons.email_outlined,
+          color: AppColors.primaryDark,
+        ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.9),
+        fillColor: Colors.white.withValues(alpha: 0.9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -276,7 +279,10 @@ class _EmailField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryDark,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -311,16 +317,21 @@ class _PasswordField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: 'Password',
         errorText: errorText,
-        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryDark),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          color: AppColors.primaryDark,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
-            obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            obscureText
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
             color: AppColors.textSecondaryDark,
           ),
           onPressed: onToggleVisibility,
         ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.9),
+        fillColor: Colors.white.withValues(alpha: 0.9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -339,7 +350,10 @@ class _PasswordField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryDark,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -425,18 +439,15 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.textDark.withOpacity(0.2))),
+        Expanded(child: Divider(color: AppColors.textDark.withValues(alpha: 0.2))),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'or',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondaryDark,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondaryDark),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.textDark.withOpacity(0.2))),
+        Expanded(child: Divider(color: AppColors.textDark.withValues(alpha: 0.2))),
       ],
     );
   }
@@ -472,8 +483,8 @@ class _GoogleSignInButton extends StatelessWidget {
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textDark,
-          backgroundColor: Colors.white.withOpacity(0.9),
-          side: BorderSide(color: AppColors.textDark.withOpacity(0.2)),
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
+          side: BorderSide(color: AppColors.textDark.withValues(alpha: 0.2)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
           ),
@@ -493,10 +504,7 @@ class _CreateAccountLink extends StatelessWidget {
       children: [
         const Text(
           "Don't have an account?",
-          style: TextStyle(
-            color: AppColors.textSecondaryDark,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
         ),
         TextButton(
           onPressed: () => context.push(AppRouter.signUp),
@@ -517,7 +525,10 @@ class _CreateAccountLink extends StatelessWidget {
 // ── Guest Sign-In button ──────────────────────────────────────────────────────
 
 class _AnonymousSignInButton extends StatelessWidget {
-  const _AnonymousSignInButton({required this.isLoading, required this.onPressed});
+  const _AnonymousSignInButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
 
   final bool isLoading;
   final VoidCallback? onPressed;
@@ -537,14 +548,18 @@ class _AnonymousSignInButton extends StatelessWidget {
                   color: AppColors.primaryDark,
                 ),
               )
-            : const Icon(Icons.person_outline_rounded, size: 22, color: AppColors.primaryDark),
+            : const Icon(
+                Icons.person_outline_rounded,
+                size: 22,
+                color: AppColors.primaryDark,
+              ),
         label: const Text(
           'Continue as Guest',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryDark,
-          backgroundColor: Colors.white.withOpacity(0.9),
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
           side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),

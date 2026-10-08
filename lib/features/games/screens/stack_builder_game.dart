@@ -11,7 +11,8 @@ class StackBuilderGame extends StatefulWidget {
   State<StackBuilderGame> createState() => _StackBuilderGameState();
 }
 
-class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerProviderStateMixin {
+class _StackBuilderGameState extends State<StackBuilderGame>
+    with SingleTickerProviderStateMixin {
   bool _started = false;
   bool _gameOver = false;
   int _score = 0;
@@ -28,22 +29,46 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
 
   static const double _blockH = 38;
   static const double _baseW = 180;
-  static const _labels = ['Work', 'Rest', 'Fun', 'Sleep', 'Friends', 'Hobby', 'Exercise', 'Me Time'];  static const _colors = [
-    Color(0xFFEF5350), Color(0xFF42A5F5), Color(0xFF66BB6A),
-    Color(0xFFFFCA28), Color(0xFFAB47BC), Color(0xFF26C6DA),
-    Color(0xFFFF9800), Color(0xFF8D6E63),
+  static const _labels = [
+    'Work',
+    'Rest',
+    'Fun',
+    'Sleep',
+    'Friends',
+    'Hobby',
+    'Exercise',
+    'Me Time',
+  ];
+  static const _colors = [
+    Color(0xFFEF5350),
+    Color(0xFF42A5F5),
+    Color(0xFF66BB6A),
+    Color(0xFFFFCA28),
+    Color(0xFFAB47BC),
+    Color(0xFF26C6DA),
+    Color(0xFFFF9800),
+    Color(0xFF8D6E63),
   ];
 
   @override
   void initState() {
     super.initState();
-    _shakeCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
-    _shakeAnim = Tween<double>(begin: -8, end: 8).animate(
-        CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
+    _shakeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _shakeAnim = Tween<double>(
+      begin: -8,
+      end: 8,
+    ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
   }
 
   @override
-  void dispose() { _loop?.cancel(); _shakeCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _loop?.cancel();
+    _shakeCtrl.dispose();
+    super.dispose();
+  }
 
   void _startGame() {
     final size = MediaQuery.of(context).size;
@@ -55,7 +80,14 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
       _blocks = 0;
       _speed = 2.0;
       _movingRight = true;
-      _tower = [_Block(x: cx, width: _baseW, label: LanguageProvider.of(context).foundation, color: const Color(0xFF5D4037))];
+      _tower = [
+        _Block(
+          x: cx,
+          width: _baseW,
+          label: LanguageProvider.of(context).foundation,
+          color: const Color(0xFF5D4037),
+        ),
+      ];
       _falling = _newBlock(size.width);
       _fallingX = 0;
     });
@@ -65,8 +97,16 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
 
   List<String> _getLabels() {
     final s = LanguageProvider.of(context);
-    return [s.stackWork, s.stackRest, s.stackFun, s.stackSleep,
-            s.stackFriends, s.stackHobby, s.stackExercise, s.stackMeTime];
+    return [
+      s.stackWork,
+      s.stackRest,
+      s.stackFun,
+      s.stackSleep,
+      s.stackFriends,
+      s.stackHobby,
+      s.stackExercise,
+      s.stackMeTime,
+    ];
   }
 
   _Block _newBlock(double sw) {
@@ -91,7 +131,12 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
         _fallingX -= _speed;
         if (_fallingX <= 16) _movingRight = true;
       }
-      _falling = _Block(x: _fallingX, width: _falling.width, label: _falling.label, color: _falling.color);
+      _falling = _Block(
+        x: _fallingX,
+        width: _falling.width,
+        label: _falling.label,
+        color: _falling.color,
+      );
     });
   }
 
@@ -101,19 +146,31 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
     final prev = _tower.last;
     final overlap = _calcOverlap(_fallingX, _falling.width, prev.x, prev.width);
 
-    if (overlap <= 0) { _endGame(); return; }
+    if (overlap <= 0) {
+      _endGame();
+      return;
+    }
 
     final newX = max(_fallingX, prev.x);
     final newW = overlap;
 
     setState(() {
-      _tower.add(_Block(x: newX, width: newW, label: _falling.label, color: _falling.color));
+      _tower.add(
+        _Block(
+          x: newX,
+          width: newW,
+          label: _falling.label,
+          color: _falling.color,
+        ),
+      );
       _blocks++;
       _score += (newW / _baseW * 20).round();
       _speed = min(7.0, _speed + 0.12);
       if (newW < _baseW * 0.45) {
         _shaking = true;
-        _shakeCtrl.forward(from: 0).then((_) { _shakeCtrl.reverse(); });
+        _shakeCtrl.forward(from: 0).then((_) {
+          _shakeCtrl.reverse();
+        });
       }
       _falling = _newBlock(size.width);
       _fallingX = 0;
@@ -149,19 +206,30 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
         appBar: AppBar(
           backgroundColor: const Color(0xFF5BA8A0),
           foregroundColor: Colors.white,
-          title: Text('🏗️ Stack Builder  Blocks:$_blocks',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          title: Text(
+            '🏗️ Stack Builder  Blocks:$_blocks',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Center(child: Text('Score: $_score',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              child: Center(
+                child: Text(
+                  'Score: $_score',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
         body: LeafBackground(
           child: SafeArea(
-            child: _started ? (_gameOver ? _buildGameOver() : _buildGame()) : _buildIntro(),
+            child: _started
+                ? (_gameOver ? _buildGameOver() : _buildGame())
+                : _buildIntro(),
           ),
         ),
       ),
@@ -178,20 +246,45 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
           children: [
             const Text('🏗️', style: TextStyle(fontSize: 90)),
             const SizedBox(height: 16),
-            Text(s.gameStackTitle, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+            Text(
+              s.gameStackTitle,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
             const SizedBox(height: 12),
-            Text(s.stackInstructions,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF388E3C), height: 1.6)),
+            Text(
+              s.stackInstructions,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF388E3C),
+                height: 1.6,
+              ),
+            ),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => setState(() => _startGame()),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5BA8A0), foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                backgroundColor: const Color(0xFF5BA8A0),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 14,
+                ),
               ),
-              child: Text('${s.gameStackTitle}! 🏗️', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(
+                '${s.gameStackTitle}! 🏗️',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -222,11 +315,22 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
                   decoration: BoxDecoration(
                     color: _tower[i].color,
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: [BoxShadow(color: _tower[i].color.withOpacity(0.4), blurRadius: 4)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: _tower[i].color.withValues(alpha: 0.4),
+                        blurRadius: 4,
+                      ),
+                    ],
                   ),
                   child: Center(
-                    child: Text(_tower[i].label,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    child: Text(
+                      _tower[i].label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -240,28 +344,59 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
                 decoration: BoxDecoration(
                   color: _falling.color,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withOpacity(0.7), width: 2),
-                  boxShadow: [BoxShadow(color: _falling.color.withOpacity(0.5), blurRadius: 8)],
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _falling.color.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                    ),
+                  ],
                 ),
                 child: Center(
-                  child: Text(_falling.label,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: Text(
+                    _falling.label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ),
             ),
             // Tap button
             Positioned(
-              bottom: 20, left: 0, right: 0,
+              bottom: 20,
+              left: 0,
+              right: 0,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF5BA8A0),
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [BoxShadow(color: const Color(0xFF5BA8A0).withOpacity(0.4), blurRadius: 10)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF5BA8A0).withValues(alpha: 0.4),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
-                  child: Text(LanguageProvider.of(context).tapToDrop,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 15)),
+                  child: Text(
+                    LanguageProvider.of(context).tapToDrop,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -273,37 +408,64 @@ class _StackBuilderGameState extends State<StackBuilderGame> with SingleTickerPr
 
   Widget _buildGameOver() {
     final s = LanguageProvider.of(context);
-    final msg = _blocks >= 15 ? s.masterBuilder
-        : _blocks >= 8 ? s.greatStack
+    final msg = _blocks >= 15
+        ? s.masterBuilder
+        : _blocks >= 8
+        ? s.greatStack
         : s.towerFellMsg;
     return Center(
       child: Container(
         margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.92),
+          color: Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(28),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('🏗️💥', style: TextStyle(fontSize: 72)),
-            Text(s.towerFell, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+            Text(
+              s.towerFell,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(msg, textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, color: Color(0xFF388E3C), height: 1.5)),
+            Text(
+              msg,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF388E3C),
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('${s.blocks}: $_blocks  |  ${s.score}: $_score',
-                style: const TextStyle(fontSize: 16, color: Colors.black54)),
+            Text(
+              '${s.blocks}: $_blocks  |  ${s.score}: $_score',
+              style: const TextStyle(fontSize: 16, color: Colors.black54),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => setState(() => _startGame()),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5BA8A0), foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                backgroundColor: const Color(0xFF5BA8A0),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
               ),
-              child: Text('${s.buildAgain} 🏗️', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                '${s.buildAgain} 🏗️',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -316,5 +478,10 @@ class _Block {
   final double x, width;
   final String label;
   final Color color;
-  _Block({required this.x, required this.width, required this.label, required this.color});
+  _Block({
+    required this.x,
+    required this.width,
+    required this.label,
+    required this.color,
+  });
 }
