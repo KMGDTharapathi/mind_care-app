@@ -347,17 +347,6 @@ class WillowApiService {
     return true;
   }
 
-  static String? _extractText(Map<String, dynamic> data) {
-    final candidates = data['candidates'] as List<dynamic>?;
-    if (candidates == null || candidates.isEmpty) return null;
-    final first = candidates.first as Map<String, dynamic>?;
-    final content = first?['content'] as Map<String, dynamic>?;
-    final parts = content?['parts'] as List<dynamic>?;
-    if (parts == null || parts.isEmpty) return null;
-    final text = (parts.first as Map<String, dynamic>)['text'] as String?;
-    return text;
-  }
-
   static String _normalize(String text) {
     return text
         .toLowerCase()
@@ -606,17 +595,6 @@ class WillowApiService {
     }
     return hits;
   }
-
-  static const String _systemPrompt =
-      "You are 'Willow', a warm, caring mental-health support assistant for Sri Lankan "
-      "students and young people. ALWAYS reply in Sinhala unless the user writes in another "
-      "language, in which case match their language. Keep answers short and human: 2-5 "
-      "short sentences. Never diagnose, do not prescribe medication, do not sound clinical. "
-      "Acknowledge the person's feelings, normalize them, offer one small concrete step for "
-      "today, and invite them to keep talking. If the message involves self-harm, suicide, "
-      "or being in danger, urge immediate professional help and mention the free national "
-      "helplines: 1926 (mental health helpline) and 1929 (National Child Protection "
-      "Authority), and suggest going to the nearest hospital.";
 
   static const String _crisisReply =
       "ඔයා දැන් ගොඩක් දුෂ්කර තත්වයක් පසු කරනවා. ඔයා තනිවම මේ ජීවිතේ "

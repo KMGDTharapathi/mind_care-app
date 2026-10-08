@@ -347,7 +347,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appUserName.value = null;
       // Small delay to ensure prefs are flushed before splash reads them
       await Future.delayed(const Duration(milliseconds: 100));
-      if (mounted) context.go('/splash');
+      if (context.mounted) context.go('/splash');
     }
   }
 }

@@ -56,7 +56,7 @@ Future<void> main() async {
 
   // Start the app immediately — router shows /splash at once.
   runApp(
-    MindCareApp(initFuture: Future.value(_InitResult(firebaseOk: firebaseOk))),
+    MindCareApp(initFuture: Future.value(InitResult(firebaseOk: firebaseOk))),
   );
 
   // Defer heavy init until after the first frame is painted.
@@ -66,14 +66,14 @@ Future<void> main() async {
     Future.delayed(const Duration(milliseconds: 100), () {
       _heavyInit(firebaseOk).catchError((e) {
         debugPrint('_heavyInit error: $e');
-        return _InitResult(firebaseOk: firebaseOk);
+        return InitResult(firebaseOk: firebaseOk);
       });
     });
   });
 }
 
 /// All heavy init — called after first frame is painted.
-Future<_InitResult> _heavyInit(bool firebaseOk) async {
+Future<InitResult> _heavyInit(bool firebaseOk) async {
   // Yield immediately so the first frame renders before any heavy work
   await Future.delayed(const Duration(milliseconds: 50));
 
@@ -83,6 +83,7 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
   );
 
   bool firebaseReady = false;
+  firebaseReady = firebaseOk;
 
   FlutterError.onError = (details) {
     if (firebaseReady) {
@@ -171,23 +172,23 @@ Future<_InitResult> _heavyInit(bool firebaseOk) async {
     }),
   );
 
-  return _InitResult(
+  return InitResult(
     firebaseOk: firebaseOk,
     onboardingComplete: onboardingComplete,
   );
 }
 
-class _InitResult {
+class InitResult {
   final bool firebaseOk;
   final bool onboardingComplete;
-  const _InitResult({
+  const InitResult({
     required this.firebaseOk,
     this.onboardingComplete = false,
   });
 }
 
 class MindCareApp extends StatefulWidget {
-  final Future<_InitResult> initFuture;
+  final Future<InitResult> initFuture;
   const MindCareApp({super.key, required this.initFuture});
 
   @override
@@ -204,7 +205,7 @@ class _MindCareAppState extends State<MindCareApp> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_InitResult>(
+    return FutureBuilder<InitResult>(
       future: widget.initFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {

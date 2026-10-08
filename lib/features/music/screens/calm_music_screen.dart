@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -395,7 +394,6 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
 
   void _reorderUserTracks(int oldIndex, int newIndex) {
     setState(() {
-      if (newIndex > oldIndex) newIndex--;
       final item = _userTracks.removeAt(oldIndex);
       _userTracks.insert(newIndex, item);
     });
@@ -405,13 +403,6 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
   void _editUserTrack(int userIndex, MusicTrack updated) {
     setState(() => _userTracks[userIndex] = updated);
     _saveUserTracks();
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  String _fmt(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
   }
 
   // ── Back navigation ────────────────────────────────────────────────────────
@@ -741,7 +732,7 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
           child: ReorderableListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             itemCount: _userTracks.length,
-            onReorder: _reorderUserTracks,
+            onReorderItem: _reorderUserTracks,
             proxyDecorator: (child, index, animation) => Material(
               color: Colors.transparent,
               elevation: 8,
@@ -946,7 +937,10 @@ class _CalmMusicScreenState extends State<CalmMusicScreen>
         decoration: BoxDecoration(
           color: track.color.withValues(alpha: isDark ? 0.28 : 0.12),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: track.color.withValues(alpha: 0.4), width: 1.5),
+          border: Border.all(
+            color: track.color.withValues(alpha: 0.4),
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
@@ -1091,7 +1085,9 @@ class _TrackTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: isCurrent
                 ? track.color.withValues(alpha: isDark ? 0.22 : 0.1)
-                : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
+                : (isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isCurrent
@@ -1159,7 +1155,9 @@ class _TrackTile extends StatelessWidget {
                               vertical: 1,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF5BA8A0).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFF5BA8A0,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -1222,7 +1220,9 @@ class _UserTrackTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: isCurrent
                 ? track.color.withValues(alpha: isDark ? 0.22 : 0.1)
-                : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
+                : (isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isCurrent

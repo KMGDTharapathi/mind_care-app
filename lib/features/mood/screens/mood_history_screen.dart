@@ -6,26 +6,6 @@ import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
 import 'package:mind_care_app/data/repositories/mood_repository.dart';
 
-/// Maps MoodType to a numeric value for the chart Y-axis.
-double _moodValue(MoodType mood) {
-  switch (mood) {
-    case MoodType.sad:
-      return 1;
-    case MoodType.anxious:
-      return 2;
-    case MoodType.tired:
-      return 2;
-    case MoodType.frustrated:
-      return 3;
-    case MoodType.calm:
-      return 4;
-    case MoodType.happy:
-      return 5;
-    case MoodType.excited:
-      return 6;
-  }
-}
-
 String _moodEmoji(MoodType mood) {
   switch (mood) {
     case MoodType.happy:

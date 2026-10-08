@@ -1230,42 +1230,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _StatBox extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color iconColor;
-  const _StatBox({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: iconColor, size: 22),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-            color: _kDark,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-        ),
-      ],
-    );
-  }
-}
-
 class _ErrorState extends StatelessWidget {
   final AppStrings strings;
   final VoidCallback onRetry;

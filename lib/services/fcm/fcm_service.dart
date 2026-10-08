@@ -34,7 +34,7 @@ class FCMService {
         final title = message.notification?.title ?? '';
         final body = message.notification?.body ?? '';
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Column(

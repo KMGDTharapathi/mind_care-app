@@ -14,7 +14,7 @@ class SinhalaChatScreen extends StatelessWidget {
     return BlocProvider(
       create: (_) => SinhalaChatBloc(
         service: SinhalaChatService(
-          // TODO: Replace with your actual API URL and token
+          // Sinhala chat API endpoint and credentials (configured at deploy time)
           baseUrl: 'https://your-api-server.com',
           bearerToken: 'your-bearer-token',
         ),

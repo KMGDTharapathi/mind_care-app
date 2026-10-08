@@ -4,7 +4,7 @@ import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/main.dart'
-    show hiveReadyCompleter, appUserName, splashSavedName, splashSavedLang;
+    show hiveReadyCompleter, appUserName, splashSavedName;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

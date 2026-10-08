@@ -236,6 +236,6 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
   /// Returns `true` when the device has an active network connection.
   Future<bool> _hasConnectivity() async {
     final result = await _connectivity.checkConnectivity();
-    return result != ConnectivityResult.none;
+    return result.any((r) => r != ConnectivityResult.none);
   }
 }

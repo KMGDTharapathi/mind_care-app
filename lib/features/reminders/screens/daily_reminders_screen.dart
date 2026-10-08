@@ -1,6 +1,7 @@
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 
@@ -137,7 +138,7 @@ class _PushTab extends StatelessWidget {
                   ),
                   Switch.adaptive(
                     value: state.notificationsEnabled,
-                    activeColor: _kTeal,
+                    activeThumbColor: _kTeal,
                     onChanged: (v) => _toggle(context, cubit, v),
                   ),
                 ],
@@ -371,13 +372,6 @@ class _CalendarTabState extends State<_CalendarTab> {
   int _selectedTypeIndex = 0;
   bool _isRecurring = false;
 
-  static const _typeKeys = [
-    'moodCheckin',
-    'breathing',
-    'meditation',
-    'journal',
-    'custom',
-  ];
   static const _typeIcons = [
     Icons.favorite_border_rounded,
     Icons.air_rounded,
@@ -393,7 +387,7 @@ class _CalendarTabState extends State<_CalendarTab> {
     Color(0xFF78909C),
   ];
 
-  List<String> _typeLabels(s) => [
+  List<String> _typeLabels(AppStrings s) => [
     s.typeMoodCheckin,
     s.typeBreathing,
     s.typeMeditation,
@@ -618,7 +612,7 @@ class _CalendarTabState extends State<_CalendarTab> {
               ),
               Switch.adaptive(
                 value: _isRecurring,
-                activeColor: const Color(0xFF7986CB),
+                activeThumbColor: const Color(0xFF7986CB),
                 onChanged: (v) => setState(() => _isRecurring = v),
               ),
             ],

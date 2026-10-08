@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
-import 'package:mind_care_app/data/models/mood_entry.dart';
 import 'package:mind_care_app/features/mood/bloc/mood_bloc.dart';
 
 class MoodTrackerScreen extends StatelessWidget {
@@ -94,26 +93,6 @@ class _AppBar extends StatelessWidget {
   }
 }
 
-// ── Mood option data ──────────────────────────────────────────────────────────
-
-class _MoodOption {
-  final MoodType type;
-  final String emoji;
-  final String label;
-
-  const _MoodOption(this.type, this.emoji, this.label);
-}
-
-const _moodOptions = [
-  _MoodOption(MoodType.happy, '😊', 'Happy'),
-  _MoodOption(MoodType.sad, '😔', 'Sad'),
-  _MoodOption(MoodType.anxious, '😰', 'Anxious'),
-  _MoodOption(MoodType.frustrated, '😤', 'Frustrated'),
-  _MoodOption(MoodType.calm, '😌', 'Calm'),
-  _MoodOption(MoodType.excited, '🤩', 'Excited'),
-  _MoodOption(MoodType.tired, '😴', 'Tired'),
-];
-
 // ── Mood level selector ───────────────────────────────────────────────────────
 
 class _MoodGrid extends StatelessWidget {
@@ -147,7 +126,9 @@ class _MoodGrid extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _getLevelColor(state.selectedLevel!).withValues(alpha: 0.12),
+                  color: _getLevelColor(
+                    state.selectedLevel!,
+                  ).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _getLevelColor(

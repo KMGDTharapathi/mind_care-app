@@ -400,7 +400,7 @@ class _FeatureCard extends StatelessWidget {
         : (feature.color == Colors.white.withValues(alpha: 0.85) ||
               feature.color == const Color(0xFFFFF8E1) ||
               feature.color == const Color(0xFFD4EAD0) ||
-              feature.color.alpha < 230)
+              feature.color.a < (230 / 255))
         ? const Color(0xFF1A4A4A)
         : Colors.white;
 

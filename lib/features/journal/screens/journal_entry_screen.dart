@@ -83,6 +83,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         ],
       ),
     ).then((confirmed) {
+      if (!mounted) return;
       if (confirmed == true && widget.entryId != null) {
         context.read<JournalBloc>().add(DeleteEntry(widget.entryId!));
       }

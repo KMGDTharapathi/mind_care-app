@@ -29,16 +29,6 @@ class _StackBuilderGameState extends State<StackBuilderGame>
 
   static const double _blockH = 38;
   static const double _baseW = 180;
-  static const _labels = [
-    'Work',
-    'Rest',
-    'Fun',
-    'Sleep',
-    'Friends',
-    'Hobby',
-    'Exercise',
-    'Me Time',
-  ];
   static const _colors = [
     Color(0xFFEF5350),
     Color(0xFF42A5F5),
