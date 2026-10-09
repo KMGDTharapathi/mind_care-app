@@ -2,14 +2,6 @@ import 'dart:math';
 import '../models/chat_message.dart';
 import 'willow_api_service.dart';
 
-/// A Willow chat reply: the message text and any suggested wellness features.
-class WillowReply {
-  final String text;
-  final List<String> recommendations;
-
-  const WillowReply({required this.text, this.recommendations = const []});
-}
-
 class WillowEngine {
   final bool isSinhala;
   WillowEngine({required this.isSinhala});
@@ -23,27 +15,17 @@ class WillowEngine {
     return "Hey! 🌿 I'm Willow.\n\nHow are you doing today? Feel free to share whatever's on your mind — I'm here and I'm listening. 💚";
   }
 
-  Future<WillowReply> respond(
-    ChatMessage message, {
-    List<WillowTurn> turns = const [],
-  }) async {
+  Future<String> respond(ChatMessage message) async {
     if (message.type != MessageType.text) {
-      return WillowReply(text: await _localRespond(message));
+      return _localRespond(message);
     }
     if (WillowApiService.isConfigured) {
-      final apiResponse =
-          await WillowApiService.chat(message.content, turns: turns);
-      if (apiResponse != null && apiResponse.text.isNotEmpty) {
-        // Recommendations come only from the service, and only when the reply
-        // actually suggests one (crisis, or a topic raised for the first time).
-        // Never auto-fill chips for every message.
-        return WillowReply(
-          text: apiResponse.text,
-          recommendations: apiResponse.recommendations,
-        );
+      final apiResponse = await WillowApiService.chat(message.content);
+      if (apiResponse != null && apiResponse.isNotEmpty) {
+        return apiResponse;
       }
     }
-    return WillowReply(text: await _localRespond(message));
+    return _localRespond(message);
   }
 
   Future<String> _localRespond(ChatMessage message) async {

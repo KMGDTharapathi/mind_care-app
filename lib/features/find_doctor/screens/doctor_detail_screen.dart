@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../counsellor/widgets/book_appointment_sheet.dart';
 import '../models/nearby_doctor.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
@@ -121,47 +120,17 @@ class DoctorDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // ── Book Appointment button ──────────────────────────────────
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.calendar_today_rounded),
-                label: const Text('Book Appointment'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTeal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => BookAppointmentSheet(
-                      doctorId: doctor.id,
-                      doctorName: doctor.name,
-                      doctorSpecialization: doctor.type,
-                      doctorHospital: doctor.address,
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-
             // ── Get Directions button ────────────────────────────────────
             Semantics(
               label: 'Get directions to ${doctor.name}',
               child: SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.directions_outlined, color: _kTeal),
-                  label: const Text('Get Directions', style: TextStyle(color: _kTeal)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: _kTeal, width: 1.5),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.directions_outlined),
+                  label: const Text('Get Directions'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kTeal,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

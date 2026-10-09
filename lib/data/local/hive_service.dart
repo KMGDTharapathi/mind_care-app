@@ -10,13 +10,11 @@ class HiveService {
   static const String _moodEntriesBox = 'mood_entries';
   static const String _journalEntriesBox = 'journal_entries';
   static const String _bookmarksBox = 'bookmarks';
-  static const String chatMessagesBox = 'chat_messages';
 
   static Box<MoodEntry>? _moodBox;
   static Box<JournalEntry>? _journalBox;
   static Box<String>? _bookmarksBox_;
   static Box<WriteQueueEntry>? _writeQueueBox;
-  static Box<ChatMessage>? _chatBox;
 
   static Box<MoodEntry> get moodEntries {
     assert(_moodBox != null && _moodBox!.isOpen, 'HiveService not initialized');
@@ -45,14 +43,6 @@ class HiveService {
       'HiveService not initialized',
     );
     return _writeQueueBox!;
-  }
-
-  static Box<ChatMessage> get chatMessages {
-    assert(
-      _chatBox != null && _chatBox!.isOpen,
-      'HiveService not initialized',
-    );
-    return _chatBox!;
   }
 
   static Future<void> init() async {
@@ -94,13 +84,11 @@ class HiveService {
       Hive.openBox<JournalEntry>(_journalEntriesBox),
       Hive.openBox<String>(_bookmarksBox),
       Hive.openBox<WriteQueueEntry>('write_queue'),
-      Hive.openBox<ChatMessage>(chatMessagesBox),
     ]);
     _moodBox = results[0] as Box<MoodEntry>;
     _journalBox = results[1] as Box<JournalEntry>;
     _bookmarksBox_ = results[2] as Box<String>;
     _writeQueueBox = results[3] as Box<WriteQueueEntry>;
-    _chatBox = results[4] as Box<ChatMessage>;
   }
 
   static Future<void> close() async {

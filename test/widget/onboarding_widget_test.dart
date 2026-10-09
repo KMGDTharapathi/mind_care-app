@@ -22,10 +22,6 @@ void main() {
           path: '/home',
           builder: (_, __) => const Scaffold(body: Text('Home')),
         ),
-        GoRoute(
-          path: '/language-select',
-          builder: (_, __) => const Scaffold(body: Text('Language')),
-        ),
       ],
     );
     return MaterialApp.router(routerConfig: router);
@@ -39,30 +35,28 @@ void main() {
       expect(find.text('MindCare'), findsOneWidget);
     });
 
-testWidgets('tapping Next moves to the name input page', (tester) async {
-    await tester.pumpWidget(buildOnboardingScreen());
-    await tester.pumpAndSettle();
+    testWidgets('swiping to page 2 updates dot indicator', (tester) async {
+      await tester.pumpWidget(buildOnboardingScreen());
+      await tester.pumpAndSettle();
 
-    // Navigation is button-driven, so the page advances via the Next button.
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
+      // Swipe left to go to page 2
+      await tester.drag(find.byType(PageView), const Offset(-400, 0));
+      await tester.pumpAndSettle();
 
-    // Page 2 should show the name prompt
-    expect(find.text('Who am I chatting with?'), findsOneWidget);
-  });
+      // Page 2 should show "Track Your Mood"
+      expect(find.text('Track Your Mood'), findsOneWidget);
+    });
 
     testWidgets('"Get Started" button is visible on last page', (tester) async {
       await tester.pumpWidget(buildOnboardingScreen());
       await tester.pumpAndSettle();
 
-      // Go to page 2
-      await tester.tap(find.text('Next'));
+      // Swipe to page 2
+      await tester.drag(find.byType(PageView), const Offset(-400, 0));
       await tester.pumpAndSettle();
 
-      // Go to page 3 (name page advances once a name is entered)
-      await tester.enterText(find.byType(TextField), 'Test');
-      await tester.pump();
-      await tester.tap(find.text('Continue'));
+      // Swipe to page 3
+      await tester.drag(find.byType(PageView), const Offset(-400, 0));
       await tester.pumpAndSettle();
 
       // "Get Started" button should be visible
@@ -74,19 +68,15 @@ testWidgets('tapping Next moves to the name input page', (tester) async {
       await tester.pumpWidget(buildOnboardingScreen());
       await tester.pumpAndSettle();
 
-      // Go to page 2
-      await tester.tap(find.text('Next'));
+      // Navigate to last page
+      await tester.drag(find.byType(PageView), const Offset(-400, 0));
       await tester.pumpAndSettle();
-
-      // Go to page 3
-      await tester.enterText(find.byType(TextField), 'Test');
-      await tester.pump();
-      await tester.tap(find.text('Continue'));
+      await tester.drag(find.byType(PageView), const Offset(-400, 0));
       await tester.pumpAndSettle();
 
       // Tap "Get Started"
       await tester.tap(find.text('Get Started'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Verify onboarding complete was set in SharedPreferences
       final prefs = await SharedPreferences.getInstance();

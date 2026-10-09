@@ -4,9 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gal/gal.dart';
 import 'package:mind_care_app/features/painting/models/coloring_page.dart';
 
 import 'canvas_painter.dart';
@@ -63,8 +61,6 @@ class _PaintStudioState extends State<PaintStudio> {
   // Strokes stored in canvas-space (0..800)
   final List<Stroke> _strokes = [];
   final List<List<Stroke>> _undoStack = [];
-  final List<List<Stroke>> _redoStack = [];
-  final _exportKey = GlobalKey();
   Stroke? _current;
 
   // Shapes stored in render-space (widget pixels)
@@ -184,10 +180,7 @@ class _PaintStudioState extends State<PaintStudio> {
 
   // ── Draw gestures ──────────────────────────────────────────────────────────
 
-  void _saveUndo() {
-    _undoStack.add(List.from(_strokes));
-    _redoStack.clear();
-  }
+  void _saveUndo() => _undoStack.add(List.from(_strokes));
 
   void _onPanStart(DragStartDetails d) {
     if (_tool == ToolMode.bucket) return;
@@ -306,20 +299,9 @@ class _PaintStudioState extends State<PaintStudio> {
   void _undo() {
     if (_undoStack.isEmpty) return;
     setState(() {
-      _redoStack.add(List.from(_strokes));
       _strokes
         ..clear()
         ..addAll(_undoStack.removeLast());
-    });
-  }
-
-  void _redo() {
-    if (_redoStack.isEmpty) return;
-    setState(() {
-      _undoStack.add(List.from(_strokes));
-      _strokes
-        ..clear()
-        ..addAll(_redoStack.removeLast());
     });
   }
 
@@ -329,37 +311,6 @@ class _PaintStudioState extends State<PaintStudio> {
       _strokes.clear();
       _shapes.clear();
     });
-  }
-
-  Future<void> _export() async {
-    final ctx = _exportKey.currentContext;
-    final boundary =
-        ctx?.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary == null) return;
-    try {
-      final image = await boundary.toImage(pixelRatio: 2.0);
-      final byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      image.dispose();
-      if (byteData == null) return;
-      await Gal.putImageBytes(byteData.buffer.asUint8List());
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Saved to gallery'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Export failed: $e'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -374,9 +325,7 @@ class _PaintStudioState extends State<PaintStudio> {
             _TopBar(
               onBack: () => Navigator.of(context).pop(),
               onUndo: _undoStack.isNotEmpty ? _undo : null,
-              onRedo: _redoStack.isNotEmpty ? _redo : null,
               onClear: _clear,
-              onExport: _export,
             ),
             _BrushRow(
               brush: _brush,
@@ -440,28 +389,25 @@ class _PaintStudioState extends State<PaintStudio> {
                   _renderSize = Size(box.maxWidth, box.maxHeight);
                   return Stack(
                     children: [
-                      RepaintBoundary(
-                        key: _exportKey,
-                        child: GestureDetector(
-                          onTapUp: _onTapUp,
-                          onPanStart: _onPanStart,
-                          onPanUpdate: _onPanUpdate,
-                          onPanEnd: _onPanEnd,
-                          child: CustomPaint(
-                            painter: CanvasPainter(
-                              mandala: _mandalaImage,
-                              strokes: _strokes,
-                              current: _current,
-                              shapes: _shapes,
-                              bgColor: _bgColor,
-                              bgGradient: _bgGradient,
-                              bgType: _bgType,
-                              renderSize: _renderSize,
-                            ),
-                            child: SizedBox(
-                              width: box.maxWidth,
-                              height: box.maxHeight,
-                            ),
+                      GestureDetector(
+                        onTapUp: _onTapUp,
+                        onPanStart: _onPanStart,
+                        onPanUpdate: _onPanUpdate,
+                        onPanEnd: _onPanEnd,
+                        child: CustomPaint(
+                          painter: CanvasPainter(
+                            mandala: _mandalaImage,
+                            strokes: _strokes,
+                            current: _current,
+                            shapes: _shapes,
+                            bgColor: _bgColor,
+                            bgGradient: _bgGradient,
+                            bgType: _bgType,
+                            renderSize: _renderSize,
+                          ),
+                          child: SizedBox(
+                            width: box.maxWidth,
+                            height: box.maxHeight,
                           ),
                         ),
                       ),
@@ -543,7 +489,13 @@ class _PaintStudioState extends State<PaintStudio> {
           },
         );
       case BottomTab.export:
-        return _ExportPanel(onExport: _export);
+        return _ExportPanel(
+          onExport: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Export coming soon'),
+                behavior: SnackBarBehavior.floating),
+          ),
+        );
     }
   }
 }

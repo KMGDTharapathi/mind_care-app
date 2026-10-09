@@ -16,11 +16,11 @@ abstract class MoodEvent extends Equatable {
 }
 
 class MoodSelected extends MoodEvent {
-  final int level;
-  const MoodSelected(this.level);
+  final MoodType mood;
+  const MoodSelected(this.mood);
 
   @override
-  List<Object?> get props => [level];
+  List<Object?> get props => [mood];
 }
 
 class NoteChanged extends MoodEvent {
@@ -38,14 +38,14 @@ class MoodSubmitted extends MoodEvent {
 // ── State ─────────────────────────────────────────────────────────────────────
 
 class MoodState extends Equatable {
-  final int? selectedLevel;
+  final MoodType? selectedMood;
   final String note;
   final bool isSubmitting;
   final bool isSubmitted;
   final String? validationError;
 
   const MoodState({
-    this.selectedLevel,
+    this.selectedMood,
     this.note = '',
     this.isSubmitting = false,
     this.isSubmitted = false,
@@ -53,8 +53,8 @@ class MoodState extends Equatable {
   });
 
   MoodState copyWith({
-    int? selectedLevel,
-    bool clearSelectedLevel = false,
+    MoodType? selectedMood,
+    bool clearSelectedMood = false,
     String? note,
     bool? isSubmitting,
     bool? isSubmitted,
@@ -62,9 +62,9 @@ class MoodState extends Equatable {
     bool clearValidationError = false,
   }) {
     return MoodState(
-      selectedLevel: clearSelectedLevel
+      selectedMood: clearSelectedMood
           ? null
-          : (selectedLevel ?? this.selectedLevel),
+          : (selectedMood ?? this.selectedMood),
       note: note ?? this.note,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isSubmitted: isSubmitted ?? this.isSubmitted,
@@ -76,7 +76,7 @@ class MoodState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [selectedLevel, note, isSubmitting, isSubmitted, validationError];
+      [selectedMood, note, isSubmitting, isSubmitted, validationError];
 }
 
 // ── Bloc ──────────────────────────────────────────────────────────────────────
@@ -101,12 +101,13 @@ class MoodBloc extends Bloc<MoodEvent, MoodState> {
 
   void _onMoodSelected(MoodSelected event, Emitter<MoodState> emit) {
     emit(state.copyWith(
-      selectedLevel: event.level,
+      selectedMood: event.mood,
       clearValidationError: true,
     ));
   }
 
   void _onNoteChanged(NoteChanged event, Emitter<MoodState> emit) {
+    // Enforce max 200 chars by truncating
     final truncated = event.note.length > 200
         ? event.note.substring(0, 200)
         : event.note;
@@ -117,8 +118,8 @@ class MoodBloc extends Bloc<MoodEvent, MoodState> {
     MoodSubmitted event,
     Emitter<MoodState> emit,
   ) async {
-    if (state.selectedLevel == null) {
-      emit(state.copyWith(validationError: 'Please select a mood level'));
+    if (state.selectedMood == null) {
+      emit(state.copyWith(validationError: 'Please select a mood'));
       return;
     }
 
@@ -126,8 +127,7 @@ class MoodBloc extends Bloc<MoodEvent, MoodState> {
 
     final entry = MoodEntry(
       id: const Uuid().v4(),
-      mood: MoodEntry.mapLevelToMoodType(state.selectedLevel!),
-      levelValue: state.selectedLevel!,
+      mood: state.selectedMood!,
       note: state.note.isEmpty ? null : state.note,
       timestamp: DateTime.now(),
     );
@@ -136,7 +136,7 @@ class MoodBloc extends Bloc<MoodEvent, MoodState> {
     await _syncService?.enqueueMoodEntry(entry);
     await _analyticsService?.logEvent(
       'mood_logged',
-      parameters: {'level': entry.level},
+      parameters: {'mood': entry.mood.name},
     );
 
     emit(state.copyWith(isSubmitting: false, isSubmitted: true));

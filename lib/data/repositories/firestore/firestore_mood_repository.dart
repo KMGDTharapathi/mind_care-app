@@ -1,29 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../models/mood_entry.dart';
-import '../mood_repository.dart';
+import 'package:mind_care_app/data/models/mood_entry.dart';
 
-class FirestoreMoodRepository implements MoodRepository {
+class FirestoreMoodRepository {
   FirestoreMoodRepository({
     FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+    required this.uid,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
-
-  String get _uid => _auth.currentUser?.uid ?? 'anonymous';
+  final String uid;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('users').doc(_uid).collection('moods');
+      _firestore.collection('users').doc(uid).collection('mood_entries');
 
-  @override
-  Future<void> saveMoodEntry(MoodEntry entry) async {
+  Future<void> save(MoodEntry entry) async {
     try {
       await _collection.doc(entry.id).set({
         'id': entry.id,
-        'level': entry.level,
+        'mood': entry.mood.name,
         'note': entry.note,
         'timestamp': Timestamp.fromDate(entry.timestamp),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -33,54 +27,28 @@ class FirestoreMoodRepository implements MoodRepository {
     }
   }
 
-  @override
-  Future<List<MoodEntry>> getLast7Days() async {
+  Future<void> delete(String id) async {
     try {
-      final snapshot = await _collection
-          .orderBy('timestamp', descending: true)
-          .limit(50)
-          .get();
-      final entries = snapshot.docs.map((doc) {
-        final data = doc.data();
-        final level = data['level'] as int? ?? 5;
-        return MoodEntry(
-          id: data['id'] as String,
-          mood: MoodEntry.mapLevelToMoodType(level),
-          levelValue: level,
-          note: data['note'] as String?,
-          timestamp: (data['timestamp'] as Timestamp).toDate(),
-        );
-      }).toList();
-      // Return entries sorted chronologically
-      return entries.reversed.toList();
+      await _collection.doc(id).delete();
     } catch (e) {
       rethrow;
     }
   }
 
-  @override
-  Future<MoodEntry?> getTodayEntry() async {
+  Future<List<MoodEntry>> getAll() async {
     try {
-      final today = DateTime.now();
-      final startOfToday = DateTime(today.year, today.month, today.day);
-      final snapshot = await _collection
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
-          .orderBy('timestamp', descending: true)
-          .limit(1)
-          .get();
-
-      if (snapshot.docs.isEmpty) return null;
-      final data = snapshot.docs.first.data();
-      final level = data['level'] as int? ?? 5;
-      return MoodEntry(
-        id: data['id'] as String,
-        mood: MoodEntry.mapLevelToMoodType(level),
-        levelValue: level,
-        note: data['note'] as String?,
-        timestamp: (data['timestamp'] as Timestamp).toDate(),
-      );
+      final snapshot = await _collection.get();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return MoodEntry(
+          id: data['id'] as String,
+          mood: MoodType.values.firstWhere((m) => m.name == data['mood']),
+          note: data['note'] as String?,
+          timestamp: (data['timestamp'] as Timestamp).toDate(),
+        );
+      }).toList();
     } catch (e) {
-      return null;
+      rethrow;
     }
   }
 }

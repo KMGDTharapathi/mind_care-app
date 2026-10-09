@@ -64,11 +64,6 @@ class _SignInScreenState extends State<SignInScreen> {
     context.read<AuthBloc>().add(AuthSignInWithGoogle());
   }
 
-  void _onAnonymousSignIn() {
-    _clearErrors();
-    context.read<AuthBloc>().add(AuthSignInAnonymously());
-  }
-
   void _handleAuthError(AuthError state) {
     switch (state.type) {
       case AuthErrorType.invalidEmail:
@@ -84,7 +79,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated || state is AuthAnonymous) {
+        if (state is AuthAuthenticated) {
           context.go(AppRouter.home);
         } else if (state is AuthError) {
           _handleAuthError(state);
@@ -153,16 +148,6 @@ class _SignInScreenState extends State<SignInScreen> {
                       return _GoogleSignInButton(
                         isLoading: isLoading,
                         onPressed: isLoading ? null : _onGoogleSignIn,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      final isLoading = state is AuthLoading;
-                      return _AnonymousSignInButton(
-                        isLoading: isLoading,
-                        onPressed: isLoading ? null : _onAnonymousSignIn,
                       );
                     },
                   ),
@@ -510,47 +495,6 @@ class _CreateAccountLink extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ── Guest Sign-In button ──────────────────────────────────────────────────────
-
-class _AnonymousSignInButton extends StatelessWidget {
-  const _AnonymousSignInButton({required this.isLoading, required this.onPressed});
-
-  final bool isLoading;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primaryDark,
-                ),
-              )
-            : const Icon(Icons.person_outline_rounded, size: 22, color: AppColors.primaryDark),
-        label: const Text(
-          'Continue as Guest',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryDark,
-          backgroundColor: Colors.white.withOpacity(0.9),
-          side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-          ),
-        ),
-      ),
     );
   }
 }

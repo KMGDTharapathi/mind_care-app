@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
-import 'package:mind_care_app/data/models/wellness_session_model.dart';
-import 'package:mind_care_app/data/repositories/firestore/firestore_session_repository.dart';
 import 'meditation_list_screen.dart';
 
 class MeditationSessionScreen extends StatefulWidget {
@@ -84,27 +82,6 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
       _loadStep();
     } else {
       setState(() => _finished = true);
-      try {
-        final totalSeconds = widget.meditation.steps.fold<int>(
-          0,
-          (sum, s) => sum + s.durationSeconds,
-        );
-        FirestoreSessionRepository().logSession(
-          WellnessSessionModel(
-            id: '',
-            userId: '',
-            type: 'meditation',
-            title: widget.meditation.name,
-            durationSeconds: totalSeconds,
-            completedAt: DateTime.now(),
-            metadata: {
-              'meditationId': widget.meditation.id,
-              'level': widget.meditation.level,
-              'stepsCount': widget.meditation.steps.length,
-            },
-          ),
-        );
-      } catch (_) {}
     }
   }
 
