@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mind_care_app/firebase_options.dart';
@@ -17,6 +16,7 @@ import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
+import 'package:mind_care_app/features/chat/services/willow_api_service.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 import 'package:mind_care_app/services/auth/firebase_auth_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
@@ -113,6 +113,10 @@ Future<InitResult> _heavyInit(bool firebaseOk) async {
   // can block the main isolate.
   await PreferencesService.warmUp();
 
+  // Restore the user's saved Willow model-server URL so the trained model
+  // stays connected even after a restart / without a USB `adb reverse` link.
+  unawaited(WillowApiService.loadSavedBaseUrl());
+
   // Hive and Preferences run in parallel — both are needed before we can
   // determine onboardingComplete.
   // Yield to the event loop first so the UI stays responsive.
@@ -181,10 +185,7 @@ Future<InitResult> _heavyInit(bool firebaseOk) async {
 class InitResult {
   final bool firebaseOk;
   final bool onboardingComplete;
-  const InitResult({
-    required this.firebaseOk,
-    this.onboardingComplete = false,
-  });
+  const InitResult({required this.firebaseOk, this.onboardingComplete = false});
 }
 
 class MindCareApp extends StatefulWidget {

@@ -1134,10 +1134,11 @@ class _ApiConfigBanner extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: () {
+            onPressed: () async {
               final url = ctrl.text.trim();
               if (url.isNotEmpty) {
-                WillowApiService.setBaseUrl(url);
+                await WillowApiService.saveBaseUrl(url);
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 onConfigured();
               }

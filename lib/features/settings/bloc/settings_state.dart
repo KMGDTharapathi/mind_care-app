@@ -6,6 +6,7 @@ class SettingsState extends Equatable {
   final TimeOfDay? notificationTime;
   final Set<int> repeatDays; // 1=Mon … 7=Sun, empty = every day
   final String reminderMessage;
+  final int? reminderPresetIndex;
   final String? userEmail;
   final bool isAuthenticated;
   final bool analyticsConsent;
@@ -18,6 +19,7 @@ class SettingsState extends Equatable {
     this.notificationTime,
     this.repeatDays = const {},
     this.reminderMessage = 'Time for your daily wellness check-in 🌿',
+    this.reminderPresetIndex,
     this.userEmail,
     this.isAuthenticated = false,
     this.analyticsConsent = false,
@@ -31,6 +33,8 @@ class SettingsState extends Equatable {
     TimeOfDay? notificationTime,
     Set<int>? repeatDays,
     String? reminderMessage,
+    int? reminderPresetIndex,
+    bool clearReminderPresetIndex = false,
     String? userEmail,
     bool? isAuthenticated,
     bool? analyticsConsent,
@@ -44,6 +48,9 @@ class SettingsState extends Equatable {
       notificationTime: notificationTime ?? this.notificationTime,
       repeatDays: repeatDays ?? this.repeatDays,
       reminderMessage: reminderMessage ?? this.reminderMessage,
+      reminderPresetIndex: clearReminderPresetIndex
+          ? null
+          : (reminderPresetIndex ?? this.reminderPresetIndex),
       userEmail: clearUserEmail ? null : (userEmail ?? this.userEmail),
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       analyticsConsent: analyticsConsent ?? this.analyticsConsent,
@@ -81,6 +88,7 @@ class SettingsState extends Equatable {
     notificationTime,
     repeatDays,
     reminderMessage,
+    reminderPresetIndex,
     userEmail,
     isAuthenticated,
     analyticsConsent,

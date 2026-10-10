@@ -18,7 +18,7 @@ enum _Operation { firestore, gps, district }
 /// [OverpassService], and connectivity checks to drive the doctor-search feature.
 ///
 /// Default behaviour (no search performed yet): loads all doctors/counsellors
-/// from Firestore so the full seeded list is shown immediately.
+/// from Firestore so the full list is shown immediately.
 ///
 /// GPS / district search: queries the Overpass API for nearby facilities and
 /// merges them with the Firestore list, deduplicating by name.
@@ -49,7 +49,7 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
 
   /// Called once when the screen is first built.
   ///
-  /// Always loads the full Firestore list first so all seeded doctors are
+  /// Always loads the full Firestore list first so all doctors are
   /// visible immediately. If location permission is already granted, also
   /// kicks off a GPS-based Overpass search to enrich the list with nearby
   /// facilities.

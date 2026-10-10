@@ -3,9 +3,8 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/features/meditation/screens/meditation_list_screen.dart';
 import 'package:mind_care_app/features/meditation/screens/meditation_session_screen.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  HUB — two tabs: Meditations + Breathing Exercises
-// ─────────────────────────────────────────────────────────────────────────────
+//  HUB
+
 class BreathingListScreen extends StatefulWidget {
   const BreathingListScreen({super.key});
   @override
@@ -19,7 +18,6 @@ class _BreathingListScreenState extends State<BreathingListScreen>
     super.initState();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -31,7 +29,7 @@ class _BreathingListScreenState extends State<BreathingListScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────────
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 12, 16, 0),
               child: Row(
@@ -57,7 +55,7 @@ class _BreathingListScreenState extends State<BreathingListScreen>
                 ],
               ),
             ),
-            // ── Meditations only ─────────────────────────────────────────────
+            // Meditations only
             Expanded(
               child: _MeditationsTab(isDark: isDark, s: s),
             ),
@@ -68,9 +66,8 @@ class _BreathingListScreenState extends State<BreathingListScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 //  MEDITATIONS TAB
-// ─────────────────────────────────────────────────────────────────────────────
+
 class _MeditationsTab extends StatelessWidget {
   final bool isDark;
   final dynamic s;

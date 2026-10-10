@@ -33,9 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final CrashlyticsService? _crashlyticsService;
   StreamSubscription<AuthUser?>? _authSubscription;
 
-  // ---------------------------------------------------------------------------
   // Event handlers
-  // ---------------------------------------------------------------------------
 
   Future<void> _onAuthStarted(
     AuthStarted event,
@@ -129,8 +127,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onSignOut(AuthSignOut event, Emitter<AuthState> emit) async {
-    // signOut() immediately restores an anonymous session; the authStateChanges
-    // stream (subscribed via AuthStarted) will emit the new anonymous user.
+    // signOut immediately restores an anonymous session; the authStateChanges
     await _analyticsService?.setUserId(null);
     await _crashlyticsService?.setUserId(null);
     await _authService.signOut();
@@ -170,8 +167,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(message: e.message, type: e.type));
     }
   }
-
-  // ---------------------------------------------------------------------------
 
   @override
   Future<void> close() {

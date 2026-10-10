@@ -178,7 +178,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 }
 
-// ── Header ───────────────────────────────────────────────────────────────────
+// Header
 
 class _Header extends StatelessWidget {
   @override
@@ -229,8 +229,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── Email field ───────────────────────────────────────────────────────────────
-
+// Email field
 class _EmailField extends StatelessWidget {
   const _EmailField({
     required this.controller,
@@ -289,7 +288,7 @@ class _EmailField extends StatelessWidget {
   }
 }
 
-// ── Password field ────────────────────────────────────────────────────────────
+// Password field
 
 class _PasswordField extends StatelessWidget {
   const _PasswordField({
@@ -360,8 +359,7 @@ class _PasswordField extends StatelessWidget {
   }
 }
 
-// ── Error banner ──────────────────────────────────────────────────────────────
-
+// Error banner
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message});
 
@@ -392,7 +390,7 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-// ── Sign-in button ────────────────────────────────────────────────────────────
+// Sign-in button
 
 class _SignInButton extends StatelessWidget {
   const _SignInButton({required this.isLoading, required this.onPressed});
@@ -432,14 +430,15 @@ class _SignInButton extends StatelessWidget {
   }
 }
 
-// ── Divider ───────────────────────────────────────────────────────────────────
-
+//  Divider
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.textDark.withValues(alpha: 0.2))),
+        Expanded(
+          child: Divider(color: AppColors.textDark.withValues(alpha: 0.2)),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
@@ -447,13 +446,15 @@ class _Divider extends StatelessWidget {
             style: TextStyle(fontSize: 14, color: AppColors.textSecondaryDark),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.textDark.withValues(alpha: 0.2))),
+        Expanded(
+          child: Divider(color: AppColors.textDark.withValues(alpha: 0.2)),
+        ),
       ],
     );
   }
 }
 
-// ── Google Sign-In button ─────────────────────────────────────────────────────
+// Google Sign-In button
 
 class _GoogleSignInButton extends StatelessWidget {
   const _GoogleSignInButton({required this.isLoading, required this.onPressed});
@@ -494,7 +495,7 @@ class _GoogleSignInButton extends StatelessWidget {
   }
 }
 
-// ── Create account link ───────────────────────────────────────────────────────
+// Create account link
 
 class _CreateAccountLink extends StatelessWidget {
   @override
@@ -522,7 +523,7 @@ class _CreateAccountLink extends StatelessWidget {
   }
 }
 
-// ── Guest Sign-In button ──────────────────────────────────────────────────────
+// Guest Sign-In button
 
 class _AnonymousSignInButton extends StatelessWidget {
   const _AnonymousSignInButton({

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:mind_care_app/data/local/preferences_service.dart';
 
 /// One turn of prior conversation context. `role` is 'user' or 'model'
 /// (the app mirrors Gemini's roles so the API can send alternating turns).
@@ -59,6 +60,22 @@ class WillowApiService {
     _baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
     _serverMode = true;
     _lastProbe = DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  /// Restores a previously configured model-server URL so the trained model
+  /// stays connected across app restarts (and without a USB/`adb reverse`
+  /// link to the dev PC).
+  static Future<void> loadSavedBaseUrl() async {
+    final url = await PreferencesService.getChatServerUrl();
+    if (url != null && url.isNotEmpty) {
+      setBaseUrl(url);
+    }
+  }
+
+  /// Sets the model-server URL and persists it so it survives restarts.
+  static Future<void> saveBaseUrl(String url) async {
+    setBaseUrl(url);
+    await PreferencesService.setChatServerUrl(_baseUrl);
   }
 
   static String get baseUrl => _baseUrl;

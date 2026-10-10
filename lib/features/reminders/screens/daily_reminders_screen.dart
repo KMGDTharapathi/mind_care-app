@@ -262,9 +262,12 @@ class _PushTab extends StatelessWidget {
                     const SizedBox(height: 12),
                     _MessagePicker(
                       current: state.reminderMessage,
+                      selectedIndex: state.reminderPresetIndex,
                       isDark: isDark,
                       presets: s.reminderPresets,
-                      onChanged: (msg) => cubit.setReminderMessage(msg),
+                      onChanged: (i) =>
+                          cubit.setReminderMessage(s.reminderPresets[i],
+                              presetIndex: i),
                     ),
                   ],
                 ),
@@ -980,12 +983,14 @@ class _DayPicker extends StatelessWidget {
 
 class _MessagePicker extends StatelessWidget {
   final String current;
+  final int? selectedIndex;
   final bool isDark;
   final List<String> presets;
-  final ValueChanged<String> onChanged;
+  final ValueChanged<int> onChanged;
 
   const _MessagePicker({
     required this.current,
+    required this.selectedIndex,
     required this.isDark,
     required this.presets,
     required this.onChanged,
@@ -994,10 +999,13 @@ class _MessagePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: presets.map((msg) {
-        final isSelected = current == msg;
+      children: List.generate(presets.length, (i) {
+        final msg = presets[i];
+        final isSelected = selectedIndex != null
+            ? selectedIndex == i
+            : current == msg;
         return GestureDetector(
-          onTap: () => onChanged(msg),
+          onTap: () => onChanged(i),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             margin: const EdgeInsets.only(bottom: 8),
@@ -1040,7 +1048,7 @@ class _MessagePicker extends StatelessWidget {
             ),
           ),
         );
-      }).toList(),
+      }),
     );
   }
 }

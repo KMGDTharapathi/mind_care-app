@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/services/auth/auth_service.dart';
@@ -17,9 +18,23 @@ class SettingsCubit extends Cubit<SettingsState> {
         prefs.getBool('notifications_enabled') ?? false;
     final timeStr = prefs.getString('notification_time');
     final repeatList = prefs.getStringList('repeat_days') ?? [];
-    final message =
-        prefs.getString('reminder_message') ??
-        'Time for your daily wellness check-in 🌿';
+    final presetIndex =
+        int.tryParse(prefs.getString('reminder_preset_index') ?? '');
+    var message = prefs.getString('reminder_message');
+
+    // A saved preset is tracked by index so the selected message survives a
+    // language switch (preset texts are localized and would otherwise never
+    // match in the other language). Re-derive the text in the saved language.
+    if (presetIndex != null) {
+      final lang = prefs.getString('app_language') ?? 'en';
+      final presets = lang == 'si'
+          ? AppStrings.si.reminderPresets
+          : AppStrings.en.reminderPresets;
+      if (presetIndex >= 0 && presetIndex < presets.length) {
+        message = presets[presetIndex];
+      }
+    }
+    message ??= 'Time for your daily wellness check-in 🌿';
 
     TimeOfDay? notificationTime;
     if (timeStr != null) {
@@ -40,6 +55,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         repeatDays: repeatList.map((e) => int.tryParse(e) ?? 0).toSet()
           ..remove(0),
         reminderMessage: message,
+        reminderPresetIndex: presetIndex,
       ),
     );
   }
@@ -93,10 +109,18 @@ class SettingsCubit extends Cubit<SettingsState> {
     if (state.notificationsEnabled) await _reschedule();
   }
 
-  Future<void> setReminderMessage(String message) async {
+  Future<void> setReminderMessage(String message, {int? presetIndex}) async {
     final prefs = await PreferencesService.getSharedPreferences();
     await prefs.setString('reminder_message', message);
-    emit(state.copyWith(reminderMessage: message));
+    if (presetIndex != null) {
+      await prefs.setString('reminder_preset_index', presetIndex.toString());
+    }
+    emit(
+      state.copyWith(
+        reminderMessage: message,
+        reminderPresetIndex: presetIndex ?? state.reminderPresetIndex,
+      ),
+    );
     if (state.notificationsEnabled) await _reschedule();
   }
 
