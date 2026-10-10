@@ -393,12 +393,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       appBar: _buildAppBar(isDark, isSi),
       body: Column(
         children: [
-          // API config banner — shown when ngrok URL not set
-          if (!WillowApiService.isConfigured)
-            _ApiConfigBanner(
-              isSinhala: isSi,
-              onConfigured: () => setState(() {}),
-            ),
           Expanded(
             child: Stack(
               children: [
@@ -478,44 +472,31 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         ],
       ),
       actions: [
-        // Tap to update API URL
-        GestureDetector(
-          onTap: () {
-            final banner = _ApiConfigBanner(
-              isSinhala: isSi,
-              onConfigured: () => setState(() {}),
-            );
-            banner._showConfigDialog(context);
-          },
-          child: Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: WillowApiService.isConfigured
-                        ? const Color(0xFF69F0AE)
-                        : Colors.orange,
-                    shape: BoxShape.circle,
-                  ),
+        // Fixed endpoint indicator (not user-editable).
+        Container(
+          margin: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF69F0AE),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  WillowApiService.isConfigured
-                      ? (isSi ? 'සබැඳිව' : 'Online')
-                      : (isSi ? 'සකසන්න' : 'Setup'),
-                  style: const TextStyle(fontSize: 11, color: Colors.white),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                isSi ? 'සබැඳිව' : 'Online',
+                style: const TextStyle(fontSize: 11, color: Colors.white),
+              ),
+            ],
           ),
         ),
       ],
@@ -1035,117 +1016,6 @@ class _MicBtn extends StatelessWidget {
       height: 44,
       decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
       child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
-    );
-  }
-}
-
-// ── API Config Banner ─────────────────────────────────────────────────────────
-
-class _ApiConfigBanner extends StatelessWidget {
-  final bool isSinhala;
-  final VoidCallback onConfigured;
-  const _ApiConfigBanner({required this.isSinhala, required this.onConfigured});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showConfigDialog(context),
-      child: Container(
-        width: double.infinity,
-        color: const Color(0xFFFFF8E1),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              size: 16,
-              color: Color(0xFF795548),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                isSinhala
-                    ? 'AI model URL සකසන්න — ස්පර්ශ කරන්න'
-                    : 'Tap to connect your LLaMA model',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF795548)),
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              size: 16,
-              color: Color(0xFF795548),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showConfigDialog(BuildContext context) {
-    final ctrl = TextEditingController(text: WillowApiService.baseUrl);
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text(
-          'Connect Willow AI',
-          style: TextStyle(color: _kDarkTeal, fontWeight: FontWeight.w700),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '1. Run Cell 10 in your Colab notebook\n'
-              '2. Copy the ngrok URL it prints\n'
-              '3. Paste it below',
-              style: TextStyle(fontSize: 13, height: 1.5),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              decoration: InputDecoration(
-                hintText: 'https://xxxx.ngrok-free.app',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kTeal, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-              ),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kTeal,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () {
-              final url = ctrl.text.trim();
-              if (url.isNotEmpty) {
-                WillowApiService.setBaseUrl(url);
-                Navigator.pop(context);
-                onConfigured();
-              }
-            },
-            child: const Text('Connect'),
-          ),
-        ],
-      ),
     );
   }
 }

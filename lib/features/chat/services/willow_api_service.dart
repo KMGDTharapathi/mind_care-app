@@ -19,21 +19,14 @@ class WillowChatResult {
   const WillowChatResult({required this.text, this.recommendations = const []});
 }
 
-/// Replies come from the trained model (a hosted fine-tuned Qwen server)
-/// whenever it is reachable. Gemini is used as an online fallback when a key
-/// is present, and a curated in-app brain is the offline-only last resort so
-/// the chat always responds. Crisis statements are handled locally and
-/// deterministically in every path for speed and safety.
 class WillowApiService {
   static const String _apiKey = '';
 
-  /// The fine-tuned model server. Defaults to the local `serve_qwen.py`
-  /// instance (Android emulators reach the host via 10.0.2.2); paste a
-  /// tunnel/cloud URL in the chat setup dialog to override it.
-  static String _baseUrl = defaultTargetPlatform == TargetPlatform.android
-      ? 'http://10.0.2.2:8000'
-      : 'http://127.0.0.1:8000';
-  static bool _serverMode = true;
+  /// The fine-tuned model server endpoint. Fixed for this build so users
+  /// cannot change it from inside the app.
+  static final String _baseUrl =
+      'https://paint-assurance-humanitarian-amanda.trycloudflare.com';
+  static final bool _serverMode = true;
 
   /// Model server reachability cache. Probing happens at most once every few
   /// seconds so a server that is down never stalls each message on a timeout;
@@ -53,12 +46,6 @@ class WillowApiService {
   static void _markServerDown() {
     _lastProbe = DateTime.now();
     _serverReachable = false;
-  }
-
-  static void setBaseUrl(String url) {
-    _baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
-    _serverMode = true;
-    _lastProbe = DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   static String get baseUrl => _baseUrl;
