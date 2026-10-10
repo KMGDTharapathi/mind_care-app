@@ -104,7 +104,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
+// Header
 
 class _Header extends StatelessWidget {
   @override
@@ -155,7 +155,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── Email field ───────────────────────────────────────────────────────────────
+// Email field
 
 class _EmailField extends StatelessWidget {
   const _EmailField({
@@ -215,8 +215,7 @@ class _EmailField extends StatelessWidget {
   }
 }
 
-// ── Success banner ────────────────────────────────────────────────────────────
-
+// Success banner
 class _SuccessBanner extends StatelessWidget {
   const _SuccessBanner({required this.email});
 
@@ -229,7 +228,9 @@ class _SuccessBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.primaryLight.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         children: [
@@ -263,8 +264,7 @@ class _SuccessBanner extends StatelessWidget {
   }
 }
 
-// ── Send button ───────────────────────────────────────────────────────────────
-
+// Send button
 class _SendButton extends StatelessWidget {
   const _SendButton({required this.isLoading, required this.onPressed});
 
@@ -303,8 +303,7 @@ class _SendButton extends StatelessWidget {
   }
 }
 
-// ── Back to sign-in link ──────────────────────────────────────────────────────
-
+// Back to sign-in link
 class _BackToSignInLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

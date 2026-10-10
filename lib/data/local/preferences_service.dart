@@ -10,6 +10,12 @@ class PreferencesService {
   static const _keyUserName = 'user_name';
   static const _keyAppLanguage = 'app_language';
   static const _keyUserId = 'user_id';
+  static const _keyChatServerUrl = 'chat_server_url';
+  static const _keyGame2048Best = 'game_2048_best';
+  static const _keyGameMemoryBest = 'game_memory_best';
+  static const _keyGameMemoryStars = 'game_memory_stars';
+  static const _keyGameMinesBest = 'game_mines_best';
+  static const _keyGameSudokuBest = 'game_sudoku_best';
 
   // Cached instance — avoids repeated platform channel calls on every read/write
   static SharedPreferences? _prefs;
@@ -114,5 +120,66 @@ class PreferencesService {
   static Future<void> setUserId(String id) async {
     final prefs = await _get();
     await prefs.setString(_keyUserId, id);
+  }
+
+  static Future<String?> getChatServerUrl() async {
+    final prefs = await _get();
+    return prefs.getString(_keyChatServerUrl);
+  }
+
+  static Future<void> setChatServerUrl(String url) async {
+    final prefs = await _get();
+    await prefs.setString(_keyChatServerUrl, url);
+  }
+
+  // ── Game scores & progress ─────────────────────────────────────────────────
+  static Future<int> getGame2048Best() async =>
+      (await _get()).getInt(_keyGame2048Best) ?? 0;
+
+  static Future<void> setGame2048Best(int value) async {
+    final prefs = await _get();
+    if (value > (prefs.getInt(_keyGame2048Best) ?? 0)) {
+      await prefs.setInt(_keyGame2048Best, value);
+    }
+  }
+
+  static Future<int> getGameMemoryBest() async =>
+      (await _get()).getInt(_keyGameMemoryBest) ?? 0;
+
+  static Future<void> setGameMemoryBest(int value) async {
+    final prefs = await _get();
+    if (value > (prefs.getInt(_keyGameMemoryBest) ?? 0)) {
+      await prefs.setInt(_keyGameMemoryBest, value);
+    }
+  }
+
+  static Future<String?> getGameMemoryStars() async =>
+      (await _get()).getString(_keyGameMemoryStars);
+
+  static Future<void> setGameMemoryStars(String value) async {
+    final prefs = await _get();
+    await prefs.setString(_keyGameMemoryStars, value);
+  }
+
+  static Future<int> getGameMinesBest() async =>
+      (await _get()).getInt(_keyGameMinesBest) ?? 0;
+
+  static Future<void> setGameMinesBest(int seconds) async {
+    final prefs = await _get();
+    final current = prefs.getInt(_keyGameMinesBest) ?? 0;
+    if (current == 0 || seconds < current) {
+      await prefs.setInt(_keyGameMinesBest, seconds);
+    }
+  }
+
+  static Future<int> getGameSudokuBest() async =>
+      (await _get()).getInt(_keyGameSudokuBest) ?? 0;
+
+  static Future<void> setGameSudokuBest(int seconds) async {
+    final prefs = await _get();
+    final current = prefs.getInt(_keyGameSudokuBest) ?? 0;
+    if (current == 0 || seconds < current) {
+      await prefs.setInt(_keyGameSudokuBest, seconds);
+    }
   }
 }

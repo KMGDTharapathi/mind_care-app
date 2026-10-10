@@ -12,12 +12,12 @@ class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
-/// Auth operation in progress (sign-in, sign-up, etc.).
+/// Auth operation in progress
 class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// A real (non-anonymous) user is signed in.
+/// A real user is signed in.
 class AuthAuthenticated extends AuthState {
   const AuthAuthenticated(this.user);
 
@@ -27,7 +27,7 @@ class AuthAuthenticated extends AuthState {
   List<Object?> get props => [user.uid, user.email, user.isAnonymous];
 }
 
-/// An anonymous session is active (no real account).
+/// An anonymous session is active
 class AuthAnonymous extends AuthState {
   const AuthAnonymous(this.user);
 

@@ -4,8 +4,9 @@ import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/features/games/screens/bubble_blaster_game.dart';
 import 'package:mind_care_app/features/games/screens/snake_game.dart';
 import 'package:mind_care_app/features/games/screens/pattern_match_game.dart';
-import 'package:mind_care_app/features/games/screens/aim_drop_game.dart';
-import 'package:mind_care_app/features/games/screens/stack_builder_game.dart';
+import 'package:mind_care_app/features/games/screens/game_2048.dart';
+import 'package:mind_care_app/features/games/screens/sudoku_game.dart';
+import 'package:mind_care_app/features/games/screens/minesweeper_game.dart';
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({super.key});
@@ -53,27 +54,39 @@ class GamesScreen extends StatelessWidget {
         ),
       ),
       _GameInfo(
-        emoji: '🎯',
-        title: s.gameAimTitle,
-        description: s.gameAimDesc,
-        mood: s.gameAimMood,
+        emoji: '🔢',
+        title: s.game2048Title,
+        description: s.game2048Desc,
+        mood: s.game2048Mood,
         color: isDark ? const Color(0xFF2A1A00) : const Color(0xFFFFF8E1),
         accentColor: const Color(0xFFFFA000),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AimDropGame()),
+          MaterialPageRoute(builder: (_) => const Game2048Screen()),
         ),
       ),
       _GameInfo(
-        emoji: '🏗️',
-        title: s.gameStackTitle,
-        description: s.gameStackDesc,
-        mood: s.gameStackMood,
+        emoji: '🧠',
+        title: s.gameSudokuTitle,
+        description: s.gameSudokuDesc,
+        mood: s.gameSudokuMood,
         color: isDark ? const Color(0xFF1A0A2A) : const Color(0xFFF3E5F5),
         accentColor: const Color(0xFF7B1FA2),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const StackBuilderGame()),
+          MaterialPageRoute(builder: (_) => const SudokuGame()),
+        ),
+      ),
+      _GameInfo(
+        emoji: '🔎',
+        title: s.gameMinesTitle,
+        description: s.gameMinesDesc,
+        mood: s.gameMinesMood,
+        color: isDark ? const Color(0xFF002A2E) : const Color(0xFFE0F2F1),
+        accentColor: const Color(0xFF00897B),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MinesweeperGame()),
         ),
       ),
     ];

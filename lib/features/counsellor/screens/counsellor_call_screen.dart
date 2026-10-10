@@ -4,8 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import '../models/doctor_model.dart';
-import '../data/doctor_seed_service.dart';
-import '../data/doctor_seed_data.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
 const _kDark = Color(0xFF1A4A4A);
@@ -37,7 +35,6 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    DoctorSeedService.seedIfEmpty();
   }
 
   @override
@@ -419,9 +416,9 @@ class _DoctorListTabState extends State<_DoctorListTab> {
   }
 }
 
-// ── Firebase doctor list (inline, no Expanded needed inside ListView) ─────────
+// ── Live doctor list from Firestore (no local seed/fallback data) ────────────
 
-class _FirebaseDoctorList extends StatelessWidget {
+class _FirebaseDoctorList extends StatefulWidget {
   final String filterSpec;
   final String filterLang;
   final String filterProvince;
@@ -434,10 +431,34 @@ class _FirebaseDoctorList extends StatelessWidget {
     required this.strings,
   });
 
+  @override
+  State<_FirebaseDoctorList> createState() => _FirebaseDoctorListState();
+}
+
+class _FirebaseDoctorListState extends State<_FirebaseDoctorList> {
+  late Stream<QuerySnapshot> _stream;
+
+  @override
+  void initState() {
+    super.initState();
+    _stream = _doctorsStream();
+  }
+
+  Stream<QuerySnapshot> _doctorsStream() {
+    return FirebaseFirestore.instance
+        .collection('doctors')
+        .where('is_verified', isEqualTo: true)
+        .snapshots();
+  }
+
+  void _retry() {
+    setState(() => _stream = _doctorsStream());
+  }
+
   /// Returns true if the doctor's address contains any keyword for the province.
   bool _matchesProvince(Doctor doctor) {
-    if (filterProvince == 'All Provinces') return true;
-    final keywords = _kProvinceKeywords[filterProvince] ?? [];
+    if (widget.filterProvince == 'All Provinces') return true;
+    final keywords = _kProvinceKeywords[widget.filterProvince] ?? [];
     final address = (doctor.address ?? '').toLowerCase();
     final hospital = doctor.hospital.toLowerCase();
     return keywords.any(
@@ -450,13 +471,10 @@ class _FirebaseDoctorList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('doctors')
-          .where('is_verified', isEqualTo: true)
-          .snapshots(),
+      stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return _ErrorState(strings: strings, onRetry: () {});
+          return _ErrorState(strings: widget.strings, onRetry: _retry);
         }
         if (!snapshot.hasData) {
           return const Padding(
@@ -466,40 +484,15 @@ class _FirebaseDoctorList extends StatelessWidget {
         }
 
         var doctors = snapshot.data!.docs
-            .map((d) {
-              final doctor = Doctor.fromFirestore(d);
-              if ((doctor.address == null || doctor.address!.isEmpty) &&
-                  (doctor.clinicHours == null || doctor.clinicHours!.isEmpty)) {
-                final match = kRealDoctors
-                    .where((s) => s['name'] == doctor.name)
-                    .firstOrNull;
-                if (match != null) {
-                  return Doctor(
-                    id: doctor.id,
-                    name: doctor.name,
-                    photoUrl: doctor.photoUrl,
-                    specialization: doctor.specialization,
-                    languages: doctor.languages,
-                    bio: doctor.bio,
-                    qualifications: doctor.qualifications,
-                    registrationNo: doctor.registrationNo,
-                    hospital: doctor.hospital,
-                    address: match['address'] as String?,
-                    clinicHours: match['clinic_hours'] as String?,
-                    isVerified: doctor.isVerified,
-                    isAvailable: doctor.isAvailable,
-                    callType: doctor.callType,
-                  );
-                }
-              }
-              return doctor;
-            })
+            .map(Doctor.fromFirestore)
             .where((d) {
               if (d.id == '__seed_meta__') return false;
-              if (filterSpec != 'All' && d.specialization != filterSpec) {
+              if (widget.filterSpec != 'All' &&
+                  d.specialization != widget.filterSpec) {
                 return false;
               }
-              if (filterLang != 'All' && !d.languages.contains(filterLang)) {
+              if (widget.filterLang != 'All' &&
+                  !d.languages.contains(widget.filterLang)) {
                 return false;
               }
               if (!_matchesProvince(d)) return false;
@@ -525,9 +518,9 @@ class _FirebaseDoctorList extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    filterProvince == 'All Provinces'
-                        ? strings.noDoctorsFound
-                        : 'No doctors found in $filterProvince',
+                    widget.filterProvince == 'All Provinces'
+                        ? widget.strings.noDoctorsFound
+                        : 'No doctors found in ${widget.filterProvince}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.grey),
                   ),
@@ -547,7 +540,9 @@ class _FirebaseDoctorList extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ),
-            ...doctors.map((d) => _DoctorCard(doctor: d, strings: strings)),
+            ...doctors.map(
+              (d) => _DoctorCard(doctor: d, strings: widget.strings),
+            ),
           ],
         );
       },

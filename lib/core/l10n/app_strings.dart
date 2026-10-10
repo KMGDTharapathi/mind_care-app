@@ -286,18 +286,24 @@ class AppStrings {
     'Flip cards and find matching emoji pairs. Calms the mind instantly.',
   );
   String get gamePatternMood => _s('😤 ආතතිය', '😤 Stressed');
-  String get gameAimTitle => _s('ඉලක්ක සහ හෙළීම', 'Aim & Drop');
-  String get gameAimDesc => _s(
-    'බෝලය වමට සහ දකුණට ඉදිරියට යයි. ගැලපෙන වර්ණ කලාපයට හෙළීමට ස්පර්ශ කරන්න!',
-    'A ball swings left and right. Tap to drop it into the matching color zone!',
+  String get game2048Title => _s('2048', '2048');
+  String get game2048Desc => _s(
+    'අංක ඇද, ගැලපෙන ඒවා එකතු කරන්න. 2048 කරා ළඟා වන්න!',
+    'Swipe to slide the tiles. Merge equal numbers and reach 2048!',
   );
-  String get gameAimMood => _s('🎯 අවධානය', '🎯 Focus');
-  String get gameStackTitle => _s('ගොඩ ගැසීම', 'Stack Builder');
-  String get gameStackDesc => _s(
-    'ගෙවල් ගොඩ ගැසීමට ගමන් කරන කොටස් හෙළන්න. කාර්යය, විවේකය සහ විනෝදය සමතුලිත කරන්න!',
-    'Drop moving blocks to build a tower. Balance Work, Rest & Fun!',
+  String get game2048Mood => _s('🧠 සන්සුන්', '🧠 Calm');
+  String get gameSudokuTitle => _s('සුඩෝකු', 'Sudoku');
+  String get gameSudokuDesc => _s(
+    'සෑම පේළිය, තීරුව සහ 3×3 කොටුවේ 1-9 වරක් පමණක් පිරවන්න. සම්භාව්‍ය තර්කන ක්‍රීඩාව.',
+    'Fill every row, column and 3×3 box with 1-9 exactly once. The classic logic puzzle.',
   );
-  String get gameStackMood => _s('😵 අධික බර', '😵 Overwhelmed');
+  String get gameSudokuMood => _s('🤔 තර්කනය', '🤔 Logic');
+  String get gameMinesTitle => _s('බෝම්බ ක්ෂේත්‍රය', 'Minesweeper');
+  String get gameMinesDesc => _s(
+    'බෝම්බවලට නොගැටී සියලු කොටු හෙළිදරව් කරන්න. සංඛ්‍යා අවට බෝම්බ ගණන පෙන්වයි.',
+    'Reveal every safe cell without hitting a mine. Numbers reveal nearby mines.',
+  );
+  String get gameMinesMood => _s('🔎 අවධානය', '🔎 Focus');
 
   // ── Game UI strings ────────────────────────────────────────────────────────
   String get gameOver => _s('ක්‍රීඩාව අවසන්!', 'Game Over!');
@@ -305,12 +311,26 @@ class AppStrings {
   String get start => _s('ආරම්භ කරන්න', 'START');
   String get play => _s('ක්‍රීඩා කරන්න', 'PLAY');
   String get score => _s('ලකුණු', 'Score');
-  String get round => _s('වටය', 'Round');
   String get moves => _s('ගමන්', 'Moves');
   String get pairs => _s('යුගල', 'Pairs');
-  String get blocks => _s('කොටස්', 'Blocks');
-  String get tapToDrop => _s('හෙළීමට ස්පර්ශ කරන්න!', 'TAP TO DROP!');
-  String get dropInto => _s('හෙළන්න:', 'Drop into:');
+  String get best => _s('හොඳම', 'Best');
+  String get newBest => _s('නව හොඳම! 🏆', 'New Best! 🏆');
+  String get time => _s('කාලය', 'Time');
+  String get combo => _s('එකතුව', 'Combo');
+  String get undo => _s('අහෝසි', 'Undo');
+  String get hint => _s('ඉඟිය', 'Hint');
+  String get restart => _s('නැවත අරඹන්න', 'Restart');
+  String get nextLevel => _s('ඊළඟ මට්ටම', 'Next Level');
+  String get youWin => _s('ඔබ දිනුවා! 🎉', 'You Win! 🎉');
+  String get solved => _s('විසඳා ඇත! 🎉', 'Solved! 🎉');
+  String get stars => _s('තරු', 'Stars');
+  String get difficulty => _s('දුෂ්කරතාව', 'Difficulty');
+  String get easy => _s('පහසු', 'Easy');
+  String get medium => _s('මධ්‍යම', 'Medium');
+  String get hard => _s('අමාරු', 'Hard');
+  String get mines => _s('බෝම්බ', 'Mines');
+  String get flagMode => _s('ධජ තබන්න', 'Flag');
+  String get revealMode => _s('හෙළිදරව් කරන්න', 'Reveal');
 
   // ── Exit game dialog ───────────────────────────────────────────────────────
   String get exitGameTitle =>
@@ -335,44 +355,27 @@ class AppStrings {
 
   // Pattern Match
   String get patternInstructions => _s(
-    'ගැලපෙන යුගල සොයා ගැනීමට කාඩ් පෙරළන්න!\nකාඩ් දෙකක් ස්පර්ශ කරන්න — ගැලපෙන්නේ නම්, ඒවා විවෘතව රැඳේ.\nසියලු යුගල ඉවත් කිරීමට ඉදිරියට යන්න!',
-    'Flip cards to find matching pairs!\nTap two cards — if they match, they stay open.\nClear all pairs to advance!',
+    'ගැලපෙන යුගල සොයා ගැනීමට කාඩ් පෙරළන්න! කාඩ් දෙකක් ස්පර්ශ කරන්න — ගැලපෙන්නේ නම්, ඒවා විවෘතව රැඳේ.\nඅඩු ගමන් සහ වේගයෙන් සෙල්ලම් කර තරු 3ක් දිනාගන්න!',
+    'Flip cards to find matching pairs! Tap two — a match stays open.\nUse fewer moves and less time to earn 3 stars!',
   );
 
-  // Aim & Drop
-  String get aimInstructions => _s(
-    'බෝලය වමට සහ දකුණට ඉදිරියට යයි.\nගැලපෙන වර්ණ කලාපයට හෙළීමට ස්පර්ශ කරන්න!\nබෝල වර්ණය කලාපයට ගැලපෙන්නට ඕනෑ.',
-    'A ball swings left and right.\nTap to drop it into the matching colored zone!\nMatch the ball color to the zone.',
+  // 2048
+  String get game2048Instructions => _s(
+    'ඕනෑම දිශාවකට ඇදීමෙන් හෝ ඊතල භාවිතයෙන් ටයිල් චලනය කරන්න.\nසමාන අංක දෙකක් එකිනෙක ස්පර්ශ වූ විට එකක් වේ.\n2048 කරා ළඟා වන්න!',
+    'Swipe (or use the arrows) to slide the tiles.\nWhen two equal numbers touch, they merge into one.\nReach 2048 to win!',
   );
 
-  // Stack Builder
-  String get stackInstructions => _s(
-    'කාර්යය, විවේකය, විනෝදය සහ තවත් කොටස් ගොඩ ගසන්න!\nගමන් කරන කොටස හෙළීමට ස්පර්ශ කරන්න.\nපරිපූර්ණ ලෙස සකසන්න.\nසම්පූර්ණයෙන් මඟ හැරෙන්නේ නම් = ක්‍රීඩාව අවසන්!',
-    'Stack blocks of Work, Rest, Fun & more!\nTap to drop each moving block.\nAlign perfectly for max score.\nMiss completely = game over!',
+  // Sudoku
+  String get sudokuInstructions => _s(
+    'සෑම පේළියකම, තීරුවකම සහ 3×3 කොටුවකම 1-9 අංක වරක් පමණක් පිරවන්න.\nකොටුවක් තෝරා අංකයක් තට්ටු කරන්න.\nදුෂ්කරතාව තෝරන්න!',
+    'Fill every row, column and 3×3 box with the digits 1-9 exactly once.\nTap a cell, then tap a number.\nPick a difficulty to begin!',
   );
-  String get towerFell => _s('කුළුණ ඇද වැටුණා!', 'Tower Fell!');
-  String get buildAgain => _s('නැවත ගොඩ ගසන්න', 'Build Again');
-  String get masterBuilder => _s(
-    'ශ්‍රේෂ්ඨ ගොඩ ගැසීම! පරිපූර්ණ සමතුලිතතාව! 🏆',
-    'Master builder! Perfect balance! 🏆',
+
+  // Minesweeper
+  String get minesInstructions => _s(
+    'බෝම්බවලට නොගැටී සියලු ආරක්ෂිත කොටු හෙළිදරව් කරන්න.\nසංඛ්‍යා අවට බෝම්බ කීයක් ඇත්ද පෙන්වයි.\nබෝම්බයක් සලකුණු කිරීමට දිගු කර එබන්න.',
+    'Reveal every safe cell without hitting a mine.\nNumbers show how many mines are nearby.\nLong-press to flag a suspected mine.',
   );
-  String get greatStack => _s(
-    'විශිෂ්ට ගොඩ ගැසීම! සමතුලිතතාව ඉදිරියට! 🏗️',
-    'Great stack! Keep balancing! 🏗️',
-  );
-  String get towerFellMsg => _s(
-    'කුළුණ ඇද වැටුණා... මගේ සැලසුම් මෙන් 😂',
-    'The tower fell... like my plans 😂',
-  );
-  String get foundation => _s('පදනම', 'Foundation');
-  String get stackWork => _s('කාර්යය', 'Work');
-  String get stackRest => _s('විවේකය', 'Rest');
-  String get stackFun => _s('විනෝදය', 'Fun');
-  String get stackSleep => _s('නිදිමත', 'Sleep');
-  String get stackFriends => _s('මිතුරන්', 'Friends');
-  String get stackHobby => _s('විනෝදාංශය', 'Hobby');
-  String get stackExercise => _s('ව්‍යායාම', 'Exercise');
-  String get stackMeTime => _s('මගේ කාලය', 'Me Time');
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   String get welcomeBack => _s('නැවත සාදරයෙන් පිළිගනිමු', 'Welcome back');

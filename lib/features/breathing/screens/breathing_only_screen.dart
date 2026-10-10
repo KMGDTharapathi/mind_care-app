@@ -61,7 +61,7 @@ class BreathingOnlyScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────────────
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 12, 16, 0),
               child: Row(
@@ -88,7 +88,7 @@ class BreathingOnlyScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Banner ──────────────────────────────────────────────────────
+            // Banner
             Container(
               margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               padding: const EdgeInsets.all(18),
@@ -150,7 +150,7 @@ class BreathingOnlyScreen extends StatelessWidget {
               ),
             ),
 
-            // ── List ────────────────────────────────────────────────────────
+            // List
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),

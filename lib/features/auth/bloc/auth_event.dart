@@ -19,7 +19,7 @@ class AuthSignInWithGoogle extends AuthEvent {}
 /// Sign in anonymously.
 class AuthSignInAnonymously extends AuthEvent {}
 
-/// Sign out the current user (stream will emit the new anonymous state).
+/// Sign out the current user
 class AuthSignOut extends AuthEvent {}
 
 /// Create a new account with email and password.

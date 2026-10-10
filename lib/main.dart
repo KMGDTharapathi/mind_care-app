@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mind_care_app/firebase_options.dart';
@@ -181,10 +180,7 @@ Future<InitResult> _heavyInit(bool firebaseOk) async {
 class InitResult {
   final bool firebaseOk;
   final bool onboardingComplete;
-  const InitResult({
-    required this.firebaseOk,
-    this.onboardingComplete = false,
-  });
+  const InitResult({required this.firebaseOk, this.onboardingComplete = false});
 }
 
 class MindCareApp extends StatefulWidget {

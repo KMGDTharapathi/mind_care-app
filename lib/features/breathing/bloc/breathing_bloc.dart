@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/data/models/breathing_pattern.dart';
 import 'package:mind_care_app/services/analytics/analytics_service.dart';
 
-// ── Events ────────────────────────────────────────────────────────────────────
+// Events
 
 abstract class BreathingEvent {}
 
@@ -18,7 +18,7 @@ class CompleteSession extends BreathingEvent {}
 
 class ResetSession extends BreathingEvent {}
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// State
 
 class BreathingState {
   final BreathingPattern? pattern;
@@ -60,8 +60,7 @@ class BreathingState {
   }
 }
 
-// ── Bloc ──────────────────────────────────────────────────────────────────────
-
+// Bloc
 class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   Timer? _timer;
   final AnalyticsService? analyticsService;
@@ -111,7 +110,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       return;
     }
 
-    // Phase complete — advance
+    // Phase complete
     final phases = s.pattern!.phases;
     final nextPhaseIndex = s.currentPhaseIndex + 1;
 
@@ -124,7 +123,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         ),
       );
     } else {
-      // All phases done — check cycle
+      // All phases done
       final nextCycle = s.currentCycle + 1;
       if (nextCycle > s.totalCycles) {
         // Session complete
