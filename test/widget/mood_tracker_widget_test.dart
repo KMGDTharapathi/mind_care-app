@@ -76,7 +76,7 @@ void main() {
       await tester.pump();
 
       // Validation error should appear
-      expect(find.text('Please select a mood level'), findsOneWidget);
+      expect(find.text('Please select a mood'), findsOneWidget);
     });
 
     testWidgets('selecting a mood and submitting calls saveMoodEntry', (
@@ -92,8 +92,8 @@ void main() {
       GoRouter.of(context).go('/home/mood');
       await tester.pumpAndSettle();
 
-      // Select a mood level
-      await tester.tap(find.text('7'));
+      // Select "Happy" mood
+      await tester.tap(find.text('Happy'));
       await tester.pump();
 
       // Scroll down to make "Log Mood" button visible
@@ -128,14 +128,14 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('Log Mood'), warnIfMissed: false);
       await tester.pump();
-      expect(find.text('Please select a mood level'), findsOneWidget);
+      expect(find.text('Please select a mood'), findsOneWidget);
 
-      // Select a mood level
-      await tester.tap(find.text('3'));
+      // Select a mood
+      await tester.tap(find.text('Calm'));
       await tester.pump();
 
       // Validation error should be gone
-      expect(find.text('Please select a mood level'), findsNothing);
+      expect(find.text('Please select a mood'), findsNothing);
     });
   });
 }

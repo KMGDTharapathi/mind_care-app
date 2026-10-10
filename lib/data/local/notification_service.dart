@@ -121,6 +121,30 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 
+  /// Shows an immediate notification confirming that an event was added
+  /// to the device calendar.
+  static Future<void> showEventAddedNotification({
+    required String eventTitle,
+    required String provider,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(),
+    );
+    await flutterLocalNotificationsPlugin.show(
+      200,
+      'Added to $provider',
+      eventTitle,
+      details,
+    );
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   /// Returns the next [tz.TZDateTime] for the given weekday (1=Mon…7=Sun).

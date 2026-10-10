@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
@@ -42,6 +46,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         reminderMessage: message,
       ),
     );
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -66,11 +71,13 @@ class SettingsCubit extends Cubit<SettingsState> {
       await PreferencesService.setNotificationsEnabled(true);
       emit(state.copyWith(notificationsEnabled: true));
       await _reschedule();
+      unawaited(_syncReminderToFirestore());
       return true;
     } else {
       await NotificationService.cancelAll();
       await PreferencesService.setNotificationsEnabled(false);
       emit(state.copyWith(notificationsEnabled: false));
+      unawaited(_syncReminderToFirestore());
       return true;
     }
   }
@@ -81,6 +88,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     await PreferencesService.setNotificationTime(timeStr);
     emit(state.copyWith(notificationTime: time));
     if (state.notificationsEnabled) await _reschedule();
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> setRepeatDays(Set<int> days) async {
@@ -91,6 +99,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
     emit(state.copyWith(repeatDays: days));
     if (state.notificationsEnabled) await _reschedule();
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> setReminderMessage(String message) async {
@@ -98,6 +107,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     await prefs.setString('reminder_message', message);
     emit(state.copyWith(reminderMessage: message));
     if (state.notificationsEnabled) await _reschedule();
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> _reschedule() async {
@@ -110,11 +120,49 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
   }
 
+  /// Syncs current reminder preferences to Firebase Firestore under the user's document.
+  Future<void> _syncReminderToFirestore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final uid = user?.uid ?? await PreferencesService.getUserId();
+      if (uid == null || uid.isEmpty) return;
+
+      final time = state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
+      final timeStr =
+          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+      final reminderData = {
+        'reminderEnabled': state.notificationsEnabled,
+        'reminderTime': timeStr,
+        'reminderRepeatDays': state.repeatDays.toList(),
+        'reminderMessage': state.reminderMessage,
+        'reminderUpdatedAt': FieldValue.serverTimestamp(),
+      };
+
+      // 1. Update the main user document directly (users/{uid}) so it shows in the Firestore Console table
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(reminderData, SetOptions(merge: true));
+
+      // 2. Also keep settings/preferences subcollection in sync
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('settings')
+          .doc('preferences')
+          .set(reminderData, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('SettingsCubit: Reminder sync to Firestore failed (non-fatal): $e');
+    }
+  }
+
   void updateAuthState(AuthUser? user) {
     if (user == null || user.isAnonymous) {
       emit(state.copyWith(isAuthenticated: false, clearUserEmail: true));
     } else {
       emit(state.copyWith(isAuthenticated: true, userEmail: user.email));
+      unawaited(_syncReminderToFirestore());
     }
   }
 

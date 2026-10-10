@@ -29,10 +29,6 @@ class ChatMessage extends HiveObject {
   @HiveField(6)
   final DateTime timestamp;
 
-  // Suggested wellness feature ids (see WellnessFeature.all). Transient only:
-  // not stored in Hive so the existing chat-history adapter stays unchanged.
-  final List<String> recommendations;
-
   ChatMessage({
     required this.id,
     required this.senderName,
@@ -41,7 +37,6 @@ class ChatMessage extends HiveObject {
     this.fileName,
     this.durationSeconds = 0,
     required this.timestamp,
-    this.recommendations = const [],
   });
 
   MessageSender get sender =>
@@ -65,14 +60,12 @@ class ChatMessage extends HiveObject {
     required MessageSender sender,
     required String text,
     required DateTime timestamp,
-    List<String> recommendations = const [],
   }) => ChatMessage(
     id: id,
     senderName: sender == MessageSender.user ? 'user' : 'willow',
     typeName: 'text',
     content: text,
     timestamp: timestamp,
-    recommendations: recommendations,
   );
 
   factory ChatMessage.voice({
