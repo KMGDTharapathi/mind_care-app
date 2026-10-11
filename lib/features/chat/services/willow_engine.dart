@@ -31,8 +31,10 @@ class WillowEngine {
       return WillowReply(text: await _localRespond(message));
     }
     if (WillowApiService.isConfigured) {
-      final apiResponse =
-          await WillowApiService.chat(message.content, turns: turns);
+      final apiResponse = await WillowApiService.chat(
+        message.content,
+        turns: turns,
+      );
       if (apiResponse != null && apiResponse.text.isNotEmpty) {
         // Recommendations come only from the service, and only when the reply
         // actually suggests one (crisis, or a topic raised for the first time).
@@ -51,11 +53,17 @@ class WillowEngine {
     await Future.delayed(Duration(milliseconds: delay));
     switch (message.type) {
       case MessageType.voice:
-        return (_siVoiceAck + _enVoiceAck)[_rng.nextInt(isSinhala ? _siVoiceAck.length : _enVoiceAck.length)];
+        return (_siVoiceAck + _enVoiceAck)[_rng.nextInt(
+          isSinhala ? _siVoiceAck.length : _enVoiceAck.length,
+        )];
       case MessageType.image:
-        return (isSinhala ? _siImageAck : _enImageAck)[_rng.nextInt(isSinhala ? _siImageAck.length : _enImageAck.length)];
+        return (isSinhala ? _siImageAck : _enImageAck)[_rng.nextInt(
+          isSinhala ? _siImageAck.length : _enImageAck.length,
+        )];
       case MessageType.file:
-        return (isSinhala ? _siFileAck : _enFileAck)[_rng.nextInt(isSinhala ? _siFileAck.length : _enFileAck.length)];
+        return (isSinhala ? _siFileAck : _enFileAck)[_rng.nextInt(
+          isSinhala ? _siFileAck.length : _enFileAck.length,
+        )];
       case MessageType.text:
         return _matchText(message.content);
     }
@@ -76,98 +84,169 @@ class WillowEngine {
   }
 
   static const _siRules = [
-    _Rule(patterns: ['හෙලෝ','ආයුබෝවන්','ආයුබෝ','සුභ','කොහොමද','හායි'], responses: [
-      "ආයුබෝ! 😊 ඔබව දැකීමට සතුටුයි. ඔබ කොහොමද?",
-      "හෙලෝ! 🌿 ඔබ ආවා. මට ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ආයුබෝ! අද ඔබ කොහොමද? 💚",
-    ]),
-    _Rule(patterns: ['කනස්සල්ල','කනස්සල්','බිය','කලබල','නර්වස්'], responses: [
-      "ඔව්... ඒ හැඟීම ඇත්තෙන්ම අමාරුයි. 💙 ඔබට ඒ බිය දැනෙන්නේ කොහොමද?",
-      "ඒ ඇසීමට හිත දුකයි... කනස්සල්ල ඇත්තෙන්ම දුෂ්කරයි. ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 🌿 ඔබට ඒ කනස්සල්ල ආවේ කොහොමද?",
-      "ඒ හැඟීම දැනීම ඇත්තෙන්ම අමාරුයි... 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
-    ]),
-    _Rule(patterns: ['ආතතිය','ගොඩක් වැඩ','බර','පීඩනය','stress'], responses: [
-      "ඔව්... ඔබ ගොඩක් දේ දරාගෙන ඉන්නවා. 😔 ඔබට ලොකුම ගැටලුව කුමක්ද?",
-      "ඒ ඇත්තෙන්ම අමාරු. 💙 ඔබ ගැන ටිකක් කියන්නකෝ — ඔබට දැන් වඩාත් බරක් දැනෙන්නේ කුමක්ද?",
-      "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 🌿 ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඒ ඇසීමට හිත දුකයි... ඔබ ගොඩක් වෙහෙස වෙනවා. 💚 ඔබ ගැන ටිකක් කතා කරමු.",
-    ]),
-    _Rule(patterns: ['දුකයි','දුක','කනගාටු','අඬනවා','කඳුළු'], responses: [
-      "ඒ ඇසීමට හිත දුකයි... 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඔව්... ඒ ඇත්තෙන්ම දුෂ්කරයි. 🌿 ඔබට ඒ දුක දැනෙන්නේ ඇයිද?",
-      "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 💚 ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඒ ඇසීමට කනගාටුයි... ඔබ ගැන ටිකක් කතා කරමු. 💙",
-    ]),
-    _Rule(patterns: ['නිදාගන්න','නිදිමත','වෙහෙස','ක්ලාන්ත','නිදා'], responses: [
-      "ඔව්... නිදාගන්න බැරිවීම ඇත්තෙන්ම අමාරු. 😔 ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඒ ඇත්තෙන්ම දුෂ්කරයි. 💙 ඔබට ඒ ගැටලුව ආවේ කොහොමද?",
-      "ඒ ඇසීමට හිත දුකයි... නිදාගන්න බැරිවීම ශරීරයටත් මනසටත් බරක්. 🌿 ඔබ ගැන ටිකක් කියන්නකෝ.",
-    ]),
-    _Rule(patterns: ['තනිකම','තනිව','තනිය','lonely'], responses: [
-      "ඒ ඇසීමට හිත දුකයි... 💙 තනිකම ඇත්තෙන්ම වේදනාකාරීයි. ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඔව්... ඒ හැඟීම ඇත්තෙන්ම දුෂ්කරයි. 🌿 ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්.",
-      "ඒ ඇසීමට කනගාටුයි. 💚 ඔබ ගැන ටිකක් කතා කරමු.",
-    ]),
-    _Rule(patterns: ['විභාග','exam','ඉගෙනීම'], responses: [
-      "ඔව්... විභාග ගැන ආතතිය ඇත්තෙන්ම දුෂ්කරයි. 😔 ඔබ ගොඩක් වෙහෙස වෙනවා. ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඒ ඇත්තෙන්ම අමාරු. 💙 ඔබ ගැන ටිකක් කතා කරමු.",
-    ]),
-    _Rule(patterns: ['fail','අසාර්ථක','නොහැකි'], responses: [
-      "ඒ ඇසීමට හිත දුකයි... 💙 ඔබ ඒ ගැන ගොඩක් කලකිරිලා ඉන්නවා. ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඔව්... ඒ හැඟීම ඇත්තෙන්ම දුෂ්කරයි. 🌿 ඔබ ගැන ටිකක් කතා කරමු.",
-    ]),
-    _Rule(patterns: ['කවුරුවත්','තේරුම්','තේරෙන්නේ'], responses: [
-      "ඒ ඇසීමට හිත දුකයි... 💙 ඔබව නොතේරෙන්නේ කවුද?",
-      "ඔව්... ඒ හැඟීම ඇත්තෙන්ම වේදනාකාරීයි. 🌿 ඔබ ගැන ටිකක් කියන්නකෝ.",
-    ]),
-    _Rule(patterns: ['ජීවිතය','ජීවිත','ජීවිතේ','අමාරුයි'], responses: [
-      "ඔව්... ජීවිතය සමහර වෙලාවට ගොඩක් බරක් දැනෙනවා. 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඒ ඇසීමට හිත දුකයි... ඔබ ගොඩක් දේ දරාගෙන ඉන්නවා. 🌿 ඔබ ගැන ටිකක් කතා කරමු.",
-    ]),
-    _Rule(patterns: ['සතුටු','සතුට','හොඳයි'], responses: [
-      "ඒ ඇසීමට ලොකු සතුටකි! 🌟 ඔබ ගැන ටිකක් කියන්නකෝ.",
-      "ඔව්, ඒ හොඳයි! 💚 ඔබ ගැන ටිකක් කතා කරමු.",
-    ]),
-    _Rule(patterns: ['ස්තූතියි','ස්තූති'], responses: [
-      "ඔබට ස්වාගතයි! 🌿",
-      "ඒ ඇසීමට සතුටයි. 💚",
-    ]),
+    _Rule(
+      patterns: ['හෙලෝ', 'ආයුබෝවන්', 'ආයුබෝ', 'සුභ', 'කොහොමද', 'හායි'],
+      responses: [
+        "ආයුබෝ! 😊 ඔබව දැකීමට සතුටුයි. ඔබ කොහොමද?",
+        "හෙලෝ! 🌿 ඔබ ආවා. මට ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ආයුබෝ! අද ඔබ කොහොමද? 💚",
+      ],
+    ),
+    _Rule(
+      patterns: ['කනස්සල්ල', 'කනස්සල්', 'බිය', 'කලබල', 'නර්වස්'],
+      responses: [
+        "ඔව්... ඒ හැඟීම ඇත්තෙන්ම අමාරුයි. 💙 ඔබට ඒ බිය දැනෙන්නේ කොහොමද?",
+        "ඒ ඇසීමට හිත දුකයි... කනස්සල්ල ඇත්තෙන්ම දුෂ්කරයි. ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 🌿 ඔබට ඒ කනස්සල්ල ආවේ කොහොමද?",
+        "ඒ හැඟීම දැනීම ඇත්තෙන්ම අමාරුයි... 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
+      ],
+    ),
+    _Rule(
+      patterns: ['ආතතිය', 'ගොඩක් වැඩ', 'බර', 'පීඩනය', 'stress'],
+      responses: [
+        "ඔව්... ඔබ ගොඩක් දේ දරාගෙන ඉන්නවා. 😔 ඔබට ලොකුම ගැටලුව කුමක්ද?",
+        "ඒ ඇත්තෙන්ම අමාරු. 💙 ඔබ ගැන ටිකක් කියන්නකෝ — ඔබට දැන් වඩාත් බරක් දැනෙන්නේ කුමක්ද?",
+        "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 🌿 ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඒ ඇසීමට හිත දුකයි... ඔබ ගොඩක් වෙහෙස වෙනවා. 💚 ඔබ ගැන ටිකක් කතා කරමු.",
+      ],
+    ),
+    _Rule(
+      patterns: ['දුකයි', 'දුක', 'කනගාටු', 'අඬනවා', 'කඳුළු'],
+      responses: [
+        "ඒ ඇසීමට හිත දුකයි... 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඔව්... ඒ ඇත්තෙන්ම දුෂ්කරයි. 🌿 ඔබට ඒ දුක දැනෙන්නේ ඇයිද?",
+        "ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්. 💚 ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඒ ඇසීමට කනගාටුයි... ඔබ ගැන ටිකක් කතා කරමු. 💙",
+      ],
+    ),
+    _Rule(
+      patterns: ['නිදාගන්න', 'නිදිමත', 'වෙහෙස', 'ක්ලාන්ත', 'නිදා'],
+      responses: [
+        "ඔව්... නිදාගන්න බැරිවීම ඇත්තෙන්ම අමාරු. 😔 ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඒ ඇත්තෙන්ම දුෂ්කරයි. 💙 ඔබට ඒ ගැටලුව ආවේ කොහොමද?",
+        "ඒ ඇසීමට හිත දුකයි... නිදාගන්න බැරිවීම ශරීරයටත් මනසටත් බරක්. 🌿 ඔබ ගැන ටිකක් කියන්නකෝ.",
+      ],
+    ),
+    _Rule(
+      patterns: ['තනිකම', 'තනිව', 'තනිය', 'lonely'],
+      responses: [
+        "ඒ ඇසීමට හිත දුකයි... 💙 තනිකම ඇත්තෙන්ම වේදනාකාරීයි. ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඔව්... ඒ හැඟීම ඇත්තෙන්ම දුෂ්කරයි. 🌿 ඔබ ඒ ගැන කතා කරන්නට ආවා — ඒ ලොකු දෙයක්.",
+        "ඒ ඇසීමට කනගාටුයි. 💚 ඔබ ගැන ටිකක් කතා කරමු.",
+      ],
+    ),
+    _Rule(
+      patterns: ['විභාග', 'exam', 'ඉගෙනීම'],
+      responses: [
+        "ඔව්... විභාග ගැන ආතතිය ඇත්තෙන්ම දුෂ්කරයි. 😔 ඔබ ගොඩක් වෙහෙස වෙනවා. ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඒ ඇත්තෙන්ම අමාරු. 💙 ඔබ ගැන ටිකක් කතා කරමු.",
+      ],
+    ),
+    _Rule(
+      patterns: ['fail', 'අසාර්ථක', 'නොහැකි'],
+      responses: [
+        "ඒ ඇසීමට හිත දුකයි... 💙 ඔබ ඒ ගැන ගොඩක් කලකිරිලා ඉන්නවා. ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඔව්... ඒ හැඟීම ඇත්තෙන්ම දුෂ්කරයි. 🌿 ඔබ ගැන ටිකක් කතා කරමු.",
+      ],
+    ),
+    _Rule(
+      patterns: ['කවුරුවත්', 'තේරුම්', 'තේරෙන්නේ'],
+      responses: [
+        "ඒ ඇසීමට හිත දුකයි... 💙 ඔබව නොතේරෙන්නේ කවුද?",
+        "ඔව්... ඒ හැඟීම ඇත්තෙන්ම වේදනාකාරීයි. 🌿 ඔබ ගැන ටිකක් කියන්නකෝ.",
+      ],
+    ),
+    _Rule(
+      patterns: ['ජීවිතය', 'ජීවිත', 'ජීවිතේ', 'අමාරුයි'],
+      responses: [
+        "ඔව්... ජීවිතය සමහර වෙලාවට ගොඩක් බරක් දැනෙනවා. 💙 ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඒ ඇසීමට හිත දුකයි... ඔබ ගොඩක් දේ දරාගෙන ඉන්නවා. 🌿 ඔබ ගැන ටිකක් කතා කරමු.",
+      ],
+    ),
+    _Rule(
+      patterns: ['සතුටු', 'සතුට', 'හොඳයි'],
+      responses: [
+        "ඒ ඇසීමට ලොකු සතුටකි! 🌟 ඔබ ගැන ටිකක් කියන්නකෝ.",
+        "ඔව්, ඒ හොඳයි! 💚 ඔබ ගැන ටිකක් කතා කරමු.",
+      ],
+    ),
+    _Rule(
+      patterns: ['ස්තූතියි', 'ස්තූති'],
+      responses: ["ඔබට ස්වාගතයි! 🌿", "ඒ ඇසීමට සතුටයි. 💚"],
+    ),
   ];
 
   static const _enRules = [
-    _Rule(patterns: ['hello','hi','hey','morning','afternoon','evening'], responses: [
-      "Hey! 😊 How are you doing?",
-      "Hi there! 🌿 What's on your mind?",
-    ]),
-    _Rule(patterns: ['anxious','anxiety','nervous','panic','worried','fear','scared'], responses: [
-      "That sounds really tough... 💙 Tell me more about what's making you feel this way.",
-      "I hear you. Anxiety can feel overwhelming. 🌿 What's been going on?",
-    ]),
-    _Rule(patterns: ['stress','stressed','overwhelmed','pressure','burnout'], responses: [
-      "That sounds really hard... 😔 You're carrying a lot. What's weighing on you most?",
-      "I'm sorry you're feeling this way. 💙 Tell me more about what's happening.",
-    ]),
-    _Rule(patterns: ['sad','sadness','depressed','depression','unhappy','down','cry','tears'], responses: [
-      "I'm sorry you're feeling this way... 💙 Tell me more about what's been going on.",
-      "That sounds really tough. 🌿 What's been weighing on your heart?",
-    ]),
-    _Rule(patterns: ['sleep','insomnia','tired','exhausted','fatigue'], responses: [
-      "That sounds really hard... 😔 Not being able to sleep is tough. Tell me more about it.",
-      "I'm sorry you're struggling with sleep. 💙 How long has this been going on?",
-    ]),
-    _Rule(patterns: ['lonely','alone','isolated'], responses: [
-      "That sounds really painful... 💙 Loneliness is so hard. Tell me more.",
-      "I'm sorry you're feeling this way. 🌿 You're not alone — I'm here.",
-    ]),
-    _Rule(patterns: ['happy','happiness','joy','great','wonderful','good'], responses: [
-      "That's wonderful to hear! 🌟 Tell me more!",
-      "I'm so glad! 💚 What's been making you feel good?",
-    ]),
-    _Rule(patterns: ['thank','thanks'], responses: [
-      "You're welcome! 🌿",
-      "Anytime! 💚",
-    ]),
+    _Rule(
+      patterns: ['hello', 'hi', 'hey', 'morning', 'afternoon', 'evening'],
+      responses: [
+        "Hey! 😊 How are you doing?",
+        "Hi there! 🌿 What's on your mind?",
+      ],
+    ),
+    _Rule(
+      patterns: [
+        'anxious',
+        'anxiety',
+        'nervous',
+        'panic',
+        'worried',
+        'fear',
+        'scared',
+      ],
+      responses: [
+        "That sounds really tough... 💙 Tell me more about what's making you feel this way.",
+        "I hear you. Anxiety can feel overwhelming. 🌿 What's been going on?",
+      ],
+    ),
+    _Rule(
+      patterns: ['stress', 'stressed', 'overwhelmed', 'pressure', 'burnout'],
+      responses: [
+        "That sounds really hard... 😔 You're carrying a lot. What's weighing on you most?",
+        "I'm sorry you're feeling this way. 💙 Tell me more about what's happening.",
+      ],
+    ),
+    _Rule(
+      patterns: [
+        'sad',
+        'sadness',
+        'depressed',
+        'depression',
+        'unhappy',
+        'down',
+        'cry',
+        'tears',
+      ],
+      responses: [
+        "I'm sorry you're feeling this way... 💙 Tell me more about what's been going on.",
+        "That sounds really tough. 🌿 What's been weighing on your heart?",
+      ],
+    ),
+    _Rule(
+      patterns: ['sleep', 'insomnia', 'tired', 'exhausted', 'fatigue'],
+      responses: [
+        "That sounds really hard... 😔 Not being able to sleep is tough. Tell me more about it.",
+        "I'm sorry you're struggling with sleep. 💙 How long has this been going on?",
+      ],
+    ),
+    _Rule(
+      patterns: ['lonely', 'alone', 'isolated'],
+      responses: [
+        "That sounds really painful... 💙 Loneliness is so hard. Tell me more.",
+        "I'm sorry you're feeling this way. 🌿 You're not alone — I'm here.",
+      ],
+    ),
+    _Rule(
+      patterns: ['happy', 'happiness', 'joy', 'great', 'wonderful', 'good'],
+      responses: [
+        "That's wonderful to hear! 🌟 Tell me more!",
+        "I'm so glad! 💚 What's been making you feel good?",
+      ],
+    ),
+    _Rule(
+      patterns: ['thank', 'thanks'],
+      responses: ["You're welcome! 🌿", "Anytime! 💚"],
+    ),
   ];
 
   static const _enFallback = [

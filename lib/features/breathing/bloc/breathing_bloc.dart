@@ -5,7 +5,7 @@ import 'package:mind_care_app/data/models/wellness_session_model.dart';
 import 'package:mind_care_app/data/repositories/firestore/firestore_session_repository.dart';
 import 'package:mind_care_app/services/analytics/analytics_service.dart';
 
-// ── Events ────────────────────────────────────────────────────────────────────
+// Events
 
 abstract class BreathingEvent {}
 
@@ -20,7 +20,7 @@ class CompleteSession extends BreathingEvent {}
 
 class ResetSession extends BreathingEvent {}
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// State
 
 class BreathingState {
   final BreathingPattern? pattern;
@@ -62,8 +62,7 @@ class BreathingState {
   }
 }
 
-// ── Bloc ──────────────────────────────────────────────────────────────────────
-
+// Bloc
 class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   Timer? _timer;
   final AnalyticsService? analyticsService;
@@ -88,15 +87,17 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   void _onStartSession(StartSession event, Emitter<BreathingState> emit) {
     _cancelTimer();
     final pattern = event.pattern;
-    emit(BreathingState(
-      pattern: pattern,
-      currentPhaseIndex: 0,
-      secondsRemaining: pattern.phases[0].durationSeconds,
-      isRunning: true,
-      isCompleted: false,
-      currentCycle: 1,
-      totalCycles: 3,
-    ));
+    emit(
+      BreathingState(
+        pattern: pattern,
+        currentPhaseIndex: 0,
+        secondsRemaining: pattern.phases[0].durationSeconds,
+        isRunning: true,
+        isCompleted: false,
+        currentCycle: 1,
+        totalCycles: 3,
+      ),
+    );
     _startTimer();
   }
 
@@ -111,27 +112,27 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       return;
     }
 
-    // Phase complete — advance
+    // Phase complete
     final phases = s.pattern!.phases;
     final nextPhaseIndex = s.currentPhaseIndex + 1;
 
     if (nextPhaseIndex < phases.length) {
       // Move to next phase in same cycle
-      emit(s.copyWith(
-        currentPhaseIndex: nextPhaseIndex,
-        secondsRemaining: phases[nextPhaseIndex].durationSeconds,
-      ));
+      emit(
+        s.copyWith(
+          currentPhaseIndex: nextPhaseIndex,
+          secondsRemaining: phases[nextPhaseIndex].durationSeconds,
+        ),
+      );
     } else {
-      // All phases done — check cycle
+      // All phases done
       final nextCycle = s.currentCycle + 1;
       if (nextCycle > s.totalCycles) {
         // Session complete
         _cancelTimer();
-        emit(s.copyWith(
-          secondsRemaining: 0,
-          isRunning: false,
-          isCompleted: true,
-        ));
+        emit(
+          s.copyWith(secondsRemaining: 0, isRunning: false, isCompleted: true),
+        );
         analyticsService?.logEvent(
           'breathing_session_completed',
           parameters: {'pattern': s.pattern!.id},
@@ -159,11 +160,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         } catch (_) {}
       } else {
         // Start next cycle from phase 0
-        emit(s.copyWith(
-          currentPhaseIndex: 0,
-          secondsRemaining: phases[0].durationSeconds,
-          currentCycle: nextCycle,
-        ));
+        emit(
+          s.copyWith(
+            currentPhaseIndex: 0,
+            secondsRemaining: phases[0].durationSeconds,
+            currentCycle: nextCycle,
+          ),
+        );
       }
     }
   }

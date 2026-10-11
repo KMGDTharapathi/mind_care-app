@@ -1,6 +1,7 @@
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 
@@ -35,13 +36,16 @@ class _DailyRemindersScreenState extends State<DailyRemindersScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = LanguageProvider.of(context);
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0D1A1A) : const Color(0xFFF0F9F9),
+      backgroundColor: isDark
+          ? const Color(0xFF0D1A1A)
+          : const Color(0xFFF0F9F9),
       appBar: AppBar(
         backgroundColor: _kTeal,
         foregroundColor: Colors.white,
-        title: Text(s.remindersTitle,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          s.remindersTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         elevation: 0,
         bottom: TabBar(
           controller: _tabs,
@@ -49,8 +53,14 @@ class _DailyRemindersScreenState extends State<DailyRemindersScreen>
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           tabs: [
-            Tab(icon: const Icon(Icons.notifications_outlined), text: s.pushTab),
-            Tab(icon: const Icon(Icons.calendar_month_outlined), text: s.calendarTab),
+            Tab(
+              icon: const Icon(Icons.notifications_outlined),
+              text: s.pushTab,
+            ),
+            Tab(
+              icon: const Icon(Icons.calendar_month_outlined),
+              text: s.calendarTab,
+            ),
           ],
         ),
       ),
@@ -91,41 +101,48 @@ class _PushTab extends StatelessWidget {
             // Enable toggle
             _ReminderCard(
               isDark: isDark,
-              child: Row(children: [
-                _IconCircle(
-                  icon: state.notificationsEnabled
-                      ? Icons.notifications_active_rounded
-                      : Icons.notifications_off_outlined,
-                  color: state.notificationsEnabled ? _kTeal : Colors.grey,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
+              child: Row(
+                children: [
+                  _IconCircle(
+                    icon: state.notificationsEnabled
+                        ? Icons.notifications_active_rounded
+                        : Icons.notifications_off_outlined,
+                    color: state.notificationsEnabled ? _kTeal : Colors.grey,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(s.dailyReminderToggle,
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : _kDark)),
+                        Text(
+                          s.dailyReminderToggle,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : _kDark,
+                          ),
+                        ),
                         Text(
                           state.notificationsEnabled
                               ? '${s.activeLabel} — ${state.repeatLabel}'
                               : s.tapToEnable,
                           style: TextStyle(
-                              fontSize: 13,
-                              color: state.notificationsEnabled
-                                  ? _kTeal
-                                  : Colors.grey),
+                            fontSize: 13,
+                            color: state.notificationsEnabled
+                                ? _kTeal
+                                : Colors.grey,
+                          ),
                         ),
-                      ]),
-                ),
-                Switch.adaptive(
-                  value: state.notificationsEnabled,
-                  activeColor: _kTeal,
-                  onChanged: (v) => _toggle(context, cubit, v),
-                ),
-              ]),
+                      ],
+                    ),
+                  ),
+                  Switch.adaptive(
+                    value: state.notificationsEnabled,
+                    activeThumbColor: _kTeal,
+                    onChanged: (v) => _toggle(context, cubit, v),
+                  ),
+                ],
+              ),
             ),
 
             if (state.notificationsEnabled) ...[
@@ -135,30 +152,38 @@ class _PushTab extends StatelessWidget {
               _ReminderCard(
                 isDark: isDark,
                 onTap: () => _pickTime(context, cubit, state),
-                child: Row(children: [
-                  const _IconCircle(
-                      icon: Icons.access_time_rounded, color: _kTeal),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
+                child: Row(
+                  children: [
+                    const _IconCircle(
+                      icon: Icons.access_time_rounded,
+                      color: _kTeal,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.reminderTime,
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : _kDark)),
-                          Text(s.tapToChange,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade500)),
-                        ]),
-                  ),
-                  _Pill(
-                    label: _fmtTime(context, state),
-                    color: _kTeal,
-                  ),
-                ]),
+                          Text(
+                            s.reminderTime,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : _kDark,
+                            ),
+                          ),
+                          Text(
+                            s.tapToChange,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _Pill(label: _fmtTime(context, state), color: _kTeal),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -167,34 +192,46 @@ class _PushTab extends StatelessWidget {
               _ReminderCard(
                 isDark: isDark,
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
                         const _IconCircle(
-                            icon: Icons.repeat_rounded, color: Color(0xFF7986CB)),
+                          icon: Icons.repeat_rounded,
+                          color: Color(0xFF7986CB),
+                        ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(s.repeatLabel,
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : _kDark)),
-                                Text(state.repeatLabel,
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Color(0xFF7986CB))),
-                              ]),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.repeatLabel,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : _kDark,
+                                ),
+                              ),
+                              Text(
+                                state.repeatLabel,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF7986CB),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ]),
-                      const SizedBox(height: 14),
-                      _DayPicker(
-                        selected: state.repeatDays,
-                        onChanged: (days) => cubit.setRepeatDays(days),
-                      ),
-                    ]),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    _DayPicker(
+                      selected: state.repeatDays,
+                      onChanged: (days) => cubit.setRepeatDays(days),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -203,35 +240,44 @@ class _PushTab extends StatelessWidget {
               _ReminderCard(
                 isDark: isDark,
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
                         const _IconCircle(
-                            icon: Icons.edit_note_rounded,
-                            color: Color(0xFFFF8A65)),
+                          icon: Icons.edit_note_rounded,
+                          color: Color(0xFFFF8A65),
+                        ),
                         const SizedBox(width: 14),
-                        Text(s.reminderMessage,
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : _kDark)),
-                      ]),
-                      const SizedBox(height: 12),
-                      _MessagePicker(
-                        current: state.reminderMessage,
-                        isDark: isDark,
-                        presets: s.reminderPresets,
-                        onChanged: (msg) => cubit.setReminderMessage(msg),
-                      ),
-                    ]),
+                        Text(
+                          s.reminderMessage,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : _kDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _MessagePicker(
+                      current: state.reminderMessage,
+                      selectedIndex: state.reminderPresetIndex,
+                      isDark: isDark,
+                      presets: s.reminderPresets,
+                      onChanged: (msg, presetIndex) =>
+                          cubit.setReminderMessage(
+                            msg,
+                            presetIndex: presetIndex,
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ],
 
             const SizedBox(height: 20),
-            _InfoNote(
-              isDark: isDark,
-              text: s.pushInfoNote,
-            ),
+            _InfoNote(isDark: isDark, text: s.pushInfoNote),
           ],
         );
       },
@@ -244,7 +290,10 @@ class _PushTab extends StatelessWidget {
   }
 
   Future<void> _toggle(
-      BuildContext context, SettingsCubit cubit, bool enabled) async {
+    BuildContext context,
+    SettingsCubit cubit,
+    bool enabled,
+  ) async {
     if (!enabled) {
       await cubit.setNotificationsEnabled(false);
       return;
@@ -261,19 +310,26 @@ class _PushTab extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(children: [
-          const Icon(Icons.notifications_active_rounded, color: _kTeal, size: 24),
-          const SizedBox(width: 10),
-          Text(s.enableNotifications),
-        ]),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.notifications_active_rounded,
+              color: _kTeal,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Text(s.enableNotifications),
+          ],
+        ),
         content: Text(
           s.notificationExplanation,
           style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(s.notNow)),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(s.notNow),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _kTeal),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -286,15 +342,18 @@ class _PushTab extends StatelessWidget {
   }
 
   Future<void> _pickTime(
-      BuildContext context, SettingsCubit cubit, SettingsState state) async {
+    BuildContext context,
+    SettingsCubit cubit,
+    SettingsState state,
+  ) async {
     final picked = await showTimePicker(
       context: context,
       initialTime:
           state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-            colorScheme:
-                Theme.of(ctx).colorScheme.copyWith(primary: _kTeal)),
+          colorScheme: Theme.of(ctx).colorScheme.copyWith(primary: _kTeal),
+        ),
         child: child!,
       ),
     );
@@ -317,21 +376,31 @@ class _CalendarTabState extends State<_CalendarTab> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
   int _selectedTypeIndex = 0;
   bool _isRecurring = false;
+  String _customLabel = ''; // used when the "Custom" type is selected
 
-  static const _typeKeys = [
-    'moodCheckin', 'breathing', 'meditation', 'journal', 'custom',
-  ];
+  static const _customTypeIndex = 4; // index of s.typeCustom in _typeLabels
+
   static const _typeIcons = [
-    Icons.favorite_border_rounded, Icons.air_rounded,
-    Icons.self_improvement_outlined, Icons.edit_outlined, Icons.star_outline_rounded,
+    Icons.favorite_border_rounded,
+    Icons.air_rounded,
+    Icons.self_improvement_outlined,
+    Icons.edit_outlined,
+    Icons.star_outline_rounded,
   ];
   static const _typeColors = [
-    Color(0xFFE57373), Color(0xFF5BA8A0),
-    Color(0xFF7986CB), Color(0xFFFF8A65), Color(0xFF78909C),
+    Color(0xFFE57373),
+    Color(0xFF5BA8A0),
+    Color(0xFF7986CB),
+    Color(0xFFFF8A65),
+    Color(0xFF78909C),
   ];
 
-  List<String> _typeLabels(s) => [
-    s.typeMoodCheckin, s.typeBreathing, s.typeMeditation, s.typeJournal, s.typeCustom,
+  List<String> _typeLabels(AppStrings s) => [
+    s.typeMoodCheckin,
+    s.typeBreathing,
+    s.typeMeditation,
+    s.typeJournal,
+    s.typeCustom,
   ];
 
   @override
@@ -353,61 +422,122 @@ class _CalendarTabState extends State<_CalendarTab> {
         // Type selector
         _ReminderCard(
           isDark: isDark,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              const _IconCircle(
-                  icon: Icons.category_outlined, color: Color(0xFF7986CB)),
-              const SizedBox(width: 14),
-              Text(s.reminderType,
-                  style: TextStyle(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const _IconCircle(
+                    icon: Icons.category_outlined,
+                    color: Color(0xFF7986CB),
+                  ),
+                  const SizedBox(width: 14),
+                  Text(
+                    s.reminderType,
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : _kDark)),
-            ]),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: List.generate(typeLabels.length, (i) {
-                final label = typeLabels[i];
-                final isSelected = _selectedTypeIndex == i;
-                final color = _typeColors[i];
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedTypeIndex = i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? color.withOpacity(0.15)
-                          : (isDark
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.grey.shade100),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: isSelected ? color : Colors.transparent,
-                          width: 1.5),
+                      color: isDark ? Colors.white : _kDark,
                     ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(_typeIcons[i], size: 16, color: isSelected ? color : Colors.grey),
-                      const SizedBox(width: 6),
-                      Text(label,
-                          style: TextStyle(
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(typeLabels.length, (i) {
+                  final label = typeLabels[i];
+                  final isSelected = _selectedTypeIndex == i;
+                  final color = _typeColors[i];
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedTypeIndex = i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? color.withValues(alpha: 0.15)
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.grey.shade100),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? color : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _typeIcons[i],
+                            size: 16,
+                            color: isSelected ? color : Colors.grey,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            label,
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.w400,
-                              color: isSelected
-                                  ? color
-                                  : Colors.grey.shade600)),
-                    ]),
-                  ),
-                );
-              }),
-            ),
-          ]),
+                              color: isSelected ? color : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
+
+        // Custom reminder-type label editor — shown when "Custom" is selected.
+        // The user's own message becomes the calendar event title.
+        if (_selectedTypeIndex == _customTypeIndex) ...[
+          const SizedBox(height: 12),
+          _ReminderCard(
+            isDark: isDark,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const _IconCircle(
+                      icon: Icons.edit_outlined,
+                      color: Color(0xFFFF8A65),
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      s.reminderMessage,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : _kDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _MessagePicker(
+                  current: _customLabel,
+                  selectedIndex: null,
+                  isDark: isDark,
+                  presets: const [],
+                  emptyFallback: s.typeCustom,
+                  onChanged: (msg, _) => setState(() => _customLabel = msg),
+                ),
+              ],
+            ),
+          ),
+        ],
 
         const SizedBox(height: 12),
 
@@ -415,29 +545,38 @@ class _CalendarTabState extends State<_CalendarTab> {
         _ReminderCard(
           isDark: isDark,
           onTap: () => _pickDate(context),
-          child: Row(children: [
-            const _IconCircle(
-                icon: Icons.calendar_today_outlined, color: _kTeal),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
+          child: Row(
+            children: [
+              const _IconCircle(
+                icon: Icons.calendar_today_outlined,
+                color: _kTeal,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.dateLabel,
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : _kDark)),
-                    Text(s.tapToChoose,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500)),
-                  ]),
-            ),
-            _Pill(
-              label: _fmtDate(_selectedDate),
-              color: _kTeal,
-            ),
-          ]),
+                    Text(
+                      s.dateLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : _kDark,
+                      ),
+                    ),
+                    Text(
+                      s.tapToChoose,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _Pill(label: _fmtDate(_selectedDate), color: _kTeal),
+            ],
+          ),
         ),
 
         const SizedBox(height: 12),
@@ -446,29 +585,41 @@ class _CalendarTabState extends State<_CalendarTab> {
         _ReminderCard(
           isDark: isDark,
           onTap: () => _pickTime(context),
-          child: Row(children: [
-            const _IconCircle(
-                icon: Icons.access_time_rounded, color: Color(0xFFFF8A65)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
+          child: Row(
+            children: [
+              const _IconCircle(
+                icon: Icons.access_time_rounded,
+                color: Color(0xFFFF8A65),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.timeLabel,
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : _kDark)),
-                    Text(s.tapToChoose,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500)),
-                  ]),
-            ),
-            _Pill(
-              label: _selectedTime.format(context),
-              color: const Color(0xFFFF8A65),
-            ),
-          ]),
+                    Text(
+                      s.timeLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : _kDark,
+                      ),
+                    ),
+                    Text(
+                      s.tapToChoose,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _Pill(
+                label: _selectedTime.format(context),
+                color: const Color(0xFFFF8A65),
+              ),
+            ],
+          ),
         ),
 
         const SizedBox(height: 12),
@@ -476,33 +627,44 @@ class _CalendarTabState extends State<_CalendarTab> {
         // Recurring toggle
         _ReminderCard(
           isDark: isDark,
-          child: Row(children: [
-            const _IconCircle(
-                icon: Icons.repeat_rounded, color: Color(0xFF7986CB)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
+          child: Row(
+            children: [
+              const _IconCircle(
+                icon: Icons.repeat_rounded,
+                color: Color(0xFF7986CB),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.recurringLabel,
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : _kDark)),
-                    Text(_isRecurring ? s.repeatsWeekly : s.oneTimeEvent,
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: _isRecurring
-                                ? const Color(0xFF7986CB)
-                                : Colors.grey)),
-                  ]),
-            ),
-            Switch.adaptive(
-              value: _isRecurring,
-              activeColor: const Color(0xFF7986CB),
-              onChanged: (v) => setState(() => _isRecurring = v),
-            ),
-          ]),
+                    Text(
+                      s.recurringLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : _kDark,
+                      ),
+                    ),
+                    Text(
+                      _isRecurring ? s.repeatsWeekly : s.oneTimeEvent,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _isRecurring
+                            ? const Color(0xFF7986CB)
+                            : Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: _isRecurring,
+                activeThumbColor: const Color(0xFF7986CB),
+                onChanged: (v) => setState(() => _isRecurring = v),
+              ),
+            ],
+          ),
         ),
 
         const SizedBox(height: 20),
@@ -519,26 +681,36 @@ class _CalendarTabState extends State<_CalendarTab> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                borderRadius: BorderRadius.circular(16),
+              ),
               textStyle: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w600),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
 
         const SizedBox(height: 16),
-        _InfoNote(
-          isDark: isDark,
-          text: s.calendarInfoNote,
-        ),
+        _InfoNote(isDark: isDark, text: s.calendarInfoNote),
       ],
     );
   }
 
   String _fmtDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
@@ -551,9 +723,10 @@ class _CalendarTabState extends State<_CalendarTab> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-            colorScheme: Theme.of(ctx)
-                .colorScheme
-                .copyWith(primary: const Color(0xFF7986CB))),
+          colorScheme: Theme.of(
+            ctx,
+          ).colorScheme.copyWith(primary: const Color(0xFF7986CB)),
+        ),
         child: child!,
       ),
     );
@@ -566,9 +739,10 @@ class _CalendarTabState extends State<_CalendarTab> {
       initialTime: _selectedTime,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-            colorScheme: Theme.of(ctx)
-                .colorScheme
-                .copyWith(primary: const Color(0xFFFF8A65))),
+          colorScheme: Theme.of(
+            ctx,
+          ).colorScheme.copyWith(primary: const Color(0xFFFF8A65)),
+        ),
         child: child!,
       ),
     );
@@ -576,7 +750,11 @@ class _CalendarTabState extends State<_CalendarTab> {
   }
 
   void _addToCalendar(List<String> typeLabels) {
-    final selectedType = typeLabels[_selectedTypeIndex];
+    // For the "Custom" type, the user's own message is the event label.
+    final selectedType =
+        _selectedTypeIndex == _customTypeIndex && _customLabel.trim().isNotEmpty
+        ? _customLabel.trim()
+        : typeLabels[_selectedTypeIndex];
     final start = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -593,9 +771,7 @@ class _CalendarTabState extends State<_CalendarTab> {
       location: '',
       startDate: start,
       endDate: end,
-      recurrence: _isRecurring
-          ? Recurrence(frequency: Frequency.weekly)
-          : null,
+      recurrence: _isRecurring ? Recurrence(frequency: Frequency.weekly) : null,
       allDay: false,
     );
 
@@ -625,42 +801,57 @@ class _HeroBanner extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight),
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: gradientColors.first.withOpacity(0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6))
+            color: gradientColors.first.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
-      child: Row(children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-          child: Icon(icon, color: Colors.white, size: 26),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title,
-                style: const TextStyle(
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 26),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(subtitle,
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13,
-                    height: 1.4)),
-          ]),
-        ),
-      ]),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -670,8 +861,7 @@ class _ReminderCard extends StatelessWidget {
   final bool isDark;
   final VoidCallback? onTap;
 
-  const _ReminderCard(
-      {required this.child, required this.isDark, this.onTap});
+  const _ReminderCard({required this.child, required this.isDark, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -687,9 +877,10 @@ class _ReminderCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3))
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
             ],
           ),
           child: child,
@@ -709,8 +900,10 @@ class _IconCircle extends StatelessWidget {
     return Container(
       width: 44,
       height: 44,
-      decoration:
-          BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
       child: Icon(icon, color: color, size: 22),
     );
   }
@@ -726,11 +919,17 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12)),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 15, fontWeight: FontWeight.bold, color: color)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -746,21 +945,27 @@ class _InfoNote extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withOpacity(0.05)
+            ? Colors.white.withValues(alpha: 0.05)
             : const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(Icons.info_outline_rounded, size: 18, color: Colors.green),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(text,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded, size: 18, color: Colors.green),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
               style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white70 : Colors.green.shade800,
-                  height: 1.4)),
-        ),
-      ]),
+                fontSize: 13,
+                color: isDark ? Colors.white70 : Colors.green.shade800,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -803,15 +1008,18 @@ class _DayPicker extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: isOn ? _kTeal : Colors.grey.withOpacity(0.12),
+              color: isOn ? _kTeal : Colors.grey.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(_days[i],
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: isOn ? Colors.white : Colors.grey)),
+              child: Text(
+                _days[i],
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isOn ? Colors.white : Colors.grey,
+                ),
+              ),
             ),
           ),
         );
@@ -822,65 +1030,357 @@ class _DayPicker extends StatelessWidget {
 
 // ── Message picker ────────────────────────────────────────────────────────────
 
-class _MessagePicker extends StatelessWidget {
+class _MessagePicker extends StatefulWidget {
   final String current;
+  final int? selectedIndex;
   final bool isDark;
   final List<String> presets;
-  final ValueChanged<String> onChanged;
+  final String? emptyFallback;
+  final void Function(String message, int? presetIndex) onChanged;
 
-  const _MessagePicker(
-      {required this.current,
-      required this.isDark,
-      required this.presets,
-      required this.onChanged});
+  const _MessagePicker({
+    required this.current,
+    required this.selectedIndex,
+    required this.isDark,
+    required this.presets,
+    this.emptyFallback,
+    required this.onChanged,
+  });
+
+  @override
+  State<_MessagePicker> createState() => _MessagePickerState();
+}
+
+class _MessagePickerState extends State<_MessagePicker> {
+  late final TextEditingController _controller;
+  bool _editing = false;
+  bool _showActions = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.current);
+  }
+
+  @override
+  void didUpdateWidget(covariant _MessagePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Keep the field in sync with external changes (e.g. a language switch)
+    // while the user is not actively editing.
+    if (!_editing && widget.current != oldWidget.current) {
+      _controller.text = widget.current;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String get _default => widget.presets.isNotEmpty
+      ? widget.presets.first
+      : (widget.emptyFallback ?? '');
+
+  void _save() {
+    var msg = _controller.text.trim();
+    // Empty input → fall back to the first preset (or emptyFallback) so the
+    // message is never blank. The user can "delete and save" to reset.
+    if (msg.isEmpty) msg = _default;
+    _controller.text = msg;
+    _controller.selection = TextSelection.collapsed(offset: msg.length);
+    final presetIndex = widget.presets.indexOf(msg);
+    widget.onChanged(msg, presetIndex >= 0 ? presetIndex : null);
+    final s = LanguageProvider.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(s.saved),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _kTeal,
+      ),
+    );
+    setState(() {
+      _editing = false;
+      _showActions = false;
+    });
+  }
+
+  void _delete() {
+    // Deleting clears the field and lets the user type a new message (or tap
+    // save to fall back to the default preset).
+    _controller.clear();
+    setState(() {
+      _editing = true;
+      _showActions = false;
+    });
+  }
+
+  void _selectPreset(int index) {
+    final msg = widget.presets[index];
+    _controller.text = msg;
+    _controller.selection = TextSelection.collapsed(offset: msg.length);
+    widget.onChanged(msg, index);
+    setState(() => _editing = false);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final s = LanguageProvider.of(context);
+    final trimmed = _controller.text.trim();
+    final isCustom = trimmed.isNotEmpty && !widget.presets.contains(trimmed);
     return Column(
-      children: presets.map((msg) {
-        final isSelected = current == msg;
-        return GestureDetector(
-          onTap: () => onChanged(msg),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            margin: const EdgeInsets.only(bottom: 8),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFFFF8A65).withOpacity(0.1)
-                  : (isDark
-                      ? Colors.white.withOpacity(0.04)
-                      : Colors.grey.shade50),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: isSelected
+      children: [
+        if (!_editing)
+          // Display mode — shows the saved message. Tapping it reveals the
+          // small edit + delete icon buttons.
+          GestureDetector(
+            onTap: () => setState(() => _showActions = !_showActions),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: isCustom
+                    ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
+                    : (widget.isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.grey.shade50),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isCustom
                       ? const Color(0xFFFF8A65)
                       : Colors.transparent,
-                  width: 1.5),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.notifications_active_outlined,
+                    size: 20,
+                    color: Color(0xFFFF8A65),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      trimmed.isEmpty ? _default : trimmed,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: widget.isDark ? Colors.white : Colors.black87,
+                        height: 1.4,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Small edit / delete buttons — only while actions are shown.
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 180),
+                    child: _showActions
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _SmallActionButton(
+                                icon: Icons.edit_rounded,
+                                color: const Color(0xFFFF8A65),
+                                tooltip: s.edit,
+                                onPressed: () {
+                                  setState(() => _editing = true);
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    _controller.selection =
+                                        TextSelection.collapsed(
+                                          offset: _controller.text.length,
+                                        );
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              _SmallActionButton(
+                                icon: Icons.delete_outline_rounded,
+                                color: Colors.red.shade400,
+                                tooltip: s.delete,
+                                onPressed: _delete,
+                              ),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
-            child: Row(children: [
-              Icon(
-                isSelected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
-                size: 18,
-                color: isSelected
-                    ? const Color(0xFFFF8A65)
-                    : Colors.grey,
+          )
+        else ...[
+          // Edit mode — editable field with the Save button.
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLines: 3,
+            minLines: 1,
+            style: TextStyle(
+              fontSize: 14,
+              color: widget.isDark ? Colors.white : Colors.black87,
+            ),
+            decoration: InputDecoration(
+              hintText: _default.isEmpty ? 'Type a reminder message…' : _default,
+              hintStyle: TextStyle(
+                fontSize: 14,
+                color: widget.isDark ? Colors.white38 : Colors.grey.shade500,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(msg,
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white70 : Colors.black87,
-                        height: 1.4)),
+              prefixIcon: const Icon(
+                Icons.edit_rounded,
+                size: 20,
+                color: Color(0xFFFF8A65),
               ),
-            ]),
+              filled: true,
+              fillColor: widget.isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.grey.shade50,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF8A65),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF8A65),
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF8A65),
+                  width: 1.5,
+                ),
+              ),
+            ),
           ),
-        );
-      }).toList(),
+          const SizedBox(height: 10),
+          // Save the typed message as the reminder message.
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save_rounded, size: 18),
+              label: Text(s.save),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF8A65),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+        if (widget.presets.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          ...List.generate(widget.presets.length, (i) {
+            final msg = widget.presets[i];
+            final isSelected = widget.selectedIndex != null
+                ? widget.selectedIndex == i
+                : trimmed == msg;
+            return GestureDetector(
+              onTap: () => _selectPreset(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFFF8A65).withValues(alpha: 0.1)
+                      : (widget.isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : Colors.grey.shade50),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFFFF8A65)
+                        : Colors.transparent,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isSelected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      size: 18,
+                      color: isSelected
+                          ? const Color(0xFFFF8A65)
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        msg,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: widget.isDark
+                              ? Colors.white70
+                              : Colors.black87,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+}
+
+class _SmallActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _SmallActionButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: tooltip,
+      icon: Icon(icon, size: 20),
+      color: color,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      style: IconButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     );
   }
 }

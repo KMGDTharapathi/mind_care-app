@@ -67,8 +67,9 @@ void main() {
       expect(find.text('3 words'), findsOneWidget);
     });
 
-    testWidgets('saving with empty body shows validation error snackbar',
-        (tester) async {
+    testWidgets('saving with empty body shows validation error snackbar', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildJournalEntryScreen(mockRepository));
       await tester.pump();
 
@@ -80,8 +81,9 @@ void main() {
       expect(find.text('Journal body cannot be empty.'), findsOneWidget);
     });
 
-    testWidgets('delete button shows confirmation dialog for existing entry',
-        (tester) async {
+    testWidgets('delete button shows confirmation dialog for existing entry', (
+      tester,
+    ) async {
       // Set up mock for loading entries
       final existingEntry = JournalEntry(
         id: 'entry-1',
@@ -91,8 +93,9 @@ void main() {
         updatedAt: DateTime.now(),
       );
 
-      when(() => mockRepository.getAllEntries())
-          .thenAnswer((_) async => [existingEntry]);
+      when(
+        () => mockRepository.getAllEntries(),
+      ).thenAnswer((_) async => [existingEntry]);
 
       await tester.pumpWidget(
         buildJournalEntryScreen(mockRepository, entryId: 'entry-1'),
@@ -117,7 +120,9 @@ void main() {
       expect(find.text('Delete'), findsOneWidget);
     });
 
-    testWidgets('cancelling delete dialog does not delete entry', (tester) async {
+    testWidgets('cancelling delete dialog does not delete entry', (
+      tester,
+    ) async {
       final existingEntry = JournalEntry(
         id: 'entry-2',
         title: 'Keep Me',
@@ -126,8 +131,9 @@ void main() {
         updatedAt: DateTime.now(),
       );
 
-      when(() => mockRepository.getAllEntries())
-          .thenAnswer((_) async => [existingEntry]);
+      when(
+        () => mockRepository.getAllEntries(),
+      ).thenAnswer((_) async => [existingEntry]);
 
       await tester.pumpWidget(
         buildJournalEntryScreen(mockRepository, entryId: 'entry-2'),

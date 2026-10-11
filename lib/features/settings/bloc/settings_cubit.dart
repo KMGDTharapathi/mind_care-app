@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/services/auth/auth_service.dart';
@@ -16,11 +18,27 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> loadSettings() async {
     final prefs = await PreferencesService.getSharedPreferences();
     final themeModeStr = prefs.getString('theme_mode') ?? 'light';
-    final notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
+    final notificationsEnabled =
+        prefs.getBool('notifications_enabled') ?? false;
     final timeStr = prefs.getString('notification_time');
     final repeatList = prefs.getStringList('repeat_days') ?? [];
-    final message = prefs.getString('reminder_message') ??
-        'Time for your daily wellness check-in 🌿';
+    final presetIndex =
+        int.tryParse(prefs.getString('reminder_preset_index') ?? '');
+    var message = prefs.getString('reminder_message');
+
+    // A saved preset is tracked by index so the selected message survives a
+    // language switch (preset texts are localized and would otherwise never
+    // match in the other language). Re-derive the text in the saved language.
+    if (presetIndex != null) {
+      final lang = prefs.getString('app_language') ?? 'en';
+      final presets = lang == 'si'
+          ? AppStrings.si.reminderPresets
+          : AppStrings.en.reminderPresets;
+      if (presetIndex >= 0 && presetIndex < presets.length) {
+        message = presets[presetIndex];
+      }
+    }
+    message ??= 'Time for your daily wellness check-in 🌿';
 
     TimeOfDay? notificationTime;
     if (timeStr != null) {
@@ -33,121 +51,24 @@ class SettingsCubit extends Cubit<SettingsState> {
       }
     }
 
-    emit(state.copyWith(
-      themeMode: themeModeStr == 'dark' ? ThemeMode.dark : ThemeMode.light,
-      notificationsEnabled: notificationsEnabled,
-      notificationTime: notificationTime,
-      repeatDays: repeatList.map((e) => int.tryParse(e) ?? 0).toSet()
-        ..remove(0),
-      reminderMessage: message,
-    ));
-
-    // Also attempt to restore cloud reminder preferences from Firestore
-    await _loadFromFirestore();
-  }
-
-  Future<void> _loadFromFirestore() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('reminders')
-          .doc('daily_reminder')
-          .get();
-
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        final cloudEnabled = data['notificationsEnabled'] as bool?;
-        final cloudTimeStr = data['notificationTime'] as String?;
-        final cloudDays = (data['repeatDays'] as List<dynamic>?)
-            ?.map((e) => (e as num).toInt())
-            .toSet();
-        final cloudMsg = data['reminderMessage'] as String?;
-
-        TimeOfDay? cloudTime;
-        if (cloudTimeStr != null) {
-          final parts = cloudTimeStr.split(':');
-          if (parts.length == 2) {
-            cloudTime = TimeOfDay(
-              hour: int.tryParse(parts[0]) ?? 9,
-              minute: int.tryParse(parts[1]) ?? 0,
-            );
-          }
-        }
-
-        if (cloudEnabled != null || cloudTime != null || cloudDays != null || cloudMsg != null) {
-          emit(state.copyWith(
-            notificationsEnabled: cloudEnabled ?? state.notificationsEnabled,
-            notificationTime: cloudTime ?? state.notificationTime,
-            repeatDays: cloudDays ?? state.repeatDays,
-            reminderMessage: cloudMsg ?? state.reminderMessage,
-          ));
-
-          final prefs = await PreferencesService.getSharedPreferences();
-          if (cloudEnabled != null) {
-            await PreferencesService.setNotificationsEnabled(cloudEnabled);
-          }
-          if (cloudTimeStr != null) {
-            await PreferencesService.setNotificationTime(cloudTimeStr);
-          }
-          if (cloudDays != null) {
-            await prefs.setStringList(
-                'repeat_days', cloudDays.map((d) => d.toString()).toList());
-          }
-          if (cloudMsg != null) {
-            await prefs.setString('reminder_message', cloudMsg);
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Firestore reminder load failed: $e');
-    }
-  }
-
-  Future<void> _syncToFirestore() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      final time = state.notificationTime;
-      final timeStr = time != null
-          ? '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'
-          : '09:00';
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({
-        'reminderEnabled': state.notificationsEnabled,
-        'reminderTime': timeStr,
-        'reminderRepeatDays': state.repeatDays.toList(),
-        'reminderMessage': state.reminderMessage,
-        'reminderUpdatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('reminders')
-          .doc('daily_reminder')
-          .set({
-        'notificationsEnabled': state.notificationsEnabled,
-        'notificationTime': timeStr,
-        'repeatDays': state.repeatDays.toList(),
-        'reminderMessage': state.reminderMessage,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (e) {
-      debugPrint('Firestore reminder sync failed: $e');
-    }
+    emit(
+      state.copyWith(
+        themeMode: themeModeStr == 'dark' ? ThemeMode.dark : ThemeMode.light,
+        notificationsEnabled: notificationsEnabled,
+        notificationTime: notificationTime,
+        repeatDays: repeatList.map((e) => int.tryParse(e) ?? 0).toSet()
+          ..remove(0),
+        reminderMessage: message,
+        reminderPresetIndex: presetIndex,
+      ),
+    );
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     await PreferencesService.setThemeMode(
-        mode == ThemeMode.dark ? 'dark' : 'light');
+      mode == ThemeMode.dark ? 'dark' : 'light',
+    );
     emit(state.copyWith(themeMode: mode));
   }
 
@@ -166,13 +87,13 @@ class SettingsCubit extends Cubit<SettingsState> {
       await PreferencesService.setNotificationsEnabled(true);
       emit(state.copyWith(notificationsEnabled: true));
       await _reschedule();
-      unawaited(_syncToFirestore());
+      unawaited(_syncReminderToFirestore());
       return true;
     } else {
       await NotificationService.cancelAll();
       await PreferencesService.setNotificationsEnabled(false);
       emit(state.copyWith(notificationsEnabled: false));
-      unawaited(_syncToFirestore());
+      unawaited(_syncReminderToFirestore());
       return true;
     }
   }
@@ -183,24 +104,39 @@ class SettingsCubit extends Cubit<SettingsState> {
     await PreferencesService.setNotificationTime(timeStr);
     emit(state.copyWith(notificationTime: time));
     if (state.notificationsEnabled) await _reschedule();
-    unawaited(_syncToFirestore());
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> setRepeatDays(Set<int> days) async {
     final prefs = await PreferencesService.getSharedPreferences();
     await prefs.setStringList(
-        'repeat_days', days.map((d) => d.toString()).toList());
+      'repeat_days',
+      days.map((d) => d.toString()).toList(),
+    );
     emit(state.copyWith(repeatDays: days));
     if (state.notificationsEnabled) await _reschedule();
-    unawaited(_syncToFirestore());
+    unawaited(_syncReminderToFirestore());
   }
 
-  Future<void> setReminderMessage(String message) async {
+  Future<void> setReminderMessage(String message, {int? presetIndex}) async {
     final prefs = await PreferencesService.getSharedPreferences();
     await prefs.setString('reminder_message', message);
-    emit(state.copyWith(reminderMessage: message));
+    if (presetIndex != null) {
+      await prefs.setString('reminder_preset_index', presetIndex.toString());
+    } else {
+      // A custom (user-typed) message is not tied to a localized preset, so
+      // clear the stored index to stop it being overwritten on the next load.
+      await prefs.remove('reminder_preset_index');
+    }
+    emit(
+      state.copyWith(
+        reminderMessage: message,
+        reminderPresetIndex: presetIndex,
+        clearReminderPresetIndex: presetIndex == null,
+      ),
+    );
     if (state.notificationsEnabled) await _reschedule();
-    unawaited(_syncToFirestore());
+    unawaited(_syncReminderToFirestore());
   }
 
   Future<void> _reschedule() async {
@@ -213,12 +149,61 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
   }
 
+  /// Syncs current reminder preferences to Firebase Firestore under the user's document.
+  Future<void> _syncReminderToFirestore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final uid = user?.uid ?? await PreferencesService.getUserId();
+      if (uid == null || uid.isEmpty) return;
+
+      final time = state.notificationTime ?? const TimeOfDay(hour: 9, minute: 0);
+      final timeStr =
+          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+      final reminderData = {
+        'reminderEnabled': state.notificationsEnabled,
+        'reminderTime': timeStr,
+        'reminderRepeatDays': state.repeatDays.toList(),
+        'reminderMessage': state.reminderMessage,
+        'reminderUpdatedAt': FieldValue.serverTimestamp(),
+      };
+
+      // 1. Update the main user document directly (users/{uid}) so it shows in the Firestore Console table
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(reminderData, SetOptions(merge: true));
+
+      // 2. Also keep settings/preferences and reminders/daily_reminder subcollections in sync
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('settings')
+          .doc('preferences')
+          .set(reminderData, SetOptions(merge: true));
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('reminders')
+          .doc('daily_reminder')
+          .set({
+        'enabled': state.notificationsEnabled,
+        'time': timeStr,
+        'repeatDays': state.repeatDays.toList(),
+        'message': state.reminderMessage,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('SettingsCubit: Reminder sync to Firestore failed (non-fatal): $e');
+    }
+  }
+
   void updateAuthState(AuthUser? user) {
     if (user == null || user.isAnonymous) {
       emit(state.copyWith(isAuthenticated: false, clearUserEmail: true));
     } else {
       emit(state.copyWith(isAuthenticated: true, userEmail: user.email));
-      unawaited(_loadFromFirestore());
+      unawaited(_syncReminderToFirestore());
     }
   }
 

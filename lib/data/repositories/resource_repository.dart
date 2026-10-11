@@ -102,7 +102,9 @@ class ResourceRepository {
     final lower = query.toLowerCase();
     return getAll().where((r) {
       final titleMatch = r.title.toLowerCase().contains(lower);
-      final keywordMatch = r.keywords.any((k) => k.toLowerCase().contains(lower));
+      final keywordMatch = r.keywords.any(
+        (k) => k.toLowerCase().contains(lower),
+      );
       return titleMatch || keywordMatch;
     }).toList();
   }
@@ -117,12 +119,9 @@ class ResourceRepository {
 
   Future<List<Resource>> getBookmarked() async {
     final bookmarks = HiveService.bookmarks;
-    return _seedResources
-        .where((r) => bookmarks.containsKey(r.id))
-        .map((r) {
-          r.isBookmarked = true;
-          return r;
-        })
-        .toList();
+    return _seedResources.where((r) => bookmarks.containsKey(r.id)).map((r) {
+      r.isBookmarked = true;
+      return r;
+    }).toList();
   }
 }

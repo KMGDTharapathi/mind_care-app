@@ -38,7 +38,8 @@ class ServiceLocator {
     // Opening the same box twice can deadlock the main isolate and cause ANR.
     writeQueue ??= queue ?? WriteQueue.fromBox(HiveService.writeQueue);
     crashlyticsService ??= crashlytics;
-    syncService ??= sync ??
+    syncService ??=
+        sync ??
         FirestoreSyncService(
           authService: authService!,
           writeQueue: writeQueue!,

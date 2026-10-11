@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 enum BrushType { brush, pencil, marker, watercolor }
+
 enum ToolMode { draw, bucket, eraser }
+
 enum BottomTab { mandalas, emojis, background, shapes, export }
 
 // ─── Stroke ───────────────────────────────────────────────────────────────────
@@ -24,13 +26,13 @@ class Stroke {
   });
 
   Stroke addPoint(Offset p) => Stroke(
-        points: [...points, p],
-        color: color,
-        size: size,
-        opacity: opacity,
-        brush: brush,
-        isEraser: isEraser,
-      );
+    points: [...points, p],
+    color: color,
+    size: size,
+    opacity: opacity,
+    brush: brush,
+    isEraser: isEraser,
+  );
 }
 
 // ─── Placed shape ─────────────────────────────────────────────────────────────
@@ -60,15 +62,14 @@ class PlacedShape {
     double? height,
     Color? color,
     bool? selected,
-  }) =>
-      PlacedShape(
-        kind: kind,
-        position: position ?? this.position,
-        width: width ?? this.width,
-        height: height ?? this.height,
-        color: color ?? this.color,
-        selected: selected ?? this.selected,
-      );
+  }) => PlacedShape(
+    kind: kind,
+    position: position ?? this.position,
+    width: width ?? this.width,
+    height: height ?? this.height,
+    color: color ?? this.color,
+    selected: selected ?? this.selected,
+  );
 }
 
 // ─── Background ───────────────────────────────────────────────────────────────
@@ -82,17 +83,17 @@ class BgOption {
   final String? label;
 
   const BgOption.plain(this.color, this.label)
-      : type = BgType.plain,
-        gradientColors = null;
+    : type = BgType.plain,
+      gradientColors = null;
 
   const BgOption.gradient(this.gradientColors, this.label)
-      : type = BgType.gradient,
-        color = null;
+    : type = BgType.gradient,
+      color = null;
 
   const BgOption.texture(this.label)
-      : type = BgType.texture,
-        color = null,
-        gradientColors = null;
+    : type = BgType.texture,
+      color = null,
+      gradientColors = null;
 }
 
 const kBgOptions = <BgOption>[
@@ -120,23 +121,95 @@ const kBgOptions = <BgOption>[
 // ─── Palette ──────────────────────────────────────────────────────────────────
 
 const kPalette = <Color>[
-  Color(0xFFE53935), Color(0xFFE64A19), Color(0xFFFB8C00),
-  Color(0xFFFFB300), Color(0xFFAFB42B), Color(0xFF43A047),
-  Color(0xFF00897B), Color(0xFF039BE5), Color(0xFF1E88E5),
-  Color(0xFF3949AB), Color(0xFF8E24AA), Color(0xFFD81B60),
-  Color(0xFFEF9A9A), Color(0xFFFFCC80), Color(0xFFFFF176),
-  Color(0xFFA5D6A7), Color(0xFF80DEEA), Color(0xFF90CAF9),
-  Color(0xFFCE93D8), Color(0xFFF48FB1), Color(0xFFBCAAA4),
-  Color(0xFF90A4AE), Color(0xFFFFFFFF), Color(0xFF212121),
+  Color(0xFFE53935),
+  Color(0xFFE64A19),
+  Color(0xFFFB8C00),
+  Color(0xFFFFB300),
+  Color(0xFFAFB42B),
+  Color(0xFF43A047),
+  Color(0xFF00897B),
+  Color(0xFF039BE5),
+  Color(0xFF1E88E5),
+  Color(0xFF3949AB),
+  Color(0xFF8E24AA),
+  Color(0xFFD81B60),
+  Color(0xFFEF9A9A),
+  Color(0xFFFFCC80),
+  Color(0xFFFFF176),
+  Color(0xFFA5D6A7),
+  Color(0xFF80DEEA),
+  Color(0xFF90CAF9),
+  Color(0xFFCE93D8),
+  Color(0xFFF48FB1),
+  Color(0xFFBCAAA4),
+  Color(0xFF90A4AE),
+  Color(0xFFFFFFFF),
+  Color(0xFF212121),
 ];
 
 const kEmojis = [
-  '😀','😂','😍','🥰','😎','🤩','😇','🥳',
-  '😢','😡','😱','🤔','😴','🤗','😏','🙄',
-  '❤️','🧡','💛','💚','💙','💜','🖤','🤍',
-  '⭐','🌟','✨','💫','🔥','🌈','🌸','🌺',
-  '🦋','🐝','🌻','🍀','🌙','☀️','⛅','🌊',
-  '🎵','🎶','🎨','🎭','🎪','🎠','🎡','🎢',
-  '🍎','🍓','🍇','🍊','🍋','🍉','🍒','🍑',
-  '🦁','🐯','🐻','🦊','🐺','🦝','🐼','🐨',
+  '😀',
+  '😂',
+  '😍',
+  '🥰',
+  '😎',
+  '🤩',
+  '😇',
+  '🥳',
+  '😢',
+  '😡',
+  '😱',
+  '🤔',
+  '😴',
+  '🤗',
+  '😏',
+  '🙄',
+  '❤️',
+  '🧡',
+  '💛',
+  '💚',
+  '💙',
+  '💜',
+  '🖤',
+  '🤍',
+  '⭐',
+  '🌟',
+  '✨',
+  '💫',
+  '🔥',
+  '🌈',
+  '🌸',
+  '🌺',
+  '🦋',
+  '🐝',
+  '🌻',
+  '🍀',
+  '🌙',
+  '☀️',
+  '⛅',
+  '🌊',
+  '🎵',
+  '🎶',
+  '🎨',
+  '🎭',
+  '🎪',
+  '🎠',
+  '🎡',
+  '🎢',
+  '🍎',
+  '🍓',
+  '🍇',
+  '🍊',
+  '🍋',
+  '🍉',
+  '🍒',
+  '🍑',
+  '🦁',
+  '🐯',
+  '🐻',
+  '🦊',
+  '🐺',
+  '🦝',
+  '🐼',
+  '🐨',
 ];

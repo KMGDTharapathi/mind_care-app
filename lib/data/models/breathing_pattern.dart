@@ -10,10 +10,7 @@ class BreathingPhase extends HiveObject {
   @HiveField(1)
   final int durationSeconds;
 
-  BreathingPhase({
-    required this.label,
-    required this.durationSeconds,
-  });
+  BreathingPhase({required this.label, required this.durationSeconds});
 }
 
 @HiveType(typeId: 5)

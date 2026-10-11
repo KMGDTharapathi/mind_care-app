@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# MindCare ML files
+ml/.venv/
+ml/.hf_cache/
+ml/data/

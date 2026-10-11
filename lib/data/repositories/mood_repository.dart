@@ -16,13 +16,17 @@ class HiveMoodRepository implements MoodRepository {
   @override
   Future<List<MoodEntry>> getLast7Days() async {
     final now = DateTime.now();
-    final cutoff = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 6));
+    final cutoff = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 6));
 
-    final entries = HiveService.moodEntries.values
-        .where((e) => !e.timestamp.isBefore(cutoff))
-        .toList()
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final entries =
+        HiveService.moodEntries.values
+            .where((e) => !e.timestamp.isBefore(cutoff))
+            .toList()
+          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     return entries;
   }

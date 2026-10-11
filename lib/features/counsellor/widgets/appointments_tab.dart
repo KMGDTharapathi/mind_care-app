@@ -115,7 +115,7 @@ class AppointmentsTab extends StatelessWidget {
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           itemCount: appointments.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final appt = appointments[index];
             return _AppointmentCard(

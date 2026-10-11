@@ -30,10 +30,10 @@ class FirestoreSyncService implements SyncService {
     required WriteQueue writeQueue,
     FirebaseFirestore? firestore,
     CrashlyticsService? crashlyticsService,
-  })  : _authService = authService,
-        _writeQueue = writeQueue,
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _crashlyticsService = crashlyticsService;
+  }) : _authService = authService,
+       _writeQueue = writeQueue,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _crashlyticsService = crashlyticsService;
 
   final AuthService _authService;
   final WriteQueue _writeQueue;
@@ -49,9 +49,9 @@ class FirestoreSyncService implements SyncService {
 
   void _startConnectivityMonitoring() {
     _connectivitySubscription?.cancel();
-    _connectivitySubscription = Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> results) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
       final isOnline = results.any((r) => r != ConnectivityResult.none);
       if (_wasOffline && isOnline) {
         flushQueue();
@@ -85,8 +85,11 @@ class FirestoreSyncService implements SyncService {
             ),
       );
     } catch (e, stack) {
-      await _crashlyticsService?.recordError(e, stack,
-          reason: 'startSync mood_entries failed');
+      await _crashlyticsService?.recordError(
+        e,
+        stack,
+        reason: 'startSync mood_entries failed',
+      );
     }
 
     // journal_entries
@@ -107,8 +110,11 @@ class FirestoreSyncService implements SyncService {
             ),
       );
     } catch (e, stack) {
-      await _crashlyticsService?.recordError(e, stack,
-          reason: 'startSync journal_entries failed');
+      await _crashlyticsService?.recordError(
+        e,
+        stack,
+        reason: 'startSync journal_entries failed',
+      );
     }
 
     // bookmarks
@@ -129,8 +135,11 @@ class FirestoreSyncService implements SyncService {
             ),
       );
     } catch (e, stack) {
-      await _crashlyticsService?.recordError(e, stack,
-          reason: 'startSync bookmarks failed');
+      await _crashlyticsService?.recordError(
+        e,
+        stack,
+        reason: 'startSync bookmarks failed',
+      );
     }
 
     // settings/preferences
@@ -152,8 +161,11 @@ class FirestoreSyncService implements SyncService {
             ),
       );
     } catch (e, stack) {
-      await _crashlyticsService?.recordError(e, stack,
-          reason: 'startSync settings failed');
+      await _crashlyticsService?.recordError(
+        e,
+        stack,
+        reason: 'startSync settings failed',
+      );
     }
   }
 
@@ -182,8 +194,8 @@ class FirestoreSyncService implements SyncService {
             id: entryId,
             mood: mood,
             note: data['note'] as String?,
-            timestamp: (data['timestamp'] as Timestamp?)?.toDate() ??
-                DateTime.now(),
+            timestamp:
+                (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
           );
           HiveService.moodEntries.put(entryId, entry);
         }
@@ -193,8 +205,7 @@ class FirestoreSyncService implements SyncService {
     }
   }
 
-  void _onJournalEntriesSnapshot(
-      QuerySnapshot<Map<String, dynamic>> snapshot) {
+  void _onJournalEntriesSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
     for (final change in snapshot.docChanges) {
       if (change.type == DocumentChangeType.removed) continue;
       final data = change.doc.data();
@@ -211,8 +222,8 @@ class FirestoreSyncService implements SyncService {
             id: entryId,
             title: data['title'] as String? ?? '',
             body: data['body'] as String? ?? '',
-            createdAt: (data['createdAt'] as Timestamp?)?.toDate() ??
-                DateTime.now(),
+            createdAt:
+                (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
             updatedAt: remoteUpdatedAt ?? DateTime.now(),
           );
           HiveService.journalEntries.put(entryId, entry);
@@ -285,10 +296,10 @@ class FirestoreSyncService implements SyncService {
             .doc(entry.documentId);
 
         if (entry.operation == WriteOperation.upsert) {
-          await docRef.set(
-            {...entry.data, 'updatedAt': FieldValue.serverTimestamp()},
-            SetOptions(merge: true),
-          );
+          await docRef.set({
+            ...entry.data,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
         } else {
           await docRef.delete();
         }
@@ -298,7 +309,8 @@ class FirestoreSyncService implements SyncService {
         await _crashlyticsService?.recordError(
           e,
           stack,
-          reason: 'flushQueue write failed for ${entry.collection}/${entry.documentId}',
+          reason:
+              'flushQueue write failed for ${entry.collection}/${entry.documentId}',
         );
         // Keep in queue — will retry on next flush
       }
@@ -319,14 +331,16 @@ class FirestoreSyncService implements SyncService {
     Map<String, dynamic> data, {
     WriteOperation operation = WriteOperation.upsert,
   }) async {
-    await _writeQueue.enqueue(WriteQueueEntry(
-      id: const Uuid().v4(),
-      collection: collection,
-      documentId: documentId,
-      data: data,
-      operation: operation,
-      enqueuedAt: DateTime.now(),
-    ));
+    await _writeQueue.enqueue(
+      WriteQueueEntry(
+        id: const Uuid().v4(),
+        collection: collection,
+        documentId: documentId,
+        data: data,
+        operation: operation,
+        enqueuedAt: DateTime.now(),
+      ),
+    );
   }
 
   // ─── Helper: write directly to Firestore ────────────────────────────────────
@@ -344,10 +358,10 @@ class FirestoreSyncService implements SyncService {
           .doc(uid)
           .collection(collection)
           .doc(documentId)
-          .set(
-            {...data, 'updatedAt': FieldValue.serverTimestamp()},
-            SetOptions(merge: true),
-          );
+          .set({
+            ...data,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e, stack) {
       await _crashlyticsService?.recordError(
         e,
@@ -462,10 +476,7 @@ class FirestoreSyncService implements SyncService {
 
   @override
   Future<void> enqueueStreak(int count, String lastActiveDate) async {
-    final data = {
-      'streakCount': count,
-      'lastActiveDate': lastActiveDate,
-    };
+    final data = {'streakCount': count, 'lastActiveDate': lastActiveDate};
 
     if (_authService.currentUser?.isAnonymous == true) {
       await _writeToFirestore('settings', 'preferences', data);

@@ -10,10 +10,7 @@ const _kTeal = Color(0xFF5BA8A0);
 class PermissionDeniedView extends StatelessWidget {
   final bool isPermanent;
 
-  const PermissionDeniedView({
-    super.key,
-    required this.isPermanent,
-  });
+  const PermissionDeniedView({super.key, required this.isPermanent});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +21,9 @@ class PermissionDeniedView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isPermanent ? Icons.location_off_rounded : Icons.location_disabled_rounded,
+              isPermanent
+                  ? Icons.location_off_rounded
+                  : Icons.location_disabled_rounded,
               size: 64,
               color: Colors.grey,
             ),

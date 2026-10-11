@@ -68,10 +68,7 @@ class OverpassService {
 
     final doctors = <NearbyDoctor>[];
     for (final element in elements) {
-      final doctor = parseElement(
-        element as Map<String, dynamic>,
-        center,
-      );
+      final doctor = parseElement(element as Map<String, dynamic>, center);
       if (doctor != null) {
         doctors.add(doctor);
       }
@@ -84,10 +81,7 @@ class OverpassService {
         : doctors;
 
     // Store in cache
-    _cache[cacheKey] = _CacheEntry(
-      capped,
-      DateTime.now().add(_kCacheTtl),
-    );
+    _cache[cacheKey] = _CacheEntry(capped, DateTime.now().add(_kCacheTtl));
 
     return capped;
   }
@@ -117,10 +111,7 @@ out skel qt;
   ///
   /// Returns `null` if the element has no usable lat/lng coordinates.
   @visibleForTesting
-  NearbyDoctor? parseElement(
-    Map<String, dynamic> element,
-    LatLng center,
-  ) {
+  NearbyDoctor? parseElement(Map<String, dynamic> element, LatLng center) {
     final String type = element['type'] as String? ?? '';
     final dynamic rawId = element['id'];
     final String id = '$type/$rawId';
@@ -152,17 +143,19 @@ out skel qt;
 
     final street = tags['addr:street'] as String?;
     final city = tags['addr:city'] as String?;
-    final addressParts = [street, city]
-        .where((s) => s != null && s.isNotEmpty)
-        .cast<String>()
-        .toList();
+    final addressParts = [
+      street,
+      city,
+    ].where((s) => s != null && s.isNotEmpty).cast<String>().toList();
     final String address = addressParts.join(', ');
 
     final String? phone =
         tags['contact:phone'] as String? ?? tags['phone'] as String?;
     final String? website = tags['website'] as String?;
     final String facilityType =
-        tags['healthcare'] as String? ?? tags['amenity'] as String? ?? 'healthcare';
+        tags['healthcare'] as String? ??
+        tags['amenity'] as String? ??
+        'healthcare';
 
     final double distanceKm = DistanceCalculator.distanceKm(
       center,

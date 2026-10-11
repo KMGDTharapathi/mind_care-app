@@ -64,11 +64,7 @@ void main() {
       'මම මගේ අප්පච්චිට බයයි',
     ];
     for (final m in cases) {
-      final r = await WillowApiService.chat(m);
-      final recs = r?.recommendations ?? const <String>[];
-      final text = r?.text ?? '';
-      print('>>> $m');
-      print('    [$recs] ${text.replaceAll('\n', ' ')}');
+      await WillowApiService.chat(m);
     }
   });
 }

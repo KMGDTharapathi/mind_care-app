@@ -53,9 +53,9 @@ class _ResourceLibraryScreenState extends State<ResourceLibraryScreen> {
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          context
-                              .read<ResourceBloc>()
-                              .add(const SearchResources(''));
+                          context.read<ResourceBloc>().add(
+                            const SearchResources(''),
+                          );
                         },
                       )
                     : null,
@@ -111,20 +111,20 @@ class _ResourceLibraryScreenState extends State<ResourceLibraryScreen> {
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: Text(
                             category,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
-                        ...items.map((resource) => _ResourceCard(
-                              resource: resource,
-                              onTap: () =>
-                                  context.push('/resources/${resource.id}'),
-                              onBookmark: () => context
-                                  .read<ResourceBloc>()
-                                  .add(ToggleBookmark(resource.id)),
-                            )),
+                        ...items.map(
+                          (resource) => _ResourceCard(
+                            resource: resource,
+                            onTap: () =>
+                                context.push('/resources/${resource.id}'),
+                            onBookmark: () => context.read<ResourceBloc>().add(
+                              ToggleBookmark(resource.id),
+                            ),
+                          ),
+                        ),
                       ],
                     );
                   },

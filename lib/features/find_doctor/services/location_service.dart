@@ -17,7 +17,7 @@ class LocationService {
   /// Throws [TimeoutException] if GPS does not respond within 15 seconds.
   Future<Position> getCurrentPosition() async {
     return Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     ).timeout(
       const Duration(seconds: 15),
       onTimeout: () => throw TimeoutException('GPS timed out after 15 seconds'),

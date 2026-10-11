@@ -13,8 +13,8 @@ class LanguageProvider extends InheritedWidget {
 
   static AppStrings of(BuildContext context) {
     if (!context.mounted) return AppStrings.en;
-    final provider =
-        context.dependOnInheritedWidgetOfExactType<LanguageProvider>();
+    final provider = context
+        .dependOnInheritedWidgetOfExactType<LanguageProvider>();
     return provider?.strings ?? AppStrings.en;
   }
 
@@ -22,8 +22,7 @@ class LanguageProvider extends InheritedWidget {
   /// Use this inside dialog builders and callbacks to avoid stale-context crashes.
   static AppStrings read(BuildContext context) {
     if (!context.mounted) return AppStrings.en;
-    final provider =
-        context.getInheritedWidgetOfExactType<LanguageProvider>();
+    final provider = context.getInheritedWidgetOfExactType<LanguageProvider>();
     return provider?.strings ?? AppStrings.en;
   }
 

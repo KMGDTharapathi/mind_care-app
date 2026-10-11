@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 part 'chat_message.g.dart';
 
 enum MessageSender { user, willow }
+
 enum MessageType { text, voice, image, file }
 
 @HiveType(typeId: 20)
@@ -48,10 +49,14 @@ class ChatMessage extends HiveObject {
 
   MessageType get type {
     switch (typeName) {
-      case 'voice': return MessageType.voice;
-      case 'image': return MessageType.image;
-      case 'file': return MessageType.file;
-      default: return MessageType.text;
+      case 'voice':
+        return MessageType.voice;
+      case 'image':
+        return MessageType.image;
+      case 'file':
+        return MessageType.file;
+      default:
+        return MessageType.text;
     }
   }
 

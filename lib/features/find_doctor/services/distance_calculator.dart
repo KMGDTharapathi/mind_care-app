@@ -35,7 +35,8 @@ class DistanceCalculator {
     final double dLat = (b.lat - a.lat) * pi / 180.0;
     final double dLng = (b.lng - a.lng) * pi / 180.0;
 
-    final double aVal = sin(dLat / 2) * sin(dLat / 2) +
+    final double aVal =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(a.lat * pi / 180.0) *
             cos(b.lat * pi / 180.0) *
             sin(dLng / 2) *

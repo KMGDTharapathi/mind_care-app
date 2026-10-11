@@ -61,7 +61,11 @@ class _FirebaseErrorScreenState extends State<FirebaseErrorScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.cloud_off, size: 72, color: AppColors.primaryLight),
+                  const Icon(
+                    Icons.cloud_off,
+                    size: 72,
+                    color: AppColors.primaryLight,
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     'Unable to connect',
@@ -75,7 +79,10 @@ class _FirebaseErrorScreenState extends State<FirebaseErrorScreen> {
                   const SizedBox(height: 12),
                   const Text(
                     'MindCare could not initialise its services. Please check your connection and try again.',
-                    style: TextStyle(fontSize: 15, color: AppColors.textSecondaryDark),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppColors.textSecondaryDark,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
@@ -119,10 +126,8 @@ class _MindCareAppWrapper extends StatelessWidget {
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
             routerConfig: AppRouter.createRouter(onboardingComplete),
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context),
-              child: child!,
-            ),
+            builder: (context, child) =>
+                MediaQuery(data: MediaQuery.of(context), child: child!),
           );
         },
       ),

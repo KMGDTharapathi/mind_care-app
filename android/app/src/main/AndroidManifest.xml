@@ -27,7 +27,8 @@
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true"
         android:largeHeap="true"
-        android:hardwareAccelerated="true">
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true">
 
         <!-- Disable Firebase auto-init to prevent blocking the main thread
              before Flutter starts. Firebase is initialized manually in Dart

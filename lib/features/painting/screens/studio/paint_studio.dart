@@ -27,7 +27,10 @@ void _fillIsolate(List<dynamic> args) {
   final _FillMsg msg = args[1];
   final np = Uint32List.fromList(msg.pixels);
   final target = np[msg.y * msg.w + msg.x];
-  if (target == msg.fill) { port.send(null); return; }
+  if (target == msg.fill) {
+    port.send(null);
+    return;
+  }
   final q = <int>[msg.y * msg.w + msg.x];
   while (q.isNotEmpty) {
     final i = q.removeLast();
@@ -115,8 +118,9 @@ class _PaintStudioState extends State<PaintStudio> {
       _strokes.clear();
       _undoStack.clear();
     });
-    final svgStr =
-        await DefaultAssetBundle.of(context).loadString(page.assetPath);
+    final svgStr = await DefaultAssetBundle.of(
+      context,
+    ).loadString(page.assetPath);
     final info = await vg.loadPicture(SvgStringLoader(svgStr), null);
     final recorder = ui.PictureRecorder();
     final c = Canvas(recorder);
@@ -147,16 +151,18 @@ class _PaintStudioState extends State<PaintStudio> {
     final target = _pixels![y * _kW + x];
     if (target == fill) return;
     // Don't fill dark stroke lines
-    final r = target & 0xFF, g = (target >> 8) & 0xFF, b = (target >> 16) & 0xFF;
+    final r = target & 0xFF,
+        g = (target >> 8) & 0xFF,
+        b = (target >> 16) & 0xFF;
     if (r < 80 && g < 80 && b < 80) return;
 
     setState(() => _filling = true);
 
     final rp = ReceivePort();
-    await Isolate.spawn(
-      _fillIsolate,
-      [rp.sendPort, _FillMsg(_pixels!, x, y, _kW, _kH, fill)],
-    );
+    await Isolate.spawn(_fillIsolate, [
+      rp.sendPort,
+      _FillMsg(_pixels!, x, y, _kW, _kH, fill),
+    ]);
     final result = await rp.first as Uint32List?;
     rp.close();
     if (result == null || !mounted) {
@@ -165,8 +171,12 @@ class _PaintStudioState extends State<PaintStudio> {
     }
     final comp = Completer<ui.Image>();
     ui.decodeImageFromPixels(
-        result.buffer.asUint8List(), _kW, _kH,
-        ui.PixelFormat.rgba8888, comp.complete);
+      result.buffer.asUint8List(),
+      _kW,
+      _kH,
+      ui.PixelFormat.rgba8888,
+      comp.complete,
+    );
     final img = await comp.future;
     if (!mounted) return;
     setState(() {
@@ -197,7 +207,9 @@ class _PaintStudioState extends State<PaintStudio> {
       for (int i = _shapes.length - 1; i >= 0; i--) {
         final sh = _shapes[i];
         final handle = Offset(
-            sh.position.dx + sh.width / 2, sh.position.dy + sh.height / 2);
+          sh.position.dx + sh.width / 2,
+          sh.position.dy + sh.height / 2,
+        );
         if ((d.localPosition - handle).distance < 18) {
           setState(() {
             _shapes[i] = sh.copyWith(selected: true);
@@ -206,7 +218,10 @@ class _PaintStudioState extends State<PaintStudio> {
           return;
         }
         final r = Rect.fromCenter(
-            center: sh.position, width: sh.width, height: sh.height);
+          center: sh.position,
+          width: sh.width,
+          height: sh.height,
+        );
         if (r.contains(d.localPosition)) {
           setState(() {
             for (int j = 0; j < _shapes.length; j++) {
@@ -262,8 +277,9 @@ class _PaintStudioState extends State<PaintStudio> {
       final idx = _shapes.indexOf(_draggingShape!);
       if (idx >= 0) {
         setState(() {
-          _shapes[idx] =
-              _draggingShape!.copyWith(position: d.localPosition - _dragOffset!);
+          _shapes[idx] = _draggingShape!.copyWith(
+            position: d.localPosition - _dragOffset!,
+          );
           _draggingShape = _shapes[idx];
         });
       }
@@ -292,12 +308,14 @@ class _PaintStudioState extends State<PaintStudio> {
     }
     if (_pendingShape != null) {
       setState(() {
-        _shapes.add(PlacedShape(
-          kind: _pendingShape!,
-          position: d.localPosition,
-          color: _color,
-          selected: true,
-        ));
+        _shapes.add(
+          PlacedShape(
+            kind: _pendingShape!,
+            position: d.localPosition,
+            color: _color,
+            selected: true,
+          ),
+        );
         _pendingShape = null;
       });
     }
@@ -333,14 +351,11 @@ class _PaintStudioState extends State<PaintStudio> {
 
   Future<void> _export() async {
     final ctx = _exportKey.currentContext;
-    final boundary =
-        ctx?.findRenderObject() as RenderRepaintBoundary?;
+    final boundary = ctx?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) return;
     try {
       final image = await boundary.toImage(pixelRatio: 2.0);
-      final byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       if (byteData == null) return;
       await Gal.putImageBytes(byteData.buffer.asUint8List());
@@ -427,62 +442,67 @@ class _PaintStudioState extends State<PaintStudio> {
             border: Border.all(color: Colors.grey.shade200),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2))
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: _loadingMandala
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2979FF)))
-              : LayoutBuilder(builder: (ctx, box) {
-                  // Store render size for coordinate conversion
-                  _renderSize = Size(box.maxWidth, box.maxHeight);
-                  return Stack(
-                    children: [
-                      RepaintBoundary(
-                        key: _exportKey,
-                        child: GestureDetector(
-                          onTapUp: _onTapUp,
-                          onPanStart: _onPanStart,
-                          onPanUpdate: _onPanUpdate,
-                          onPanEnd: _onPanEnd,
-                          child: CustomPaint(
-                            painter: CanvasPainter(
-                              mandala: _mandalaImage,
-                              strokes: _strokes,
-                              current: _current,
-                              shapes: _shapes,
-                              bgColor: _bgColor,
-                              bgGradient: _bgGradient,
-                              bgType: _bgType,
-                              renderSize: _renderSize,
-                            ),
-                            child: SizedBox(
-                              width: box.maxWidth,
-                              height: box.maxHeight,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (_filling)
-                        Positioned.fill(
-                          child: Container(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF2979FF)),
+                )
+              : LayoutBuilder(
+                  builder: (ctx, box) {
+                    // Store render size for coordinate conversion
+                    _renderSize = Size(box.maxWidth, box.maxHeight);
+                    return Stack(
+                      children: [
+                        RepaintBoundary(
+                          key: _exportKey,
+                          child: GestureDetector(
+                            onTapUp: _onTapUp,
+                            onPanStart: _onPanStart,
+                            onPanUpdate: _onPanUpdate,
+                            onPanEnd: _onPanEnd,
+                            child: CustomPaint(
+                              painter: CanvasPainter(
+                                mandala: _mandalaImage,
+                                strokes: _strokes,
+                                current: _current,
+                                shapes: _shapes,
+                                bgColor: _bgColor,
+                                bgGradient: _bgGradient,
+                                bgType: _bgType,
+                                renderSize: _renderSize,
+                              ),
                               child: SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Color(0xFF2979FF)),
+                                width: box.maxWidth,
+                                height: box.maxHeight,
                               ),
                             ),
                           ),
                         ),
-                    ],
-                  );
-                }),
+                        if (_filling)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Color(0xFF2979FF),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
         ),
       ),
     );

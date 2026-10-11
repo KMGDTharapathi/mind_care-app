@@ -18,7 +18,7 @@ enum _Operation { firestore, gps, district }
 /// [OverpassService], and connectivity checks to drive the doctor-search feature.
 ///
 /// Default behaviour (no search performed yet): loads all doctors/counsellors
-/// from Firestore so the full seeded list is shown immediately.
+/// from Firestore so the full list is shown immediately.
 ///
 /// GPS / district search: queries the Overpass API for nearby facilities and
 /// merges them with the Firestore list, deduplicating by name.
@@ -40,16 +40,16 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
     required GeocoderService geocoderService,
     required OverpassService overpassService,
     required Connectivity connectivity,
-  })  : _firestoreService = firestoreService,
-        _locationService = locationService,
-        _geocoderService = geocoderService,
-        _overpassService = overpassService,
-        _connectivity = connectivity,
-        super(const DoctorSearchInitial());
+  }) : _firestoreService = firestoreService,
+       _locationService = locationService,
+       _geocoderService = geocoderService,
+       _overpassService = overpassService,
+       _connectivity = connectivity,
+       super(const DoctorSearchInitial());
 
   /// Called once when the screen is first built.
   ///
-  /// Always loads the full Firestore list first so all seeded doctors are
+  /// Always loads the full Firestore list first so all doctors are
   /// visible immediately. If location permission is already granted, also
   /// kicks off a GPS-based Overpass search to enrich the list with nearby
   /// facilities.
@@ -73,18 +73,22 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
       if (doctors.isEmpty) {
         emit(DoctorSearchEmpty(radiusKm: _radiusKm));
       } else {
-        emit(DoctorSearchLoaded(
-          doctors: doctors,
-          center: const LatLng(7.8731, 80.7718), // Sri Lanka centre
-          radiusKm: _radiusKm,
-          totalFound: doctors.length,
-        ));
+        emit(
+          DoctorSearchLoaded(
+            doctors: doctors,
+            center: const LatLng(7.8731, 80.7718), // Sri Lanka centre
+            radiusKm: _radiusKm,
+            totalFound: doctors.length,
+          ),
+        );
       }
     } catch (e) {
-      emit(DoctorSearchError(
-        message: 'Could not load doctors. Please try again.',
-        canRetry: true,
-      ));
+      emit(
+        DoctorSearchError(
+          message: 'Could not load doctors. Please try again.',
+          canRetry: true,
+        ),
+      );
     }
   }
 
@@ -132,11 +136,13 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
 
     final LatLng? result = await _geocoderService.geocode(district);
     if (result == null) {
-      emit(DoctorSearchError(
-        message:
-            'No location found for "$district". Please try a different name.',
-        canRetry: false,
-      ));
+      emit(
+        DoctorSearchError(
+          message:
+              'No location found for "$district". Please try a different name.',
+          canRetry: false,
+        ),
+      );
       return;
     }
 
@@ -194,8 +200,9 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
 
       // Merge: Firestore doctors first, then Overpass results not already
       // represented by name in the Firestore list
-      final firestoreNames =
-          firestoreDoctors.map((d) => d.name.toLowerCase()).toSet();
+      final firestoreNames = firestoreDoctors
+          .map((d) => d.name.toLowerCase())
+          .toSet();
       final uniqueOverpass = overpassDoctors
           .where((d) => !firestoreNames.contains(d.name.toLowerCase()))
           .toList();
@@ -205,26 +212,30 @@ class DoctorSearchCubit extends Cubit<DoctorSearchState> {
       if (merged.isEmpty) {
         emit(DoctorSearchEmpty(radiusKm: radiusKm));
       } else {
-        emit(DoctorSearchLoaded(
-          doctors: merged,
-          center: center,
-          radiusKm: radiusKm,
-          totalFound: merged.length,
-        ));
+        emit(
+          DoctorSearchLoaded(
+            doctors: merged,
+            center: center,
+            radiusKm: radiusKm,
+            totalFound: merged.length,
+          ),
+        );
       }
     } on OverpassException {
       // Overpass failed — still show Firestore list
       await _loadFromFirestore();
     } on GeocoderException {
-      emit(const DoctorSearchError(
-        message: 'Could not reach the geocoding service. Please try again.',
-      ));
+      emit(
+        const DoctorSearchError(
+          message: 'Could not reach the geocoding service. Please try again.',
+        ),
+      );
     }
   }
 
   /// Returns `true` when the device has an active network connection.
   Future<bool> _hasConnectivity() async {
     final result = await _connectivity.checkConnectivity();
-    return result != ConnectivityResult.none;
+    return result.any((r) => r != ConnectivityResult.none);
   }
 }

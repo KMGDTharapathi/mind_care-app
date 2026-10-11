@@ -49,7 +49,11 @@ class _ConsentPromptScreenState extends State<ConsentPromptScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.analytics_outlined, size: 64, color: AppColors.primaryLight),
+                const Icon(
+                  Icons.analytics_outlined,
+                  size: 64,
+                  color: AppColors.primaryLight,
+                ),
                 const SizedBox(height: 24),
                 const Text(
                   'Help us improve MindCare',
@@ -63,7 +67,10 @@ class _ConsentPromptScreenState extends State<ConsentPromptScreen> {
                 const SizedBox(height: 16),
                 const Text(
                   'We\'d like to collect anonymous usage data to understand how the app is used and improve your experience. No personal information is ever shared.',
-                  style: TextStyle(fontSize: 15, color: AppColors.textSecondaryDark),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondaryDark,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -124,10 +131,8 @@ class _MindCareAppWrapperState extends State<_MindCareAppWrapper> {
             routerConfig: _router,
             builder: (context, child) => ValueListenableBuilder<AppStrings>(
               valueListenable: appLanguage,
-              builder: (context, strings, _) => LanguageProvider(
-                strings: strings,
-                child: child!,
-              ),
+              builder: (context, strings, _) =>
+                  LanguageProvider(strings: strings, child: child!),
             ),
           );
         },

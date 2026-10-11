@@ -65,7 +65,12 @@ class ResourceState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [resources, filteredResources, searchQuery, isLoading];
+  List<Object?> get props => [
+    resources,
+    filteredResources,
+    searchQuery,
+    isLoading,
+  ];
 }
 
 // Bloc
@@ -74,7 +79,7 @@ class ResourceBloc extends Bloc<ResourceEvent, ResourceState> {
   final AnalyticsService? analyticsService;
 
   ResourceBloc({required this.repository, this.analyticsService})
-      : super(const ResourceState()) {
+    : super(const ResourceState()) {
     on<LoadResources>(_onLoadResources);
     on<SearchResources>(_onSearchResources);
     on<ToggleBookmark>(_onToggleBookmark);
@@ -84,12 +89,14 @@ class ResourceBloc extends Bloc<ResourceEvent, ResourceState> {
   void _onLoadResources(LoadResources event, Emitter<ResourceState> emit) {
     emit(state.copyWith(isLoading: true));
     final all = repository.getAll();
-    emit(state.copyWith(
-      isLoading: false,
-      resources: all,
-      filteredResources: all,
-      searchQuery: '',
-    ));
+    emit(
+      state.copyWith(
+        isLoading: false,
+        resources: all,
+        filteredResources: all,
+        searchQuery: '',
+      ),
+    );
   }
 
   void _onSearchResources(SearchResources event, Emitter<ResourceState> emit) {
@@ -99,8 +106,12 @@ class ResourceBloc extends Bloc<ResourceEvent, ResourceState> {
   }
 
   Future<void> _onToggleBookmark(
-      ToggleBookmark event, Emitter<ResourceState> emit) async {
-    final resource = state.resources.firstWhere((r) => r.id == event.resourceId);
+    ToggleBookmark event,
+    Emitter<ResourceState> emit,
+  ) async {
+    final resource = state.resources.firstWhere(
+      (r) => r.id == event.resourceId,
+    );
     if (resource.isBookmarked) {
       await repository.removeBookmark(event.resourceId);
     } else {
@@ -115,12 +126,13 @@ class ResourceBloc extends Bloc<ResourceEvent, ResourceState> {
   }
 
   Future<void> _onViewResource(
-      ViewResource event, Emitter<ResourceState> emit) async {
+    ViewResource event,
+    Emitter<ResourceState> emit,
+  ) async {
     final resource = state.resources.firstWhere(
       (r) => r.id == event.resourceId,
-      orElse: () => state.filteredResources.firstWhere(
-        (r) => r.id == event.resourceId,
-      ),
+      orElse: () =>
+          state.filteredResources.firstWhere((r) => r.id == event.resourceId),
     );
     await analyticsService?.logEvent(
       'resource_viewed',

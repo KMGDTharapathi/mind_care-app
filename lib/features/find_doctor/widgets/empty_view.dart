@@ -16,11 +16,7 @@ class EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.search_off_rounded,
-              size: 64,
-              color: _kTeal,
-            ),
+            const Icon(Icons.search_off_rounded, size: 64, color: _kTeal),
             const SizedBox(height: 16),
             Text(
               'No mental health providers found within $radiusKm km.\nTry increasing the search radius.',

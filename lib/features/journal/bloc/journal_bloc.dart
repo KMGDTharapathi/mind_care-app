@@ -70,13 +70,22 @@ class JournalState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       isSaved: isSaved ?? this.isSaved,
       isDeleted: isDeleted ?? this.isDeleted,
-      validationError: clearValidationError ? null : (validationError ?? this.validationError),
+      validationError: clearValidationError
+          ? null
+          : (validationError ?? this.validationError),
       wordCount: wordCount ?? this.wordCount,
     );
   }
 
   @override
-  List<Object?> get props => [entries, isLoading, isSaved, isDeleted, validationError, wordCount];
+  List<Object?> get props => [
+    entries,
+    isLoading,
+    isSaved,
+    isDeleted,
+    validationError,
+    wordCount,
+  ];
 }
 
 // Bloc
@@ -98,7 +107,10 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
     on<EntryBodyChanged>(_onEntryBodyChanged);
   }
 
-  Future<void> _onLoadEntries(LoadEntries event, Emitter<JournalState> emit) async {
+  Future<void> _onLoadEntries(
+    LoadEntries event,
+    Emitter<JournalState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
     final entries = await repository.getAllEntries();
     emit(state.copyWith(isLoading: false, entries: entries));
@@ -115,11 +127,13 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
       final maxEntries = remoteConfigService!.getInt('max_journal_entries');
       final currentCount = state.entries.length;
       if (currentCount >= maxEntries) {
-        emit(state.copyWith(
-          validationError:
-              'You have reached the maximum of $maxEntries journal entries. '
-              'Please delete some entries before adding new ones.',
-        ));
+        emit(
+          state.copyWith(
+            validationError:
+                'You have reached the maximum of $maxEntries journal entries. '
+                'Please delete some entries before adding new ones.',
+          ),
+        );
         return;
       }
     }
@@ -131,14 +145,19 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
       await analyticsService?.logEvent('journal_entry_created');
     }
     final entries = await repository.getAllEntries();
-    emit(state.copyWith(
-      entries: entries,
-      isSaved: true,
-      clearValidationError: true,
-    ));
+    emit(
+      state.copyWith(
+        entries: entries,
+        isSaved: true,
+        clearValidationError: true,
+      ),
+    );
   }
 
-  Future<void> _onDeleteEntry(DeleteEntry event, Emitter<JournalState> emit) async {
+  Future<void> _onDeleteEntry(
+    DeleteEntry event,
+    Emitter<JournalState> emit,
+  ) async {
     await repository.deleteEntry(event.id);
     final entries = await repository.getAllEntries();
     emit(state.copyWith(entries: entries, isDeleted: true));
@@ -147,7 +166,11 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
   void _onEntryBodyChanged(EntryBodyChanged event, Emitter<JournalState> emit) {
     final words = event.body.trim().isEmpty
         ? 0
-        : event.body.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+        : event.body
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((w) => w.isNotEmpty)
+              .length;
     emit(state.copyWith(wordCount: words));
   }
 }

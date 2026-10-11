@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreResourceRepository {
-  FirestoreResourceRepository({
-    FirebaseFirestore? firestore,
-    required this.uid,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreResourceRepository({FirebaseFirestore? firestore, required this.uid})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
   final String uid;

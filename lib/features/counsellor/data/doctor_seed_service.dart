@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'doctor_seed_data.dart';
 
@@ -46,7 +46,9 @@ class DoctorSeedService {
       });
 
       await seedBatch.commit();
-      debugPrint('DoctorSeedService: seeded v$_seedVersion â€” ${kRealDoctors.length} doctors');
+      debugPrint(
+        'DoctorSeedService: seeded v$_seedVersion â€” ${kRealDoctors.length} doctors',
+      );
     } catch (e) {
       debugPrint('DoctorSeedService: seed failed â€” $e');
     }

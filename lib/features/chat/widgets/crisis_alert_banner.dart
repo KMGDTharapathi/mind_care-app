@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class CrisisAlertBanner extends StatelessWidget {
   const CrisisAlertBanner({super.key});
@@ -17,7 +17,11 @@ class CrisisAlertBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 20),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red.shade700,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 'හදිසි සහාය / Emergency Support',

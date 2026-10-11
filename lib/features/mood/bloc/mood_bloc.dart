@@ -75,8 +75,13 @@ class MoodState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [selectedLevel, note, isSubmitting, isSubmitted, validationError];
+  List<Object?> get props => [
+    selectedLevel,
+    note,
+    isSubmitting,
+    isSubmitted,
+    validationError,
+  ];
 }
 
 // ── Bloc ──────────────────────────────────────────────────────────────────────
@@ -90,20 +95,19 @@ class MoodBloc extends Bloc<MoodEvent, MoodState> {
     required MoodRepository repository,
     SyncService? syncService,
     AnalyticsService? analyticsService,
-  })  : _repository = repository,
-        _syncService = syncService,
-        _analyticsService = analyticsService,
-        super(const MoodState()) {
+  }) : _repository = repository,
+       _syncService = syncService,
+       _analyticsService = analyticsService,
+       super(const MoodState()) {
     on<MoodSelected>(_onMoodSelected);
     on<NoteChanged>(_onNoteChanged);
     on<MoodSubmitted>(_onMoodSubmitted);
   }
 
   void _onMoodSelected(MoodSelected event, Emitter<MoodState> emit) {
-    emit(state.copyWith(
-      selectedLevel: event.level,
-      clearValidationError: true,
-    ));
+    emit(
+      state.copyWith(selectedLevel: event.level, clearValidationError: true),
+    );
   }
 
   void _onNoteChanged(NoteChanged event, Emitter<MoodState> emit) {

@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 import 'attachment_image_impl_io.dart'
-    if (dart.library.js_interop) 'attachment_image_impl_web.dart' as impl;
+    if (dart.library.js_interop) 'attachment_image_impl_web.dart'
+    as impl;
 
 /// Renders a local image attachment. On IO platforms this shows the actual
 /// file bytes; on web (where `dart:io` does not exist) it shows a placeholder,

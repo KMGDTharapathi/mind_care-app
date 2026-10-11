@@ -51,7 +51,9 @@ class ChatMoodDetector {
 
   static ChatMood detect(String text, {required bool isSinhala}) {
     final lower = text.toLowerCase();
-    final signals = isSinhala ? WellnessRecommender.siSignals : WellnessRecommender.enSignals;
+    final signals = isSinhala
+        ? WellnessRecommender.siSignals
+        : WellnessRecommender.enSignals;
     for (final (key, mood) in _map) {
       final words = signals[key] ?? const <String>[];
       if (words.isNotEmpty && words.any((word) => lower.contains(word))) {
@@ -70,7 +72,12 @@ class ChatMoodDetector {
           accent: Color(0xFF1976D2),
           textLight: Color(0xFF123A68),
           textDark: Color(0xFFCFE6FF),
-          accents: [Color(0xFF1976D2), Color(0xFF42A5F5), Color(0xFF64B5F6), Color(0xFF1E88E5)],
+          accents: [
+            Color(0xFF1976D2),
+            Color(0xFF42A5F5),
+            Color(0xFF64B5F6),
+            Color(0xFF1E88E5),
+          ],
         );
       case ChatMood.stressed:
         return const ChatMoodPalette(
@@ -79,7 +86,12 @@ class ChatMoodDetector {
           accent: Color(0xFF2E7D32),
           textLight: Color(0xFF1F4A28),
           textDark: Color(0xFFCBEBD3),
-          accents: [Color(0xFF2E7D32), Color(0xFF43A047), Color(0xFF66BB6A), Color(0xFF388E3C)],
+          accents: [
+            Color(0xFF2E7D32),
+            Color(0xFF43A047),
+            Color(0xFF66BB6A),
+            Color(0xFF388E3C),
+          ],
         );
       case ChatMood.sad:
         return const ChatMoodPalette(
@@ -88,7 +100,12 @@ class ChatMoodDetector {
           accent: Color(0xFF7E57C2),
           textLight: Color(0xFF4A2C7A),
           textDark: Color(0xFFE6D9FB),
-          accents: [Color(0xFF7E57C2), Color(0xFF9575CD), Color(0xFFB39DDB), Color(0xFF9C88D8)],
+          accents: [
+            Color(0xFF7E57C2),
+            Color(0xFF9575CD),
+            Color(0xFFB39DDB),
+            Color(0xFF9C88D8),
+          ],
         );
       case ChatMood.heavy:
         return const ChatMoodPalette(
@@ -97,7 +114,12 @@ class ChatMoodDetector {
           accent: Color(0xFF6A4FA3),
           textLight: Color(0xFF3E2A68),
           textDark: Color(0xFFDED0F5),
-          accents: [Color(0xFF6A4FA3), Color(0xFF7B6FC2), Color(0xFF9575CD), Color(0xFF5E62B5)],
+          accents: [
+            Color(0xFF6A4FA3),
+            Color(0xFF7B6FC2),
+            Color(0xFF9575CD),
+            Color(0xFF5E62B5),
+          ],
         );
       case ChatMood.angry:
         return const ChatMoodPalette(
@@ -106,7 +128,12 @@ class ChatMoodDetector {
           accent: Color(0xFFEF5350),
           textLight: Color(0xFF7A2E24),
           textDark: Color(0xFFFFD9D4),
-          accents: [Color(0xFFEF5350), Color(0xFFE57373), Color(0xFFFF8A80), Color(0xFFE5543F)],
+          accents: [
+            Color(0xFFEF5350),
+            Color(0xFFE57373),
+            Color(0xFFFF8A80),
+            Color(0xFFE5543F),
+          ],
         );
       case ChatMood.lonely:
         return const ChatMoodPalette(
@@ -115,7 +142,12 @@ class ChatMoodDetector {
           accent: Color(0xFF546E7A),
           textLight: Color(0xFF28434D),
           textDark: Color(0xFFD3E4E9),
-          accents: [Color(0xFF546E7A), Color(0xFF78909C), Color(0xFF90A4AE), Color(0xFF607D8B)],
+          accents: [
+            Color(0xFF546E7A),
+            Color(0xFF78909C),
+            Color(0xFF90A4AE),
+            Color(0xFF607D8B),
+          ],
         );
       case ChatMood.tired:
         return const ChatMoodPalette(
@@ -124,7 +156,12 @@ class ChatMoodDetector {
           accent: Color(0xFF8D8574),
           textLight: Color(0xFF443C2C),
           textDark: Color(0xFFE8E0D1),
-          accents: [Color(0xFF8D8574), Color(0xFFA39B8A), Color(0xFFB8B09E), Color(0xFF7E7563)],
+          accents: [
+            Color(0xFF8D8574),
+            Color(0xFFA39B8A),
+            Color(0xFFB8B09E),
+            Color(0xFF7E7563),
+          ],
         );
       case ChatMood.happy:
         return const ChatMoodPalette(
@@ -133,7 +170,12 @@ class ChatMoodDetector {
           accent: Color(0xFFFB8C00),
           textLight: Color(0xFF6B4710),
           textDark: Color(0xFFFFE8C2),
-          accents: [Color(0xFFFB8C00), Color(0xFFFFA726), Color(0xFFFFB74D), Color(0xFFF57C00)],
+          accents: [
+            Color(0xFFFB8C00),
+            Color(0xFFFFA726),
+            Color(0xFFFFB74D),
+            Color(0xFFF57C00),
+          ],
         );
       case ChatMood.neutral:
         return const ChatMoodPalette(
@@ -142,7 +184,12 @@ class ChatMoodDetector {
           accent: Color(0xFF5BA8A0),
           textLight: Color(0xFF1A4A4A),
           textDark: Color(0xFFFFFFFF),
-          accents: [Color(0xFF5BA8A0), Color(0xFF4DB6AC), Color(0xFF26A69A), Color(0xFF66BB6A)],
+          accents: [
+            Color(0xFF5BA8A0),
+            Color(0xFF4DB6AC),
+            Color(0xFF26A69A),
+            Color(0xFF66BB6A),
+          ],
         );
     }
   }

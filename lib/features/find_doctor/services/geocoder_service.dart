@@ -86,8 +86,7 @@ class GeocoderService {
         );
       }
 
-      final List<dynamic> results =
-          jsonDecode(response.body) as List<dynamic>;
+      final List<dynamic> results = jsonDecode(response.body) as List<dynamic>;
 
       if (results.isEmpty) return null;
 

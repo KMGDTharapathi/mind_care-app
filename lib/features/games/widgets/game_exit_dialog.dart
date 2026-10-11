@@ -50,12 +50,17 @@ Future<bool> showGameExitDialog(BuildContext context) async {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
-                child: Text(s.exitGameNo,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                child: Text(
+                  s.exitGameNo,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -69,10 +74,13 @@ Future<bool> showGameExitDialog(BuildContext context) async {
                   side: BorderSide(color: Colors.red.shade200, width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                child: Text(s.exitGameYes,
-                    style: const TextStyle(fontSize: 14)),
+                child: Text(
+                  s.exitGameYes,
+                  style: const TextStyle(fontSize: 14),
+                ),
               ),
             ),
           ],

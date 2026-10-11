@@ -48,10 +48,7 @@ class HiveService {
   }
 
   static Box<ChatMessage> get chatMessages {
-    assert(
-      _chatBox != null && _chatBox!.isOpen,
-      'HiveService not initialized',
-    );
+    assert(_chatBox != null && _chatBox!.isOpen, 'HiveService not initialized');
     return _chatBox!;
   }
 
