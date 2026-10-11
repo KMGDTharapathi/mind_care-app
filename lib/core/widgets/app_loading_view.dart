@@ -17,15 +17,14 @@ class AppLoadingView extends StatefulWidget {
     super.key,
     this.appName = 'MindCare',
     this.tagline = 'Your safe space for mental wellness',
-    this.logoAsset = 'assets/icon/logo.jpg',
+    this.logoAsset = 'assets/images/app_logo.png',
   });
 
   final String appName;
   final String tagline;
 
-  /// App logo. `assets/icon/logo.jpg` is a 3:2 opaque JPEG, so it is
-  /// centre-cropped into a circular badge rather than shown as a raw
-  /// rectangle. Falls back to the leaf mark if the asset is missing.
+  /// App logo (`assets/images/app_logo.png`). It is centre-cropped into a
+  /// circular badge. Falls back to the leaf mark if the asset is missing.
   final String logoAsset;
 
   @override

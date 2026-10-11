@@ -85,9 +85,11 @@ void main() {
 
     await _scrollToPicker(tester);
     final firstPreset = AppStrings.en.reminderPresets.first;
-    await tester.ensureVisible(find.text(firstPreset));
+    // .last targets the preset row (the editable display box above may show
+    // the same text as the currently-selected message).
+    await tester.ensureVisible(find.text(firstPreset).last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(firstPreset));
+    await tester.tap(find.text(firstPreset).last);
     await _pumpBriefly(tester);
 
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
@@ -102,15 +104,15 @@ void main() {
 
     await _scrollToPicker(tester);
     final presets = AppStrings.en.reminderPresets;
-    await tester.ensureVisible(find.text(presets[0]));
+    await tester.ensureVisible(find.text(presets[0]).last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(presets[0]));
+    await tester.tap(find.text(presets[0]).last);
     await _pumpBriefly(tester);
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
 
-    await tester.ensureVisible(find.text(presets[1]));
+    await tester.ensureVisible(find.text(presets[1]).last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(presets[1]));
+    await tester.tap(find.text(presets[1]).last);
     await _pumpBriefly(tester);
 
     // Still exactly one selected; the checked state moved to the new preset.

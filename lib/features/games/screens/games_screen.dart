@@ -4,7 +4,6 @@ import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/features/games/screens/bubble_blaster_game.dart';
 import 'package:mind_care_app/features/games/screens/snake_game.dart';
 import 'package:mind_care_app/features/games/screens/pattern_match_game.dart';
-import 'package:mind_care_app/features/games/screens/game_2048.dart';
 import 'package:mind_care_app/features/games/screens/sudoku_game.dart';
 import 'package:mind_care_app/features/games/screens/minesweeper_game.dart';
 
@@ -51,18 +50,6 @@ class GamesScreen extends StatelessWidget {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const PatternMatchGame()),
-        ),
-      ),
-      _GameInfo(
-        emoji: '🔢',
-        title: s.game2048Title,
-        description: s.game2048Desc,
-        mood: s.game2048Mood,
-        color: isDark ? const Color(0xFF2A1A00) : const Color(0xFFFFF8E1),
-        accentColor: const Color(0xFFFFA000),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const Game2048Screen()),
         ),
       ),
       _GameInfo(

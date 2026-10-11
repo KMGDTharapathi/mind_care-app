@@ -199,13 +199,13 @@ class _SudokuGameState extends State<SudokuGame> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
               children: [
                 _diffBtn(s.easy, 'easy'),
-                const SizedBox(width: 10),
                 _diffBtn(s.medium, 'medium'),
-                const SizedBox(width: 10),
                 _diffBtn(s.hard, 'hard'),
               ],
             ),

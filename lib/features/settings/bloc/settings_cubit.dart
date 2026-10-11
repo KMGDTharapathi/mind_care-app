@@ -123,11 +123,16 @@ class SettingsCubit extends Cubit<SettingsState> {
     await prefs.setString('reminder_message', message);
     if (presetIndex != null) {
       await prefs.setString('reminder_preset_index', presetIndex.toString());
+    } else {
+      // A custom (user-typed) message is not tied to a localized preset, so
+      // clear the stored index to stop it being overwritten on the next load.
+      await prefs.remove('reminder_preset_index');
     }
     emit(
       state.copyWith(
         reminderMessage: message,
-        reminderPresetIndex: presetIndex ?? state.reminderPresetIndex,
+        reminderPresetIndex: presetIndex,
+        clearReminderPresetIndex: presetIndex == null,
       ),
     );
     if (state.notificationsEnabled) await _reschedule();

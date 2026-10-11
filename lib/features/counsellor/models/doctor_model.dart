@@ -34,9 +34,14 @@ class Doctor {
   });
 
   factory Doctor.fromFirestore(DocumentSnapshot doc) {
-    final d = doc.data() as Map<String, dynamic>;
+    return Doctor.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+  }
+
+  /// Builds a [Doctor] from a plain map, matching the Firestore schema used by
+  /// the bundled seed data ([kRealDoctors]).
+  factory Doctor.fromMap(String id, Map<String, dynamic> d) {
     return Doctor(
-      id: doc.id,
+      id: id,
       name: d['name'] ?? '',
       photoUrl: d['photo_url'] ?? '',
       specialization: d['specialization'] ?? '',

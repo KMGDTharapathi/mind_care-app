@@ -286,12 +286,6 @@ class AppStrings {
     'Flip cards and find matching emoji pairs. Calms the mind instantly.',
   );
   String get gamePatternMood => _s('😤 ආතතිය', '😤 Stressed');
-  String get game2048Title => _s('2048', '2048');
-  String get game2048Desc => _s(
-    'අංක ඇද, ගැලපෙන ඒවා එකතු කරන්න. 2048 කරා ළඟා වන්න!',
-    'Swipe to slide the tiles. Merge equal numbers and reach 2048!',
-  );
-  String get game2048Mood => _s('🧠 සන්සුන්', '🧠 Calm');
   String get gameSudokuTitle => _s('සුඩෝකු', 'Sudoku');
   String get gameSudokuDesc => _s(
     'සෑම පේළිය, තීරුව සහ 3×3 කොටුවේ 1-9 වරක් පමණක් පිරවන්න. සම්භාව්‍ය තර්කන ක්‍රීඩාව.',
@@ -357,12 +351,6 @@ class AppStrings {
   String get patternInstructions => _s(
     'ගැලපෙන යුගල සොයා ගැනීමට කාඩ් පෙරළන්න! කාඩ් දෙකක් ස්පර්ශ කරන්න — ගැලපෙන්නේ නම්, ඒවා විවෘතව රැඳේ.\nඅඩු ගමන් සහ වේගයෙන් සෙල්ලම් කර තරු 3ක් දිනාගන්න!',
     'Flip cards to find matching pairs! Tap two — a match stays open.\nUse fewer moves and less time to earn 3 stars!',
-  );
-
-  // 2048
-  String get game2048Instructions => _s(
-    'ඕනෑම දිශාවකට ඇදීමෙන් හෝ ඊතල භාවිතයෙන් ටයිල් චලනය කරන්න.\nසමාන අංක දෙකක් එකිනෙක ස්පර්ශ වූ විට එකක් වේ.\n2048 කරා ළඟා වන්න!',
-    'Swipe (or use the arrows) to slide the tiles.\nWhen two equal numbers touch, they merge into one.\nReach 2048 to win!',
   );
 
   // Sudoku
@@ -524,6 +512,8 @@ class AppStrings {
   String get catGeneral => _s('සාමාන්‍ය', 'General');
   String get couldNotLoadDoctors =>
       _s('වෛද්‍යවරු පූරණය කළ නොහැකිය.', 'Could not load doctors.');
+  String get verifyOnSlmc =>
+      _s('SLMC හි සත්‍යාපනය කරන්න', 'Verify on SLMC');
 
   // ── Motivational ─────────────────────────────────────────────────────────
   String get motivationalBoostTitle =>

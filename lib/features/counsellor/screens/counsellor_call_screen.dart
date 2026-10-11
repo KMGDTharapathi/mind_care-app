@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import '../data/doctor_seed_data.dart';
+import '../data/doctor_seed_service.dart';
 import '../models/doctor_model.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
@@ -35,6 +37,7 @@ class _CounsellorCallScreenState extends State<CounsellorCallScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    DoctorSeedService.seedIfEmpty();
   }
 
   @override
@@ -200,6 +203,10 @@ class _DoctorListTabState extends State<_DoctorListTab> {
   final _provinceController = TextEditingController();
   String _selectedProvince = 'All Provinces';
 
+  /// Groups the province search field with its suggestions so taps outside
+  /// both dismiss the suggestions overlay.
+  final Object _provinceTapGroup = Object();
+
   @override
   void dispose() {
     _provinceController.dispose();
@@ -249,7 +256,7 @@ class _DoctorListTabState extends State<_DoctorListTab> {
                   if (mounted) controller.clear();
                 });
               }
-              return TextField(
+              final field = TextField(
                 controller: controller,
                 focusNode: focusNode,
                 textInputAction: TextInputAction.done,
@@ -299,9 +306,14 @@ class _DoctorListTabState extends State<_DoctorListTab> {
                   ),
                 ),
               );
+              return TapRegion(
+                groupId: _provinceTapGroup,
+                onTapOutside: (_) => focusNode.unfocus(),
+                child: field,
+              );
             },
             optionsViewBuilder: (context, onSelected, options) {
-              return Align(
+              final view = Align(
                 alignment: Alignment.topLeft,
                 child: Material(
                   elevation: 4,
@@ -345,6 +357,7 @@ class _DoctorListTabState extends State<_DoctorListTab> {
                   ),
                 ),
               );
+              return TapRegion(groupId: _provinceTapGroup, child: view);
             },
           ),
         ),
@@ -451,8 +464,14 @@ class _FirebaseDoctorListState extends State<_FirebaseDoctorList> {
         .snapshots();
   }
 
-  void _retry() {
-    setState(() => _stream = _doctorsStream());
+  /// Bundled real practitioner data, used when Firestore has no (or cannot
+  /// be reached for) verified doctors — so the tab always shows data.
+  List<Doctor> _localDoctors() {
+    return kRealDoctors
+        .asMap()
+        .entries
+        .map((e) => Doctor.fromMap('local_${e.key}', Map<String, dynamic>.from(e.value)))
+        .toList();
   }
 
   /// Returns true if the doctor's address contains any keyword for the province.
@@ -473,32 +492,32 @@ class _FirebaseDoctorListState extends State<_FirebaseDoctorList> {
     return StreamBuilder<QuerySnapshot>(
       stream: _stream,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _ErrorState(strings: widget.strings, onRetry: _retry);
-        }
-        if (!snapshot.hasData) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator(color: _kTeal)),
-          );
+        // Prefer live Firestore data. While it is still connecting, empty, or
+        // errored (e.g. offline), show the bundled real data so the tab is
+        // never blank.
+        List<Doctor> source;
+        if (snapshot.hasData) {
+          final remote = snapshot.data!.docs
+              .map(Doctor.fromFirestore)
+              .where((d) => d.id != '__seed_meta__')
+              .toList();
+          source = remote.isEmpty ? _localDoctors() : remote;
+        } else {
+          source = _localDoctors();
         }
 
-        var doctors = snapshot.data!.docs
-            .map(Doctor.fromFirestore)
-            .where((d) {
-              if (d.id == '__seed_meta__') return false;
-              if (widget.filterSpec != 'All' &&
-                  d.specialization != widget.filterSpec) {
-                return false;
-              }
-              if (widget.filterLang != 'All' &&
-                  !d.languages.contains(widget.filterLang)) {
-                return false;
-              }
-              if (!_matchesProvince(d)) return false;
-              return true;
-            })
-            .toList();
+        var doctors = source.where((d) {
+          if (widget.filterSpec != 'All' &&
+              d.specialization != widget.filterSpec) {
+            return false;
+          }
+          if (widget.filterLang != 'All' &&
+              !d.languages.contains(widget.filterLang)) {
+            return false;
+          }
+          if (!_matchesProvince(d)) return false;
+          return true;
+        }).toList();
 
         doctors.sort(
           (a, b) => (b.isAvailable ? 1 : 0).compareTo(a.isAvailable ? 1 : 0),
@@ -617,7 +636,7 @@ class _DoctorCard extends StatelessWidget {
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => _showDoctorProfile(context, doctor),
+        onTap: () => _openMaps(doctor),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -695,11 +714,27 @@ class _DoctorCard extends StatelessWidget {
                   ],
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.info_outline, color: _kTeal),
+                onPressed: () => _showDoctorProfile(context, doctor),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openMaps(Doctor doctor) async {
+    final query = (doctor.address != null && doctor.address!.isNotEmpty)
+        ? doctor.address!
+        : '${doctor.name} ${doctor.hospital}'.trim();
+    final uri = Uri.parse(
+      'https://maps.google.com/?q=${Uri.encodeComponent(query)}',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   void _showDoctorProfile(BuildContext context, Doctor doctor) {
@@ -872,6 +907,20 @@ class _DoctorProfileSheet extends StatelessWidget {
               'Reg. No: ${doctor.registrationNo}',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
+            if (doctor.registrationNo.isNotEmpty)
+              _ContactRow(
+                icon: Icons.verified_user_outlined,
+                label: strings.verifyOnSlmc,
+                color: _kTeal,
+                onTap: () async {
+                  final uri = Uri.parse(
+                    'https://renewal.slmc.gov.lk/practitioner/registry',
+                  );
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
             const SizedBox(height: 16),
             // ── Contact & Location ─────────────────────────────────────
             _SectionTitle(strings.contactSection),
@@ -1220,31 +1269,6 @@ class _SectionTitle extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: _kDark,
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final AppStrings strings;
-  final VoidCallback onRetry;
-  const _ErrorState({required this.strings, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
-          const SizedBox(height: 12),
-          Text(
-            strings.couldNotLoadDoctors,
-            style: const TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          TextButton(onPressed: onRetry, child: Text(strings.retry)),
-        ],
       ),
     );
   }

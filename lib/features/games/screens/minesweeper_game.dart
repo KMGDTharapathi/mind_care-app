@@ -189,13 +189,13 @@ class _MinesweeperGameState extends State<MinesweeperGame> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
               children: [
                 _diffBtn(s.easy, _diffs[0]),
-                const SizedBox(width: 10),
                 _diffBtn(s.medium, _diffs[1]),
-                const SizedBox(width: 10),
                 _diffBtn(s.hard, _diffs[2]),
               ],
             ),

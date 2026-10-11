@@ -11,7 +11,6 @@ class PreferencesService {
   static const _keyAppLanguage = 'app_language';
   static const _keyUserId = 'user_id';
   static const _keyChatServerUrl = 'chat_server_url';
-  static const _keyGame2048Best = 'game_2048_best';
   static const _keyGameMemoryBest = 'game_memory_best';
   static const _keyGameMemoryStars = 'game_memory_stars';
   static const _keyGameMinesBest = 'game_mines_best';
@@ -133,16 +132,6 @@ class PreferencesService {
   }
 
   // ── Game scores & progress ─────────────────────────────────────────────────
-  static Future<int> getGame2048Best() async =>
-      (await _get()).getInt(_keyGame2048Best) ?? 0;
-
-  static Future<void> setGame2048Best(int value) async {
-    final prefs = await _get();
-    if (value > (prefs.getInt(_keyGame2048Best) ?? 0)) {
-      await prefs.setInt(_keyGame2048Best, value);
-    }
-  }
-
   static Future<int> getGameMemoryBest() async =>
       (await _get()).getInt(_keyGameMemoryBest) ?? 0;
 

@@ -22,11 +22,23 @@ class WillowChatResult {
 class WillowApiService {
   static const String _apiKey = '';
 
-  /// The fine-tuned model server endpoint. Fixed for this build so users
-  /// cannot change it from inside the app.
-  static final String _baseUrl =
-      'https://paint-assurance-humanitarian-amanda.trycloudflare.com';
-  static final bool _serverMode = true;
+  /// The fine-tuned model server endpoint. Overridable at build time with
+  /// `--dart-define=WILLOW_API_BASE_URL=...` (e.g. a local `http://10.0.2.2:8000`
+  /// server); users still cannot change it from inside the app. Omitting the
+  /// define keeps the built-in tunnel default.
+  static const String _baseUrl = String.fromEnvironment(
+    'WILLOW_API_BASE_URL',
+    defaultValue:
+        'https://paint-assurance-humanitarian-amanda.trycloudflare.com',
+  );
+
+  /// Whether to try the hosted model server at all. Set
+  /// `--dart-define=WILLOW_SERVER_MODE=false` to force the in-app curated
+  /// engine (offline demos).
+  static const bool _serverMode = bool.fromEnvironment(
+    'WILLOW_SERVER_MODE',
+    defaultValue: true,
+  );
 
   /// Model server reachability cache. Probing happens at most once every few
   /// seconds so a server that is down never stalls each message on a timeout;
