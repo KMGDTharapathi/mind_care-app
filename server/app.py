@@ -13,7 +13,7 @@ the Flutter app already speaks:
 
 It loads one already-merged Hugging Face checkpoint per language (no PEFT
 adapters), so it works straight off the folders produced by the training
-pipeline (e.g. F:\\Models\\models_dl\\mh-qwen-en-merged).
+pipeline (e.g. server/models_dl/mh-qwen-en-merged).
 
 The app owns the crisis guardrail: it never forwards a crisis message to this
 server, so the model only ever handles non-crisis text.
@@ -26,7 +26,7 @@ Environment overrides:
   SRV_MAX_NEW_TOKENS   reply length cap    (default: 64)
   SRV_TEMPERATURE      sampling temp       (default: 0.7)
   SRV_MODELS_DIR       folder holding the checkpoints
-                       (default: F:\\Models\\models_dl, else ./models_dl)
+                       (default: ./models_dl next to this file)
 
 Run:
     python server/app.py
@@ -34,7 +34,6 @@ or:
     uvicorn server.app:app --host 0.0.0.0 --port 8000
 """
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -80,9 +79,6 @@ def _resolve_models_dir() -> Path:
     env = os.environ.get("SRV_MODELS_DIR")
     if env:
         return Path(env)
-    default = Path(r"F:\Models\models_dl")
-    if default.is_dir():
-        return default
     return Path(__file__).resolve().parent / "models_dl"
 
 

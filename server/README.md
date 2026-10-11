@@ -25,34 +25,33 @@ transformers, fastapi, uvicorn). It then starts listening on
 
 ### Model location
 
-By default it loads the already-downloaded merged checkpoints:
+The checkpoints live **inside this project**, next to `app.py`:
 
 ```
-F:\Models\models_dl\mh-qwen-en-merged
-F:\Models\models_dl\mh-qwen-si-merged
+server\models_dl\mh-qwen-en-merged
+server\models_dl\mh-qwen-si-merged
 ```
 
-Override with environment variables:
+Copy the merged model folders there once (the large weight files are gitignored).
+Override with environment variables if you keep them elsewhere:
 
-| Variable             | Default                                  | Purpose |
-|----------------------|------------------------------------------|---------|
-| `SRV_MODELS_DIR`     | `F:\Models\models_dl`                    | Folder holding the checkpoints |
-| `SRV_EN_MODEL`       | `<models dir>\mh-qwen-en-merged`         | English checkpoint |
-| `SRV_SI_MODEL`       | `<models dir>\mh-qwen-si-merged`         | Sinhala checkpoint |
-| `SRV_PORT`           | `8000`                                   | Port |
-| `SRV_HOST`           | `0.0.0.0`                                | Bind address |
-| `SRV_MAX_NEW_TOKENS` | `64`                                     | Reply length cap |
-| `SRV_TEMPERATURE`    | `0.7`                                    | Sampling temperature |
+| Variable             | Default                              | Purpose |
+|----------------------|--------------------------------------|---------|
+| `SRV_MODELS_DIR`     | `.\models_dl` (next to `app.py`)     | Folder holding the checkpoints |
+| `SRV_EN_MODEL`       | `<models dir>\mh-qwen-en-merged`     | English checkpoint |
+| `SRV_SI_MODEL`       | `<models dir>\mh-qwen-si-merged`     | Sinhala checkpoint |
+| `SRV_PORT`           | `8000`                               | Port |
+| `SRV_HOST`           | `0.0.0.0`                            | Bind address |
+| `SRV_MAX_NEW_TOKENS` | `64`                                 | Reply length cap |
+| `SRV_TEMPERATURE`    | `0.7`                                | Sampling temperature |
 
 To serve the Sinhala-only `mh-sin-sft-1b` build instead:
 
 ```powershell
-$env:SRV_EN_MODEL = "F:\Models\models_dl\mh-sin-sft-1b"
-$env:SRV_SI_MODEL = "F:\Models\models_dl\mh-sin-sft-1b"
+$env:SRV_EN_MODEL = ".\models_dl\mh-sin-sft-1b"
+$env:SRV_SI_MODEL = ".\models_dl\mh-sin-sft-1b"
 .\run.ps1
 ```
-
-(The model weights stay in `F:\Models`; they are **not** copied into this repo.)
 
 ## 2. Smoke test
 

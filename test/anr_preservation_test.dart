@@ -48,8 +48,9 @@ class _StubAuthService implements AuthService {
   @override
   Future<AuthUser> createAccountWithEmail(
     String email,
-    String password,
-  ) async => const AuthUser(uid: 'stub', isAnonymous: false);
+    String password, {
+    String? displayName,
+  }) async => const AuthUser(uid: 'stub', isAnonymous: false);
   @override
   Future<void> sendPasswordResetEmail(String email) async {}
   @override

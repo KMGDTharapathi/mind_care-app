@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
@@ -194,7 +195,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ListTile(
                     leading: const Icon(Icons.logout),
                     title: Text(s.signOut),
-                    onTap: () => context.read<AuthBloc>().add(AuthSignOut()),
+                    onTap: () {
+                      AppRouter.guestSessionActive = false;
+                      context.read<AuthBloc>().add(AuthSignOut());
+                      context.go(AppRouter.signIn);
+                    },
                   ),
                 ] else
                   ListTile(

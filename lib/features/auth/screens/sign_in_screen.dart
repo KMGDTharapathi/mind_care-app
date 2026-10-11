@@ -66,6 +66,9 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _onAnonymousSignIn() {
     _clearErrors();
+    // Mark guest access as an explicit choice for this session so the router
+    // guard allows it (a restored anonymous session does not count).
+    AppRouter.guestSessionActive = true;
     context.read<AuthBloc>().add(AuthSignInAnonymously());
   }
 
