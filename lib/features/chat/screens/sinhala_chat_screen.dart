@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/features/chat/bloc/sinhala_chat_bloc.dart';
@@ -219,21 +220,34 @@ class _InputBar extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: controller,
-                enabled: enabled,
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: enabled ? (_) => onSend() : null,
-                decoration: InputDecoration(
-                  hintText: 'ඔබේ හැඟීම් බෙදා ගන්න...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (enabled &&
+                      event is KeyDownEvent &&
+                      (event.logicalKey == LogicalKeyboardKey.enter ||
+                          event.logicalKey == LogicalKeyboardKey.numpadEnter) &&
+                      !HardwareKeyboard.instance.isShiftPressed) {
+                    onSend();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  controller: controller,
+                  enabled: enabled,
+                  maxLines: null,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: enabled ? (_) => onSend() : null,
+                  decoration: InputDecoration(
+                    hintText: 'ඔබේ හැඟීම් බෙදා ගන්න...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   ),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
             ),

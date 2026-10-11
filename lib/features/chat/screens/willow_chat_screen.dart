@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
@@ -901,21 +902,34 @@ class _InputBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                child: TextField(
-                  controller: controller,
-                  maxLines: null,
-                  textCapitalization: TextCapitalization.sentences,
-                  style: TextStyle(fontSize: 14, color: textColor),
-                  decoration: InputDecoration(
-                    hintText: isSinhala
-                        ? 'පණිවිඩයක් ටයිප් කරන්න...'
-                        : 'Type a message...',
-                    hintStyle: TextStyle(color: hintColor, fontSize: 14),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                child: Focus(
+                  onKeyEvent: (node, event) {
+                    if (event is KeyDownEvent &&
+                        (event.logicalKey == LogicalKeyboardKey.enter ||
+                            event.logicalKey == LogicalKeyboardKey.numpadEnter) &&
+                        !HardwareKeyboard.instance.isShiftPressed) {
+                      onSend();
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: TextField(
+                    controller: controller,
+                    maxLines: null,
+                    textInputAction: TextInputAction.send,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: TextStyle(fontSize: 14, color: textColor),
+                    decoration: InputDecoration(
+                      hintText: isSinhala
+                          ? 'පණිවිඩයක් ටයිප් කරන්න...'
+                          : 'Type a message...',
+                      hintStyle: TextStyle(color: hintColor, fontSize: 14),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onSubmitted: (_) => onSend(),
                   ),
-                  onSubmitted: (_) => onSend(),
                 ),
               ),
             ),
