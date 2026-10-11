@@ -86,6 +86,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
   }
 
+  void _onGoogleSignIn() {
+    _clearErrors();
+    context.read<AuthBloc>().add(AuthSignInWithGoogle());
+  }
+
   void _handleAuthError(AuthError state) {
     switch (state.type) {
       case AuthErrorType.emailInUse:
@@ -168,6 +173,63 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     return _CreateAccountButton(
                       isLoading: isLoading,
                       onPressed: isLoading ? null : _onCreateAccount,
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                        child: Divider(
+                            color: AppColors.textDark.withOpacity(0.2))),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'or',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondaryDark,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                        child: Divider(
+                            color: AppColors.textDark.withOpacity(0.2))),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state is AuthLoading;
+                    return SizedBox(
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        onPressed: isLoading ? null : _onGoogleSignIn,
+                        icon: isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primaryDark,
+                                ),
+                              )
+                            : const Icon(Icons.g_mobiledata_rounded, size: 26),
+                        label: const Text(
+                          'Continue with Google',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textDark,
+                          backgroundColor: Colors.white.withOpacity(0.9),
+                          side: BorderSide(
+                              color: AppColors.textDark.withOpacity(0.2)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
