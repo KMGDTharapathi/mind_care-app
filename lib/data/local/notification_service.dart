@@ -73,6 +73,10 @@ class NotificationService {
     return true;
   }
 
+  /// Android 13+ hides media notifications until the notification runtime
+  /// permission is granted; background music uses that same permission.
+  static Future<bool> requestMediaPermission() => requestPermissions();
+
   /// Schedule reminders.
   /// [repeatDays] empty = every day (1=Mon … 7=Sun).
   static Future<void> scheduleReminder({

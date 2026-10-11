@@ -284,9 +284,11 @@ class WillowApiService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final text = data['response'] as String?;
       if (text == null || text.trim().isEmpty) return null;
+      // The trained model is the sole author whenever the server is online.
+      // A low-quality flag is logged for diagnostics but the model's own text
+      // is still returned - we never swap it for a curated reply while online.
       if (!_looksUsable(text)) {
-        debugPrint('Hosted reply rejected (low quality)');
-        return null;
+        debugPrint('Hosted reply flagged low-quality; returning model output');
       }
       final raw = data['recommendations'];
       final recommendations = raw is List

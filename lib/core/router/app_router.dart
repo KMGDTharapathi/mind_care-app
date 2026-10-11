@@ -77,6 +77,12 @@ class AppRouter {
   static const String willowChat = '/willow-chat';
   static const String findDoctor = '/find-doctor';
 
+  /// True only after the user explicitly taps "Continue as Guest" during the
+  /// current app session. A restored anonymous session (e.g. left over from a
+  /// previous sign-out) is treated as signed out, so the login screen is shown
+  /// on a fresh launch.
+  static bool guestSessionActive = false;
+
   /// Creates a router with a redirect guard ensuring users are logged in
   /// before accessing app screens.
   static GoRouter createRouter(bool onboardingComplete) {
@@ -85,7 +91,13 @@ class AppRouter {
       routes: _routes,
       redirect: (context, state) {
         final path = state.uri.path;
-        final loggedIn = FirebaseAuth.instance.currentUser != null;
+        final user = FirebaseAuth.instance.currentUser;
+        // Only a real (non-anonymous) account counts as logged in on its own.
+        // Guest access requires an explicit "Continue as Guest" tap this
+        // session.
+        final hasAccount = user != null && !user.isAnonymous;
+        final loggedIn =
+            hasAccount || (guestSessionActive && user != null);
 
         final isAuthScreen =
             path == signIn ||
