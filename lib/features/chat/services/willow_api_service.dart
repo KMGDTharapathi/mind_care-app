@@ -22,23 +22,17 @@ class WillowChatResult {
 class WillowApiService {
   static const String _apiKey = '';
 
-  /// The fine-tuned model server endpoint. Overridable at build time with
-  /// `--dart-define=WILLOW_API_BASE_URL=...` (e.g. a local `http://10.0.2.2:8000`
-  /// server); users still cannot change it from inside the app. Omitting the
-  /// define keeps the built-in tunnel default.
-  static const String _baseUrl = String.fromEnvironment(
+  /// The fine-tuned model server endpoint. Fixed for this build so users
+  /// cannot change it from inside the app.
+  static final String _baseUrl = const String.fromEnvironment(
     'WILLOW_API_BASE_URL',
-    defaultValue:
-        'https://paint-assurance-humanitarian-amanda.trycloudflare.com',
+    defaultValue: 'http://localhost:8000',
   );
-
-  /// Whether to try the hosted model server at all. Set
-  /// `--dart-define=WILLOW_SERVER_MODE=false` to force the in-app curated
-  /// engine (offline demos).
-  static const bool _serverMode = bool.fromEnvironment(
-    'WILLOW_SERVER_MODE',
-    defaultValue: true,
-  );
+  static final bool _serverMode = const String.fromEnvironment(
+        'WILLOW_SERVER_MODE',
+        defaultValue: 'true',
+      ) ==
+      'true';
 
   /// Model server reachability cache. Probing happens at most once every few
   /// seconds so a server that is down never stalls each message on a timeout;
@@ -160,22 +154,20 @@ class WillowApiService {
       final hosted = await _callServer(message, turns);
       if (hosted != null) {
         // The trained model authors the text. Suggestions stay the app's own
-        // on-topic shortcut chips: shown the first time a topic is raised.
+
         return WillowChatResult(
           text: hosted.text,
           recommendations: topicRecsForFirstMention(),
         );
       }
       // Health said up but the call failed: remember it so we don't keep
-      // hammering a dying server, and fall back to the in-app brain.
+
       _markServerDown();
       debugPrint('Model server unreachable, falling back to in-app brain');
     }
 
     // Follow the user's mind across the recent window, but never let history
-    // override a clear new direction: the current message's own topic wins;
-    // a recurring theme (2+ mentions) is only used when the current message
-    // doesn't name a topic.
+
     final topic =
         singleTopic ?? _recurringTopic(userTexts, isSi) ?? _identifiedMindState;
     final recs = topicRecsForFirstMention();

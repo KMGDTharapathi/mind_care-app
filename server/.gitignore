@@ -1,0 +1,4 @@
+# Model weights are large and stay out of version control.
+models_dl/**/*.safetensors
+models_dl/**/*.bin
+models_dl/**/.cache/

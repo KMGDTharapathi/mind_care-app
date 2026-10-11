@@ -1,0 +1,4 @@
+﻿# Kaggle-ready evaluation (paste entire cell)
+# API_URL must be your public tunnel (ngrok/Cloudflare)
+API_URL = 'https://YOUR_PUBLIC_TUNNEL_URL/chat'
+
