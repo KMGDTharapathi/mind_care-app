@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -23,13 +24,7 @@ class FirebaseAuthService implements AuthService {
     GoogleSignIn? googleSignIn,
     FirestoreUserRepository? userRepo,
   })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ??
-            (kIsWeb
-                ? null
-                : GoogleSignIn(
-                    serverClientId:
-                        '384910835517-ge9peqbi87so7e63nf2jofnueh98g424.apps.googleusercontent.com',
-                  )),
+        _googleSignIn = googleSignIn,
         _userRepo = userRepo ?? FirestoreUserRepository();
 
   final FirebaseAuth _auth;
@@ -117,31 +112,26 @@ class FirebaseAuthService implements AuthService {
           }
           rethrow;
         }
-      } else {
-        try {
-          final googleUser = await _googleSignIn?.signIn();
-          if (googleUser == null) {
-            throw const AuthException(
-              AuthErrorType.unknown,
-              'Google sign-in was cancelled.',
-            );
-          }
-
-          final googleAuth = await googleUser.authentication;
-          final credential = GoogleAuthProvider.credential(
-            accessToken: googleAuth.accessToken,
-            idToken: googleAuth.idToken,
+      } else if (_googleSignIn != null) {
+        final googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          throw const AuthException(
+            AuthErrorType.unknown,
+            'Google sign-in was cancelled.',
           );
-
-          result = await _auth.signInWithCredential(credential);
-        } on AuthException {
-          rethrow;
-        } catch (_) {
-          // Fallback to browser OAuth 2.0 flow — works on any Android phone/PC
-          // even when the developer's debug.keystore SHA-1 is not registered
-          // in Firebase Console (ApiException: 10).
-          result = await _signInWithBrowserOAuth();
         }
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        result = await _auth.signInWithCredential(credential);
+      } else {
+        // Use browser OAuth 2.0 with PKCE directly on mobile so it works on
+        // every Android device/emulator without requiring each developer's
+        // debug.keystore SHA-1 in Firebase Console, and avoids popping up a
+        // failing Google Play Services picker first.
+        result = await _signInWithBrowserOAuth();
       }
 
       final user = _requireUser(result.user);
@@ -166,11 +156,30 @@ class FirebaseAuthService implements AuthService {
     }
   }
 
+  static String _generateCodeVerifier() {
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    final rnd = Random.secure();
+    return List.generate(64, (_) => chars[rnd.nextInt(chars.length)]).join();
+  }
+
   /// Launches Google OAuth 2.0 in the system browser using the public native
   /// OAuth client (which does not check Android SHA-1) and exchanges the
   /// authorization code for Firebase credentials.
   Future<UserCredential> _signInWithBrowserOAuth() async {
+    try {
+      // Clear any stale redirect URI and verify the native MethodChannel is
+      // compiled into the running APK (i.e. full flutter run was performed).
+      await _oauthChannel.invokeMethod<String>('getPendingOAuthRedirect');
+    } on MissingPluginException {
+      throw const AuthException(
+        AuthErrorType.unknown,
+        'Please stop the app completely and run "flutter run" again to activate Google Sign-In.',
+      );
+    } catch (_) {}
+
     final completer = Completer<String>();
+    final codeVerifier = _generateCodeVerifier();
 
     void completeWithUri(String? uriString) {
       if (uriString != null &&
@@ -186,31 +195,44 @@ class FirebaseAuthService implements AuthService {
       }
     });
 
-    final lifecycleObserver = _OAuthLifecycleObserver(
-      onResumed: () async {
+    final pollTimer = Timer.periodic(
+      const Duration(milliseconds: 400),
+      (_) async {
+        if (completer.isCompleted) return;
         try {
           final pending = await _oauthChannel
               .invokeMethod<String>('getPendingOAuthRedirect');
           if (pending != null && pending.isNotEmpty) {
             completeWithUri(pending);
-          } else {
-            // Give onNewIntent a brief moment to arrive; if user returned
-            // without completing sign-in, cancel cleanly.
-            await Future<void>.delayed(const Duration(milliseconds: 1200));
-            final retry = await _oauthChannel
-                .invokeMethod<String>('getPendingOAuthRedirect');
-            if (retry != null && retry.isNotEmpty) {
-              completeWithUri(retry);
-            } else if (!completer.isCompleted) {
-              completer.completeError(
-                const AuthException(
-                  AuthErrorType.unknown,
-                  'Google sign-in was cancelled.',
-                ),
-              );
-            }
           }
         } catch (_) {}
+      },
+    );
+
+    final lifecycleObserver = _OAuthLifecycleObserver(
+      onResumedAfterBackground: () async {
+        // Poll for up to 8 seconds after returning from the browser before
+        // assuming the user backed out without signing in.
+        for (var i = 0; i < 20; i++) {
+          if (completer.isCompleted) return;
+          try {
+            final pending = await _oauthChannel
+                .invokeMethod<String>('getPendingOAuthRedirect');
+            if (pending != null && pending.isNotEmpty) {
+              completeWithUri(pending);
+              return;
+            }
+          } catch (_) {}
+          await Future<void>.delayed(const Duration(milliseconds: 400));
+        }
+        if (!completer.isCompleted) {
+          completer.completeError(
+            const AuthException(
+              AuthErrorType.unknown,
+              'Google sign-in was cancelled.',
+            ),
+          );
+        }
       },
     );
     WidgetsBinding.instance.addObserver(lifecycleObserver);
@@ -222,6 +244,8 @@ class FirebaseAuthService implements AuthService {
         'response_type': 'code',
         'scope': 'openid email profile',
         'prompt': 'select_account',
+        'code_challenge': codeVerifier,
+        'code_challenge_method': 'plain',
       });
 
       final launched = await launchUrl(
@@ -260,6 +284,7 @@ class FirebaseAuthService implements AuthService {
         body: {
           'client_id': _nativeOAuthClientId,
           'code': code,
+          'code_verifier': codeVerifier,
           'grant_type': 'authorization_code',
           'redirect_uri': _nativeOAuthRedirectUri,
         },
@@ -283,6 +308,7 @@ class FirebaseAuthService implements AuthService {
       );
       return await _auth.signInWithCredential(credential);
     } finally {
+      pollTimer.cancel();
       WidgetsBinding.instance.removeObserver(lifecycleObserver);
       _oauthChannel.setMethodCallHandler(null);
     }
@@ -382,14 +408,19 @@ class FirebaseAuthService implements AuthService {
 }
 
 class _OAuthLifecycleObserver extends WidgetsBindingObserver {
-  _OAuthLifecycleObserver({required this.onResumed});
+  _OAuthLifecycleObserver({required this.onResumedAfterBackground});
 
-  final VoidCallback onResumed;
+  final VoidCallback onResumedAfterBackground;
+  bool _hasPaused = false;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      onResumed();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _hasPaused = true;
+    } else if (state == AppLifecycleState.resumed && _hasPaused) {
+      _hasPaused = false;
+      onResumedAfterBackground();
     }
   }
 }
