@@ -26,7 +26,7 @@ class WillowApiService {
   /// cannot change it from inside the app.
   static final String _baseUrl = const String.fromEnvironment(
     'WILLOW_API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
+        defaultValue: 'http://127.0.0.1:8000',
   );
   static final bool _serverMode = const String.fromEnvironment(
         'WILLOW_SERVER_MODE',
@@ -150,20 +150,27 @@ class WillowApiService {
       );
     }
 
-    if (_serverMode && await _serverUp()) {
-      final hosted = await _callServer(message, turns);
-      if (hosted != null) {
-        // The trained model authors the text. Suggestions stay the app's own
-
-        return WillowChatResult(
-          text: hosted.text,
-          recommendations: topicRecsForFirstMention(),
-        );
+    // Strict model-only: the trained model served by server/app.py is the sole
+    // author of every reply. If it is not reachable we say so instead of using
+    // the in-app curated brain.
+    if (_serverMode) {
+      if (await _serverUp()) {
+        final hosted = await _callServer(message, turns);
+        if (hosted != null) {
+          // The trained model authors the text. Suggestions stay the app's own.
+          return WillowChatResult(
+            text: hosted.text,
+            recommendations: topicRecsForFirstMention(),
+          );
+        }
+        // Health said up but the call failed: remember it so we don't keep
+        // probing on every message.
+        _markServerDown();
+        debugPrint('Model server call failed while online');
       }
-      // Health said up but the call failed: remember it so we don't keep
-
-      _markServerDown();
-      debugPrint('Model server unreachable, falling back to in-app brain');
+      return WillowChatResult(
+        text: isSi ? _modelUnavailableSi : _modelUnavailableEn,
+      );
     }
 
     // Follow the user's mind across the recent window, but never let history
@@ -658,6 +665,16 @@ class WillowApiService {
       "right away: call 1926 (national mental-health helpline) or 1929 "
       "(National Child Protection Authority), or go to your nearest hospital. "
       "You matter, and people can help.";
+
+  // Shown when the trained model server cannot be reached. In strict
+  // model-only mode the app never invents a reply of its own.
+  static const String _modelUnavailableEn =
+      "I'm having trouble reaching my mind right now, so I can't give you a "
+      "thoughtful reply. Please try again in a moment. 💙";
+
+  static const String _modelUnavailableSi =
+      "මට දැන් මගේ මනසට ළඟා වෙන්න අමාරුයි, ඒ නිසා හොඳ පිළිතුරක් දෙන්න "
+      "බැහැ. පොඩි වෙලාවකින් ආයෙත් උත්සාහ කරන්න. 💙";
 
   static const List<String> _greetingSignalsEn = [
     "hi",

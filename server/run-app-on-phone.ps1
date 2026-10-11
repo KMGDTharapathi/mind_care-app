@@ -34,6 +34,10 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $repoRoot
 
+# Invoke-WebRequest otherwise waits on proxy auto-detection, which can stall
+# the readiness check below on some Windows setups (even with no proxy set).
+[System.Net.WebRequest]::DefaultWebProxy = $null
+
 $venvPython = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 $requirements = Join-Path $PSScriptRoot "requirements.txt"
 
@@ -56,8 +60,11 @@ function Get-LanIp {
 }
 
 function Test-Health([int]$p) {
+    # Use the IPv4 loopback explicitly: on Windows "localhost" resolves to ::1
+    # first, but uvicorn binds IPv4 (0.0.0.0) only, so "localhost" would never
+    # connect and the ready-wait below would time out.
     try {
-        $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://localhost:$p/health"
+        $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$p/health"
         return $r.StatusCode -eq 200
     } catch {
         return $false
@@ -76,7 +83,7 @@ function Ensure-Venv {
 if ($AdbReverse) {
     Write-Host "Setting up adb reverse tcp:$Port -> tcp:$Port ..."
     adb reverse "tcp:$Port" "tcp:$Port"
-    $baseUrl = "http://localhost:$Port"
+    $baseUrl = "http://127.0.0.1:$Port"
 } else {
     $ip = Get-LanIp
     if (-not $ip) {
