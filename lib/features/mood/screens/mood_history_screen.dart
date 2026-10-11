@@ -254,7 +254,7 @@ class _MoodChart extends StatelessWidget {
 
     final barGroups = List.generate(7, (i) {
       final entry = dayMap[i];
-      final value = entry != null ? _moodValue(entry.mood) : 0.0;
+      final value = entry != null ? entry.level.toDouble() : 0.0;
       return BarChartGroupData(
         x: i,
         barRods: [
@@ -281,13 +281,13 @@ class _MoodChart extends StatelessWidget {
       ),
       child: BarChart(
         BarChartData(
-          maxY: 7,
+          maxY: 11,
           minY: 0,
           barGroups: barGroups,
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
-            horizontalInterval: 1,
+            horizontalInterval: 2,
             getDrawingHorizontalLine: (value) => FlLine(
               color: colorScheme.onSurface.withOpacity(0.08),
               strokeWidth: 1,
@@ -298,17 +298,16 @@ class _MoodChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                interval: 1,
+                interval: 2,
                 reservedSize: 28,
                 getTitlesWidget: (value, meta) {
                   if (value == 0) return const SizedBox.shrink();
                   final labels = {
-                    1.0: '😔',
-                    2.0: '😰',
-                    3.0: '😤',
-                    4.0: '😌',
-                    5.0: '😊',
-                    6.0: '🤩',
+                    2.0: '😭',
+                    4.0: '😔',
+                    6.0: '😌',
+                    8.0: '😊',
+                    10.0: '🤩',
                   };
                   final emoji = labels[value];
                   if (emoji == null) return const SizedBox.shrink();
@@ -349,8 +348,9 @@ class _MoodChart extends StatelessWidget {
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final entry = dayMap[group.x];
                 if (entry == null) return null;
+                final mood = MoodEntry.mapLevelToMoodType(entry.level);
                 return BarTooltipItem(
-                  '${_moodEmoji(entry.mood)} ${_moodLabel(entry.mood)}',
+                  '${_moodEmoji(mood)} ${_moodLabel(mood)} (Level ${entry.level})',
                   TextStyle(
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.w600,
@@ -409,7 +409,7 @@ class _RecentEntries extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
-    final reversed = entries.reversed.toList();
+    final reversed = entries.reversed.take(5).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -436,6 +436,7 @@ class _EntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
     final colorScheme = Theme.of(context).colorScheme;
+    final mood = MoodEntry.mapLevelToMoodType(entry.level);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -445,14 +446,14 @@ class _EntryTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(_moodEmoji(entry.mood), style: const TextStyle(fontSize: 26)),
+          Text(_moodEmoji(mood), style: const TextStyle(fontSize: 26)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _moodLabel(entry.mood, isSinhala: s.isSinhala),
+                  '${_moodLabel(mood, isSinhala: s.isSinhala)} (Level ${entry.level})',
                   style: Theme.of(context)
                       .textTheme
                       .bodyLarge

@@ -36,20 +36,30 @@ class FirestoreUserRepository {
           'uid': uid,
           'email': email,
           'displayName': displayName ?? '',
-          'photoUrl': ?photoUrl,
+          if (photoUrl != null) 'photoUrl': photoUrl,
           'role': 'student',
           'language': 'en',
           'createdAt': FieldValue.serverTimestamp(),
           'lastLoginAt': FieldValue.serverTimestamp(),
+          'loginCount': FieldValue.increment(1),
+          'isOnline': true,
         });
       } else {
-        await docRef.update({
+        await docRef.set({
           'lastLoginAt': FieldValue.serverTimestamp(),
+          'loginCount': FieldValue.increment(1),
+          'isOnline': true,
           if (displayName != null && displayName.isNotEmpty)
             'displayName': displayName,
           if (photoUrl != null && photoUrl.isNotEmpty) 'photoUrl': photoUrl,
-        });
+        }, SetOptions(merge: true));
       }
+
+      await docRef.collection('logins').add({
+        'timestamp': FieldValue.serverTimestamp(),
+        'email': email,
+        'displayName': displayName ?? '',
+      });
     } catch (e) {
       // Best-effort: failures must not break login flow
     }

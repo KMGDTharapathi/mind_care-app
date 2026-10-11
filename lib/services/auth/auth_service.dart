@@ -3,11 +3,15 @@ class AuthUser {
   const AuthUser({
     required this.uid,
     this.email,
+    this.displayName,
+    this.photoUrl,
     required this.isAnonymous,
   });
 
   final String uid;
   final String? email;
+  final String? displayName;
+  final String? photoUrl;
   final bool isAnonymous;
 }
 
@@ -61,7 +65,11 @@ abstract class AuthService {
   ///
   /// Throws [AuthException] with [AuthErrorType.emailInUse] if the address is
   /// already registered.
-  Future<AuthUser> createAccountWithEmail(String email, String password);
+  Future<AuthUser> createAccountWithEmail(
+    String email,
+    String password, {
+    String? displayName,
+  });
 
   /// Sends a password-reset email to [email].
   ///

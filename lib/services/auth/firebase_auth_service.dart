@@ -1,9 +1,8 @@
 import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_user_repository.dart';
 
 import 'auth_service.dart';
 
@@ -15,11 +14,22 @@ class FirebaseAuthService implements AuthService {
   FirebaseAuthService({
     FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
+    FirestoreUserRepository? userRepo,
   })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              clientId: kIsWeb
+                  ? '384910835517-ge9peqbi87so7e63nf2jofnueh98g424.apps.googleusercontent.com'
+                  : null,
+              serverClientId: kIsWeb
+                  ? null
+                  : '384910835517-ge9peqbi87so7e63nf2jofnueh98g424.apps.googleusercontent.com',
+            ),
+        _userRepo = userRepo ?? FirestoreUserRepository();
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
+  final FirestoreUserRepository _userRepo;
 
   // ---------------------------------------------------------------------------
   // AuthService interface
@@ -36,11 +46,13 @@ class FirebaseAuthService implements AuthService {
   Future<AuthUser> signInAnonymously() async {
     try {
       final result = await _auth.signInAnonymously();
-      final user = result.user;
-      if (user != null) {
-        unawaited(_recordUserLoginInFirestore(user, method: 'anonymous'));
-      }
-      return _requireUser(user);
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: 'anonymous',
+        displayName: 'Anonymous User',
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
     }
@@ -53,11 +65,14 @@ class FirebaseAuthService implements AuthService {
         email: email,
         password: password,
       );
-      final user = result.user;
-      if (user != null) {
-        unawaited(_recordUserLoginInFirestore(user, method: 'email'));
-      }
-      return _requireUser(user);
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: user.email ?? email,
+        displayName: result.user?.displayName,
+        photoUrl: result.user?.photoURL,
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
     }
@@ -66,65 +81,85 @@ class FirebaseAuthService implements AuthService {
   @override
   Future<AuthUser> signInWithGoogle() async {
     try {
+      UserCredential result;
       if (kIsWeb) {
-        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        googleProvider.addScope('email');
-        googleProvider.addScope('profile');
         try {
-          final result = await _auth.signInWithPopup(googleProvider);
-          final user = result.user;
-          if (user != null) {
-            unawaited(_recordUserLoginInFirestore(user, method: 'google'));
-          }
-          return _requireUser(user);
+          final googleProvider = GoogleAuthProvider();
+          googleProvider.addScope('email');
+          googleProvider.addScope('profile');
+          result = await _auth.signInWithPopup(googleProvider);
         } on FirebaseAuthException catch (e) {
           if (e.code == 'popup-closed-by-user' || e.code == 'cancelled') {
             final current = _auth.currentUser;
             if (current != null) return _mapUser(current)!;
             return signInAnonymously();
           }
-          throw _mapException(e);
+          rethrow;
+        }
+      } else {
+        try {
+          final googleUser = await _googleSignIn.signIn();
+          if (googleUser == null) {
+            // User cancelled — return current user (anonymous) without error.
+            final current = _auth.currentUser;
+            if (current != null) return _mapUser(current)!;
+            return signInAnonymously();
+          }
+
+          final googleAuth = await googleUser.authentication;
+          final credential = GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
+
+          result = await _auth.signInWithCredential(credential);
+        } catch (e) {
+          // Fallback to Firebase Auth provider flow (works on any device/PC
+          // even if debug.keystore SHA-1 is not registered in Firebase Console)
+          final googleProvider = GoogleAuthProvider();
+          googleProvider.addScope('email');
+          googleProvider.addScope('profile');
+          result = await _auth.signInWithProvider(googleProvider);
         }
       }
 
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        // User cancelled — return current user (anonymous) without error.
-        final current = _auth.currentUser;
-        if (current != null) return _mapUser(current)!;
-        return signInAnonymously();
-      }
-
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final result = await _auth.signInWithCredential(credential);
-      final user = result.user;
-      if (user != null) {
-        unawaited(_recordUserLoginInFirestore(user, method: 'google'));
-      }
-      return _requireUser(user);
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: user.email ?? result.user?.email ?? '',
+        displayName: result.user?.displayName,
+        photoUrl: result.user?.photoURL,
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
+    } catch (e) {
+      throw AuthException(AuthErrorType.unknown, e.toString());
     }
   }
 
   @override
   Future<AuthUser> createAccountWithEmail(
-      String email, String password) async {
+    String email,
+    String password, {
+    String? displayName,
+  }) async {
     try {
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      final user = result.user;
-      if (user != null) {
-        unawaited(_recordUserLoginInFirestore(user, method: 'email_signup'));
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        await result.user?.updateDisplayName(displayName.trim());
       }
-      return _requireUser(user);
+      final user = _requireUser(result.user);
+      unawaited(_userRepo.syncUser(
+        uid: user.uid,
+        email: email,
+        displayName: displayName ?? result.user?.displayName,
+        photoUrl: result.user?.photoURL,
+      ));
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _mapException(e);
     }
@@ -142,7 +177,9 @@ class FirebaseAuthService implements AuthService {
   @override
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
+      }
     } catch (_) {
       // Google sign-out is best-effort; ignore errors.
     }
@@ -161,6 +198,8 @@ class FirebaseAuthService implements AuthService {
     return AuthUser(
       uid: user.uid,
       email: user.email,
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
       isAnonymous: user.isAnonymous,
     );
   }
@@ -189,48 +228,5 @@ class FirebaseAuthService implements AuthService {
       _ => AuthErrorType.unknown,
     };
     return AuthException(type, e.message ?? e.code);
-  }
-
-  /// Updates login timestamp and logs every login session into Firestore.
-  Future<void> _recordUserLoginInFirestore(
-    User? user, {
-    required String method,
-  }) async {
-    if (user == null) return;
-    try {
-      final docRef =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
-
-      final docSnap = await docRef.get();
-
-      final updateData = <String, dynamic>{
-        'uid': user.uid,
-        'email': user.email ?? (user.isAnonymous ? 'anonymous' : ''),
-        'displayName': user.displayName ?? '',
-        'photoUrl': user.photoURL ?? '',
-        'isAnonymous': user.isAnonymous,
-        'lastLoginAt': FieldValue.serverTimestamp(),
-        'lastLoginMethod': method,
-        'loginCount': FieldValue.increment(1),
-        'isOnline': true,
-      };
-
-      // Record initial createdAt if not present
-      if (!docSnap.exists || !(docSnap.data()?.containsKey('createdAt') ?? false)) {
-        updateData['createdAt'] = FieldValue.serverTimestamp();
-      }
-
-      await docRef.set(updateData, SetOptions(merge: true));
-
-      // Append detailed entry to users/{uid}/logins subcollection
-      await docRef.collection('logins').add({
-        'timestamp': FieldValue.serverTimestamp(),
-        'method': method,
-        'email': user.email ?? (user.isAnonymous ? 'anonymous' : ''),
-        'displayName': user.displayName ?? '',
-      });
-    } catch (e) {
-      debugPrint('FirebaseAuthService: Failed to record login in Firestore: $e');
-    }
   }
 }

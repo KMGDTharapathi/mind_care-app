@@ -23,6 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthStarted>(_onAuthStarted);
     on<AuthSignInWithEmail>(_onSignInWithEmail);
     on<AuthSignInWithGoogle>(_onSignInWithGoogle);
+    on<AuthSignInAnonymously>(_onSignInAnonymously);
     on<AuthSignOut>(_onSignOut);
     on<AuthCreateAccount>(_onCreateAccount);
     on<AuthSendPasswordReset>(_onSendPasswordReset);
@@ -88,8 +89,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         parameters: {'method': 'email'},
       );
       emit(AuthAuthenticated(user));
-    } on AuthException catch (e) {
-      emit(AuthError(message: e.message, type: e.type));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
     }
   }
 
@@ -111,8 +114,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await _crashlyticsService?.setUserId(null);
       }
       emit(user.isAnonymous ? AuthAnonymous(user) : AuthAuthenticated(user));
-    } on AuthException catch (e) {
-      emit(AuthError(message: e.message, type: e.type));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
+    }
+  }
+
+  Future<void> _onSignInAnonymously(
+    AuthSignInAnonymously event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    try {
+      final user = await _authService.signInAnonymously();
+      await _analyticsService?.setUserId(null);
+      await _crashlyticsService?.setUserId(null);
+      emit(AuthAnonymous(user));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
     }
   }
 
@@ -120,15 +142,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignOut event,
     Emitter<AuthState> emit,
   ) async {
-    // Mark user offline in Firestore
-    final currentUid = _authService.currentUser?.uid;
-    if (currentUid != null) {
-      unawaited(FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUid)
-          .set({'isOnline': false}, SetOptions(merge: true))
-          .catchError((_) {}));
-    }
+    // signOut() immediately restores an anonymous session; the authStateChanges
+    // stream (subscribed via AuthStarted) will emit the new anonymous user.
     await _analyticsService?.setUserId(null);
     await _crashlyticsService?.setUserId(null);
     await _authService.signOut();
@@ -141,7 +156,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     try {
       final user = await _authService.createAccountWithEmail(
-          event.email, event.password);
+        event.email,
+        event.password,
+        displayName: event.displayName,
+      );
       await _analyticsService?.setUserId(user.uid);
       await _crashlyticsService?.setUserId(user.uid);
       await _analyticsService?.logEvent(
@@ -149,8 +167,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         parameters: {'method': 'email'},
       );
       emit(AuthAuthenticated(user));
-    } on AuthException catch (e) {
-      emit(AuthError(message: e.message, type: e.type));
+    } catch (e) {
+      final msg = e is AuthException ? e.message : e.toString();
+      final type = e is AuthException ? e.type : AuthErrorType.unknown;
+      emit(AuthError(message: msg, type: type));
     }
   }
 

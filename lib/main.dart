@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:mind_care_app/firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/firebase/firebase_error_screen.dart';
@@ -44,9 +46,19 @@ String? splashSavedLang;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  bool firebaseOk = true;
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+    firebaseOk = false;
+  }
+
   // Start the app immediately — router shows /splash at once.
   runApp(MindCareApp(
-    initFuture: Future.value(const _InitResult(firebaseOk: true)),
+    initFuture: Future.value(_InitResult(firebaseOk: firebaseOk)),
   ));
 
   // Defer heavy init until after the first frame is painted.
@@ -54,13 +66,13 @@ Future<void> main() async {
   // rendered before we touch any platform channels (Hive, SharedPreferences).
   WidgetsBinding.instance.addPostFrameCallback((_) {
     Future.delayed(const Duration(milliseconds: 100), () {
-      _heavyInit().catchError((e) => debugPrint('_heavyInit error: $e'));
+      _heavyInit(firebaseOk).catchError((e) => debugPrint('_heavyInit error: $e'));
     });
   });
 }
 
 /// All heavy init — called after first frame is painted.
-Future<_InitResult> _heavyInit() async {
+Future<_InitResult> _heavyInit(bool firebaseOk) async {
   // Yield immediately so the first frame renders before any heavy work
   await Future.delayed(const Duration(milliseconds: 50));
 
@@ -127,22 +139,14 @@ Future<_InitResult> _heavyInit() async {
 
   final onboardingComplete = (prefsResult[1] as bool?) ?? false;
 
-  // Firebase, Notifications, ServiceLocator — all fire-and-forget.
-  // They do NOT block the app from starting.
-  unawaited(FirebaseInitializer.init(remoteConfigService: remoteConfig)
-      .timeout(const Duration(seconds: 15),
-          onTimeout: () => const FirebaseInitResult(success: true))
-      .then((result) {
-        _firebaseReady = true;
-        if (result.success) {
-          unawaited(ServiceLocator.init(
-            remoteConfig: remoteConfig,
-            analytics: FirebaseAnalyticsService(consentService: consentService),
-            crashlytics: crashlyticsService,
-          ).catchError((e) => debugPrint('ServiceLocator failed: $e')));
-        }
-      })
-      .catchError((e) => debugPrint('Firebase failed (non-fatal): $e')));
+  // Firebase is already initialized synchronously.
+  if (firebaseOk) {
+    unawaited(ServiceLocator.init(
+      remoteConfig: remoteConfig,
+      analytics: FirebaseAnalyticsService(consentService: consentService),
+      crashlytics: crashlyticsService,
+    ).catchError((e) => debugPrint('ServiceLocator failed: $e')));
+  }
 
   unawaited(NotificationService.init(navigatorKey: navigatorKey)
       .catchError((e) => debugPrint('Notifications failed: $e')));
@@ -151,7 +155,7 @@ Future<_InitResult> _heavyInit() async {
     if (!decided) consentService.setAnalyticsConsent(true);
   }));
 
-  return _InitResult(firebaseOk: true, onboardingComplete: onboardingComplete);
+  return _InitResult(firebaseOk: firebaseOk, onboardingComplete: onboardingComplete);
 }
 
 class _InitResult {

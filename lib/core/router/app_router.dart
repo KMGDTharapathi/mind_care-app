@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mind_care_app/core/service_locator.dart';
 import 'package:mind_care_app/data/repositories/journal_repository.dart';
 import 'package:mind_care_app/data/repositories/mood_repository.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_mood_repository.dart';
 import 'package:mind_care_app/data/repositories/resource_repository.dart';
 import 'package:mind_care_app/features/breathing/screens/breathing_list_screen.dart';
 import 'package:mind_care_app/features/breathing/screens/breathing_only_screen.dart';
@@ -80,12 +82,28 @@ class AppRouter {
   static const String willowChat = '/willow-chat';
   static const String findDoctor = '/find-doctor';
 
-  /// Creates a router with a synchronous redirect based on the pre-loaded
-  /// [onboardingComplete] flag â€” avoids async deadlock on startup.
+  /// Creates a router with a redirect guard ensuring users are logged in
+  /// before accessing app screens.
   static GoRouter createRouter(bool onboardingComplete) {
     return GoRouter(
       initialLocation: splash,
       routes: _routes,
+      redirect: (context, state) {
+        final path = state.uri.path;
+        final loggedIn = FirebaseAuth.instance.currentUser != null;
+
+        final isAuthScreen = path == signIn ||
+            path == signUp ||
+            path == forgotPassword ||
+            path == splash ||
+            path == languageSelect ||
+            path == onboarding;
+
+        if (!loggedIn && !isAuthScreen) {
+          return signIn;
+        }
+        return null;
+      },
     );
   }
 
@@ -123,7 +141,7 @@ class AppRouter {
         path: moodTracker,
         builder: (context, state) => BlocProvider(
           create: (_) => MoodBloc(
-            repository: HiveMoodRepository(),
+            repository: FirestoreMoodRepository(),
             syncService: ServiceLocator.syncService,
             analyticsService: ServiceLocator.analyticsService,
           ),
@@ -133,7 +151,7 @@ class AppRouter {
       GoRoute(
         path: moodHistory,
         builder: (context, state) =>
-            MoodHistoryScreen(repository: HiveMoodRepository()),
+            MoodHistoryScreen(repository: FirestoreMoodRepository()),
       ),
       GoRoute(
         path: breathing,

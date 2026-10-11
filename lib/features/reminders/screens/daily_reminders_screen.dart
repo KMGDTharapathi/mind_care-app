@@ -1,10 +1,7 @@
 import 'package:add_2_calendar/add_2_calendar.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
-import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
 
 const _kTeal = Color(0xFF5BA8A0);
@@ -603,43 +600,6 @@ class _CalendarTabState extends State<_CalendarTab> {
     );
 
     Add2Calendar.addEvent2Cal(event);
-    _syncCalendarReminderToFirestore(selectedType, start, _isRecurring);
-  }
-
-  Future<void> _syncCalendarReminderToFirestore(
-      String type, DateTime start, bool isRecurring) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      final uid = user?.uid ?? await PreferencesService.getUserId();
-      if (uid == null || uid.isEmpty) return;
-
-      final calendarData = {
-        'lastCalendarReminder': {
-          'type': type,
-          'scheduledDate': start.toIso8601String(),
-          'isRecurring': isRecurring,
-          'createdAt': FieldValue.serverTimestamp(),
-        }
-      };
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set(calendarData, SetOptions(merge: true));
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('calendar_reminders')
-          .add({
-        'type': type,
-        'scheduledDate': start.toIso8601String(),
-        'isRecurring': isRecurring,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      debugPrint('DailyReminders: Calendar reminder sync failed (non-fatal): $e');
-    }
   }
 }
 

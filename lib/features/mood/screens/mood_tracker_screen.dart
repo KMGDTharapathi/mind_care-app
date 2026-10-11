@@ -118,7 +118,7 @@ const _moodOptions = [
   _MoodOption(MoodType.tired, '😴', 'Tired'),
 ];
 
-// ── Mood grid ─────────────────────────────────────────────────────────────────
+// ── Mood level selector ───────────────────────────────────────────────────────
 
 class _MoodGrid extends StatelessWidget {
   const _MoodGrid();
@@ -126,77 +126,154 @@ class _MoodGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MoodBloc, MoodState>(
-      buildWhen: (prev, curr) => prev.selectedMood != curr.selectedMood,
+      buildWhen: (prev, curr) => prev.selectedLevel != curr.selectedLevel,
       builder: (context, state) {
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: _moodOptions
-              .map((opt) => _MoodOptionCard(
-                    option: opt,
-                    isSelected: state.selectedMood == opt.type,
-                    onTap: () =>
-                        context.read<MoodBloc>().add(MoodSelected(opt.type)),
-                  ))
-              .toList(),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(10, (index) {
+                final level = index + 1;
+                final isSelected = state.selectedLevel == level;
+                return _MoodLevelCard(
+                  level: level,
+                  isSelected: isSelected,
+                  onTap: () =>
+                      context.read<MoodBloc>().add(MoodSelected(level)),
+                );
+              }),
+            ),
+            const SizedBox(height: 16),
+            if (state.selectedLevel != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _getLevelColor(state.selectedLevel!).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _getLevelColor(state.selectedLevel!).withOpacity(0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _getLevelEmoji(state.selectedLevel!),
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Level ${state.selectedLevel} - ${_getLevelLabel(state.selectedLevel!)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _getLevelColor(state.selectedLevel!),
+                            ),
+                          ),
+                          Text(
+                            _getLevelDesc(state.selectedLevel!),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         );
       },
     );
   }
 }
 
-class _MoodOptionCard extends StatelessWidget {
-  final _MoodOption option;
+class _MoodLevelCard extends StatelessWidget {
+  final int level;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _MoodOptionCard({
-    required this.option,
+  const _MoodLevelCard({
+    required this.level,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final color = _getLevelColor(level);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: (MediaQuery.of(context).size.width - 40 - 12 * 2) / 3,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        width: (MediaQuery.of(context).size.width - 40 - 8 * 4) / 5,
+        height: 52,
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primary.withOpacity(0.15)
-              : colorScheme.primaryContainer.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? color : color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.primary.withOpacity(0.2),
+            color: isSelected ? color : color.withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : [],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(option.emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 6),
-            Text(
-              option.label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.normal,
-                    color: isSelected
-                        ? colorScheme.primary
-                        : colorScheme.onSurface,
-                  ),
+        child: Center(
+          child: Text(
+            level.toString(),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : color,
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+Color _getLevelColor(int level) {
+  if (level <= 2) return const Color(0xFFD32F2F); // Red
+  if (level <= 4) return const Color(0xFFF57C00); // Orange
+  if (level <= 6) return const Color(0xFFFBC02D); // Yellow
+  if (level <= 8) return const Color(0xFF4CAF50); // Light Green
+  return const Color(0xFF00796B); // Teal
+}
+
+String _getLevelEmoji(int level) {
+  if (level <= 2) return '😭';
+  if (level <= 4) return '😔';
+  if (level <= 6) return '😌';
+  if (level <= 8) return '😊';
+  return '🤩';
+}
+
+String _getLevelLabel(int level) {
+  if (level <= 2) return 'Very Low';
+  if (level <= 4) return 'Low';
+  if (level <= 6) return 'Neutral / Calm';
+  if (level <= 8) return 'Good';
+  return 'Excellent!';
+}
+
+String _getLevelDesc(int level) {
+  if (level <= 2) return 'Feeling down, overwhelmed, or sad.';
+  if (level <= 4) return 'A bit anxious, tired, or frustrated.';
+  if (level <= 6) return 'Peaceful, stable, and balanced.';
+  if (level <= 8) return 'Cheerful, optimistic, and happy.';
+  return 'Thriving, excited, and full of positive energy!';
 }
 
 // ── Validation error ──────────────────────────────────────────────────────────

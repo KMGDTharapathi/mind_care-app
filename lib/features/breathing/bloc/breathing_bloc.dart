@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mind_care_app/data/models/breathing_pattern.dart';
+import 'package:mind_care_app/data/models/wellness_session_model.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_session_repository.dart';
 import 'package:mind_care_app/services/analytics/analytics_service.dart';
 
 // ── Events ────────────────────────────────────────────────────────────────────
@@ -134,6 +136,27 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           'breathing_session_completed',
           parameters: {'pattern': s.pattern!.id},
         );
+        try {
+          final totalSeconds = s.pattern!.phases.fold<int>(
+                0,
+                (sum, p) => sum + p.durationSeconds,
+              ) *
+              s.totalCycles;
+          FirestoreSessionRepository().logSession(
+            WellnessSessionModel(
+              id: '',
+              userId: '',
+              type: 'breathing',
+              title: s.pattern!.name,
+              durationSeconds: totalSeconds,
+              completedAt: DateTime.now(),
+              metadata: {
+                'patternId': s.pattern!.id,
+                'cycles': s.totalCycles,
+              },
+            ),
+          );
+        } catch (_) {}
       } else {
         // Start next cycle from phase 0
         emit(s.copyWith(

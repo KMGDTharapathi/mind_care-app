@@ -11,6 +11,7 @@ class NotificationService {
   static const _channelId = 'mindcare_daily';
   static const _channelName = 'Reminders';
   static const _baseId = 100; // IDs 100-106 for Mon-Sun
+  static const _accentColor = Color(0xFF5BA8A0);
 
   static Future<void> init({
     required GlobalKey<NavigatorState> navigatorKey,
@@ -108,6 +109,32 @@ class NotificationService {
   /// Legacy alias kept for compatibility.
   static Future<void> scheduleDailyNotification(TimeOfDay time) =>
       scheduleReminder(time: time);
+
+  /// Shows a notification confirming an event was added to the device calendar.
+  static Future<void> showEventAddedNotification({
+    required String eventTitle,
+    required String provider,
+  }) async {
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'mindcare_calendar',
+        'Calendar',
+        channelDescription: 'Calendar confirmation notifications',
+        importance: Importance.high,
+        priority: Priority.high,
+        color: _accentColor,
+      );
+      const notifDetails = NotificationDetails(android: androidDetails);
+      await flutterLocalNotificationsPlugin.show(
+        500,
+        'Event Added to $provider',
+        eventTitle,
+        notifDetails,
+      );
+    } catch (e) {
+      debugPrint('Event notification failed: $e');
+    }
+  }
 
   static Future<void> cancelAll() async {
     await flutterLocalNotificationsPlugin.cancelAll();

@@ -1,4 +1,5 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mind_care_app/services/consent/consent_service.dart';
 import 'package:mind_care_app/services/crashlytics/crashlytics_service.dart';
 
@@ -18,6 +19,7 @@ class FirebaseCrashlyticsService implements CrashlyticsService {
 
   @override
   Future<void> setUserId(String? uid) async {
+    if (kIsWeb) return;
     if (!await consentService.isAnalyticsEnabled()) return;
     await _crashlytics.setUserIdentifier(uid ?? '');
   }
@@ -29,6 +31,7 @@ class FirebaseCrashlyticsService implements CrashlyticsService {
     String? reason,
     bool fatal = false,
   }) async {
+    if (kIsWeb) return;
     if (!await consentService.isAnalyticsEnabled()) return;
     await _crashlytics.recordError(
       error,

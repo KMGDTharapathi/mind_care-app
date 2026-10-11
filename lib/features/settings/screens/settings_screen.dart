@@ -6,6 +6,11 @@ import 'package:mind_care_app/core/l10n/language_provider.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_user_repository.dart';
 import 'package:mind_care_app/main.dart' show appUserName, appLanguage;
 
 class SettingsScreen extends StatefulWidget {
@@ -91,6 +96,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     if (result != null && result.isNotEmpty) {
       await PreferencesService.setUserName(result);
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && uid.isNotEmpty) {
+        try {
+          await FirestoreUserRepository().updateProfile(uid, displayName: result);
+        } catch (_) {}
+      }
       if (!mounted) return;
       // Defer notifier update to next frame to avoid InheritedWidget assertion
       // when dialog is still in the process of being dismissed
@@ -121,6 +132,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             final cubit = context.read<SettingsCubit>();
             return ListView(
               children: [
+                const SizedBox(height: 16),
+                const _ProfileAvatarSection(),
+                const SizedBox(height: 16),
                 // ── Profile ────────────────────────────────────────────────
                 _SectionHeader(title: s.sectionProfile),
                 ListTile(
@@ -450,5 +464,160 @@ Future<void> _onLanguageSelected(
         ),
       );
     }
+  }
+}
+
+// ── Profile Picture Avatar Section ───────────────────────────────────────────
+
+class _ProfileAvatarSection extends StatefulWidget {
+  const _ProfileAvatarSection();
+
+  @override
+  State<_ProfileAvatarSection> createState() => _ProfileAvatarSectionState();
+}
+
+class _ProfileAvatarSectionState extends State<_ProfileAvatarSection> {
+  final _picker = ImagePicker();
+  bool _uploading = false;
+  String? _cachedUrl;
+  Uint8List? _localBytes;
+
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+  Reference get _storageRef =>
+      FirebaseStorage.instance.ref('users/$_uid/profile.jpg');
+
+  Future<String?> _loadProfilePicture() async {
+    if (_cachedUrl != null) return _cachedUrl;
+    final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
+    if (authPhoto != null && authPhoto.isNotEmpty) {
+      _cachedUrl = authPhoto;
+      return authPhoto;
+    }
+    try {
+      final url = await _storageRef.getDownloadURL();
+      _cachedUrl = url;
+      return url;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
+      );
+      if (pickedFile == null) return;
+
+      // Read file bytes for cross-platform support (Web & Mobile)
+      final bytes = await pickedFile.readAsBytes();
+
+      setState(() {
+        _localBytes = bytes;
+        _uploading = true;
+      });
+
+      // Upload via repository (saves to Firebase Storage, updates FirebaseAuth photoURL & Firestore document)
+      final url = await FirestoreUserRepository().uploadProfileImage(_uid, bytes);
+
+      setState(() {
+        _cachedUrl = url;
+        _uploading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully!')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _uploading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload image: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          FutureBuilder<String?>(
+            future: _loadProfilePicture(),
+            builder: (context, snapshot) {
+              final imageUrl = snapshot.data;
+              final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+              return Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF5BA8A0),
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: _uploading
+                      ? const Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: Color(0xFF5BA8A0),
+                          ),
+                        )
+                      : _localBytes != null
+                          ? Image.memory(
+                              _localBytes!,
+                              fit: BoxFit.cover,
+                            )
+                          : hasImage
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.person, size: 60, color: Colors.grey),
+                                )
+                              : const Icon(Icons.person, size: 60, color: Colors.grey),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: _uploading ? null : _pickAndUploadImage,
+              child: const CircleAvatar(
+                radius: 18,
+                backgroundColor: Color(0xFF5BA8A0),
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

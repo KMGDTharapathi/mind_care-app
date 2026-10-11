@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
 import '../services/willow_engine.dart';
 import '../services/willow_api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
 
 const _kTeal = Color(0xFF5BA8A0);
@@ -27,12 +30,16 @@ class _WillowChatScreenState extends State<WillowChatScreen>
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   final _uuid = const Uuid();
-
   bool _isTyping = false;
   bool _showScrollDown = false;
   bool _hasText = false;
 
   late WillowEngine _engine;
+  StreamSubscription<QuerySnapshot>? _chatSubscription;
+
+  String get _chatId => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+  CollectionReference<Map<String, dynamic>> get _chatCollection =>
+      FirebaseFirestore.instance.collection('chats').doc(_chatId).collection('messages');
 
   @override
   void initState() {
@@ -51,15 +58,58 @@ class _WillowChatScreenState extends State<WillowChatScreen>
         setState(() => _showScrollDown = false);
       }
     });
-    // Welcome message
-    Future.delayed(const Duration(milliseconds: 400), () {
+
+    // Real-time snapshot listener
+    _chatSubscription = _chatCollection
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .listen((snapshot) {
       if (!mounted) return;
-      _addWillowMessage(_engine.welcomeMessage());
+      final msgs = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return ChatMessage(
+          id: data['id'] as String,
+          senderName: data['senderName'] as String,
+          typeName: data['typeName'] as String? ?? 'text',
+          content: data['content'] as String,
+          fileName: data['fileName'] as String?,
+          durationSeconds: data['durationSeconds'] as int? ?? 0,
+          timestamp: (data['timestamp'] as Timestamp).toDate(),
+        );
+      }).toList();
+
+      setState(() {
+        _messages.clear();
+        _messages.addAll(msgs);
+      });
+
+      _scrollToBottom();
+
+      // If no messages, seed the welcome message in Firestore
+      if (msgs.isEmpty) {
+        _addWillowMessageToFirestore(_engine.welcomeMessage());
+      }
+    }, onError: (error) {
+      debugPrint('Firestore subscription error: $error');
+      // FALLBACK: Load local welcome message if database access fails
+      if (_messages.isEmpty) {
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: 'welcome-local',
+            sender: MessageSender.willow,
+            text: _engine.welcomeMessage(),
+            timestamp: DateTime.now(),
+          ));
+        });
+      }
     });
   }
 
   @override
   void dispose() {
+    if (_chatSubscription != null) {
+      _chatSubscription?.cancel();
+    }
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -80,15 +130,19 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     });
   }
 
-  void _addWillowMessage(String text) {
-    final msg = ChatMessage.text(
-      id: _uuid.v4(),
-      sender: MessageSender.willow,
-      text: text,
-      timestamp: DateTime.now(),
-    );
-    setState(() => _messages.add(msg));
-    _scrollToBottom();
+  Future<void> _addWillowMessageToFirestore(String text) async {
+    try {
+      final id = _uuid.v4();
+      await _chatCollection.doc(id).set({
+        'id': id,
+        'senderName': 'willow',
+        'typeName': 'text',
+        'content': text,
+        'timestamp': Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (e) {
+      debugPrint('Failed to save willow response to Firestore: $e');
+    }
   }
 
   Future<void> _sendText() async {
@@ -96,22 +150,67 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     if (text.isEmpty) return;
     _textController.clear();
 
+    final userMsgId = _uuid.v4();
     final userMsg = ChatMessage.text(
-      id: _uuid.v4(),
+      id: userMsgId,
       sender: MessageSender.user,
       text: text,
       timestamp: DateTime.now(),
     );
-    setState(() {
-      _messages.add(userMsg);
-      _isTyping = true;
-    });
+
+    bool saveSuccess = false;
+    try {
+      // Save to Firestore
+      await _chatCollection.doc(userMsgId).set({
+        'id': userMsgId,
+        'senderName': 'user',
+        'typeName': 'text',
+        'content': text,
+        'timestamp': Timestamp.fromDate(userMsg.timestamp),
+      });
+      saveSuccess = true;
+    } catch (e) {
+      debugPrint('Failed to save user message to Firestore: $e');
+      setState(() {
+        _messages.add(userMsg);
+      });
+    }
+
+    setState(() => _isTyping = true);
     _scrollToBottom();
 
-    final response = await _engine.respond(userMsg);
-    if (!mounted) return;
-    setState(() => _isTyping = false);
-    _addWillowMessage(response);
+    // Send the last ~6 turns as context so the bot can read the user's state
+    // and keep the thread going. The current message is already in _messages.
+    final contextStart = (_messages.length > 7) ? _messages.length - 7 : 0;
+    final turns = (_messages.length > 1
+            ? _messages.sublist(contextStart, _messages.length - 1)
+            : const <ChatMessage>[])
+        .where((m) => m.type == MessageType.text)
+        .map(
+          (m) => WillowTurn(
+            role: m.sender == MessageSender.willow ? 'model' : 'user',
+            text: m.content,
+          ),
+        ).toList();
+
+    // Generate response
+    final response = await _engine.respond(userMsg, turns: turns);
+    if (saveSuccess) {
+      await _addWillowMessageToFirestore(response.text);
+    } else {
+      setState(() {
+        _messages.add(ChatMessage.text(
+          id: _uuid.v4(),
+          sender: MessageSender.willow,
+          text: response.text,
+          timestamp: DateTime.now(),
+        ));
+      });
+    }
+    
+    if (mounted) {
+      setState(() => _isTyping = false);
+    }
   }
 
   Future<void> _pickAttachment() async {
@@ -168,41 +267,96 @@ class _WillowChatScreenState extends State<WillowChatScreen>
       final file = result.files.first;
       if (file.path == null) return;
 
+      final userMsgId = _uuid.v4();
       final userMsg = ChatMessage.image(
-        id: _uuid.v4(),
+        id: userMsgId,
         filePath: file.path!,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(userMsg);
-        _isTyping = true;
-      });
+
+      bool saveSuccess = false;
+      try {
+        await _chatCollection.doc(userMsgId).set({
+          'id': userMsgId,
+          'senderName': 'user',
+          'typeName': 'image',
+          'content': file.path!,
+          'timestamp': Timestamp.fromDate(userMsg.timestamp),
+        });
+        saveSuccess = true;
+      } catch (e) {
+        debugPrint('Failed to save image message: $e');
+        setState(() {
+          _messages.add(userMsg);
+        });
+      }
+
+      setState(() => _isTyping = true);
       _scrollToBottom();
+      
       final response = await _engine.respond(userMsg);
-      if (!mounted) return;
-      setState(() => _isTyping = false);
-      _addWillowMessage(response);
+      if (saveSuccess) {
+        await _addWillowMessageToFirestore(response.text);
+      } else {
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: _uuid.v4(),
+            sender: MessageSender.willow,
+            text: response.text,
+            timestamp: DateTime.now(),
+          ));
+        });
+      }
+      if (mounted) setState(() => _isTyping = false);
     } else {
       final result = await FilePicker.platform.pickFiles(allowMultiple: false);
       if (result == null || result.files.isEmpty) return;
       final file = result.files.first;
       if (file.path == null) return;
 
+      final userMsgId = _uuid.v4();
       final userMsg = ChatMessage.file(
-        id: _uuid.v4(),
+        id: userMsgId,
         filePath: file.path!,
         fileName: file.name,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(userMsg);
-        _isTyping = true;
-      });
+
+      bool saveSuccess = false;
+      try {
+        await _chatCollection.doc(userMsgId).set({
+          'id': userMsgId,
+          'senderName': 'user',
+          'typeName': 'file',
+          'content': file.path!,
+          'fileName': file.name,
+          'timestamp': Timestamp.fromDate(userMsg.timestamp),
+        });
+        saveSuccess = true;
+      } catch (e) {
+        debugPrint('Failed to save file message: $e');
+        setState(() {
+          _messages.add(userMsg);
+        });
+      }
+
+      setState(() => _isTyping = true);
       _scrollToBottom();
+      
       final response = await _engine.respond(userMsg);
-      if (!mounted) return;
-      setState(() => _isTyping = false);
-      _addWillowMessage(response);
+      if (saveSuccess) {
+        await _addWillowMessageToFirestore(response.text);
+      } else {
+        setState(() {
+          _messages.add(ChatMessage.text(
+            id: _uuid.v4(),
+            sender: MessageSender.willow,
+            text: response.text,
+            timestamp: DateTime.now(),
+          ));
+        });
+      }
+      if (mounted) setState(() => _isTyping = false);
     }
   }
 
