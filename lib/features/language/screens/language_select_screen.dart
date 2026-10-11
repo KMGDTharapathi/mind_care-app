@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/app_strings.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
@@ -15,9 +16,30 @@ class LanguageSelectScreen extends StatefulWidget {
 class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
   String? _selected; // 'si' or 'en'
 
+  Future<void> _continue() async {
+    if (_selected == null) return;
+    await PreferencesService.setAppLanguage(_selected!);
+    appLanguage.value = _selected == 'si' ? AppStrings.si : AppStrings.en;
+    if (mounted) {
+      context.go('${AppRouter.moodCheckin}?lang=$_selected');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (_selected != null &&
+            event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.enter ||
+                event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+          _continue();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -160,18 +182,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
                   const SizedBox(height: 40),
                   // Continue button
                   GestureDetector(
-                    onTap: _selected == null
-                        ? null
-                        : () async {
-                            await PreferencesService.setAppLanguage(_selected!);
-                            // Update global language notifier
-                            appLanguage.value = _selected == 'si'
-                                ? AppStrings.si
-                                : AppStrings.en;
-                            if (context.mounted) {
-                              context.go('${AppRouter.moodCheckin}?lang=$_selected');
-                            }
-                          },
+                    onTap: _selected == null ? null : _continue,
                     child: Text(
                       'Continue →',
                       style: TextStyle(
@@ -188,6 +199,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
