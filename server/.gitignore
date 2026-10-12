@@ -2,3 +2,6 @@
 models_dl/**/*.safetensors
 models_dl/**/*.bin
 models_dl/**/.cache/
+.venv/
+cloudflared.exe
+cloudflared.log

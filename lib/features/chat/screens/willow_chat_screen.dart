@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../models/chat_message.dart';
 import '../services/willow_engine.dart';
@@ -228,161 +227,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
     }
   }
 
-  Future<void> _pickAttachment() async {
-    final isSi = appLanguage.value.isSinhala;
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F5E9),
-                child: Icon(Icons.image_outlined, color: _kTeal),
-              ),
-              title: Text(isSi ? 'ඡායාරූප / රූපය' : 'Photo / Image'),
-              onTap: () => Navigator.pop(context, 'image'),
-            ),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE3F2FD),
-                child: Icon(
-                  Icons.attach_file_rounded,
-                  color: Color(0xFF1565C0),
-                ),
-              ),
-              title: Text(isSi ? 'ගොනුව' : 'File'),
-              onTap: () => Navigator.pop(context, 'file'),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-
-    if (choice == null) return;
-
-    if (choice == 'image') {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.first;
-      if (file.path == null) return;
-
-      final userMsgId = _uuid.v4();
-      final userMsg = ChatMessage.image(
-        id: userMsgId,
-        filePath: file.path!,
-        timestamp: DateTime.now(),
-      );
-
-      bool saveSuccess = false;
-      try {
-        await _chatCollection.doc(userMsgId).set({
-          'id': userMsgId,
-          'senderName': 'user',
-          'typeName': 'image',
-          'content': file.path!,
-          'timestamp': Timestamp.fromDate(userMsg.timestamp),
-        });
-        saveSuccess = true;
-      } catch (e) {
-        debugPrint('Failed to save image message: $e');
-        setState(() {
-          _messages.add(userMsg);
-        });
-      }
-
-      setState(() => _isTyping = true);
-      _scrollToBottom();
-
-      final response = await _engine.respond(userMsg);
-      if (saveSuccess) {
-        await _addWillowMessageToFirestore(response.text);
-      } else {
-        setState(() {
-          _messages.add(
-            ChatMessage.text(
-              id: _uuid.v4(),
-              sender: MessageSender.willow,
-              text: response.text,
-              timestamp: DateTime.now(),
-            ),
-          );
-        });
-      }
-      if (mounted) setState(() => _isTyping = false);
-    } else {
-      final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.first;
-      if (file.path == null) return;
-
-      final userMsgId = _uuid.v4();
-      final userMsg = ChatMessage.file(
-        id: userMsgId,
-        filePath: file.path!,
-        fileName: file.name,
-        timestamp: DateTime.now(),
-      );
-
-      bool saveSuccess = false;
-      try {
-        await _chatCollection.doc(userMsgId).set({
-          'id': userMsgId,
-          'senderName': 'user',
-          'typeName': 'file',
-          'content': file.path!,
-          'fileName': file.name,
-          'timestamp': Timestamp.fromDate(userMsg.timestamp),
-        });
-        saveSuccess = true;
-      } catch (e) {
-        debugPrint('Failed to save file message: $e');
-        setState(() {
-          _messages.add(userMsg);
-        });
-      }
-
-      setState(() => _isTyping = true);
-      _scrollToBottom();
-
-      final response = await _engine.respond(userMsg);
-      if (saveSuccess) {
-        await _addWillowMessageToFirestore(response.text);
-      } else {
-        setState(() {
-          _messages.add(
-            ChatMessage.text(
-              id: _uuid.v4(),
-              sender: MessageSender.willow,
-              text: response.text,
-              timestamp: DateTime.now(),
-            ),
-          );
-        });
-      }
-      if (mounted) setState(() => _isTyping = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -433,7 +277,6 @@ class _WillowChatScreenState extends State<WillowChatScreen>
             isDark: isDark,
             isSinhala: isSi,
             onSend: _sendText,
-            onAttach: _pickAttachment,
           ),
         ],
       ),
@@ -870,7 +713,6 @@ class _InputBar extends StatelessWidget {
   final bool isDark;
   final bool isSinhala;
   final VoidCallback onSend;
-  final VoidCallback onAttach;
 
   const _InputBar({
     required this.controller,
@@ -878,7 +720,6 @@ class _InputBar extends StatelessWidget {
     required this.isDark,
     required this.isSinhala,
     required this.onSend,
-    required this.onAttach,
   });
 
   @override
@@ -898,7 +739,7 @@ class _InputBar extends StatelessWidget {
         ),
       ),
       padding: EdgeInsets.fromLTRB(
-        8,
+        12,
         8,
         8,
         8 + MediaQuery.of(context).viewInsets.bottom,
@@ -908,13 +749,6 @@ class _InputBar extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // Attach button
-            _IconBtn(
-              icon: Icons.attach_file_rounded,
-              color: _kTeal,
-              onTap: onAttach,
-            ),
-            const SizedBox(width: 6),
             // Text field
             Expanded(
               child: Container(
@@ -959,15 +793,8 @@ class _InputBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            // Send / mic button
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (child, anim) =>
-                  ScaleTransition(scale: anim, child: child),
-              child: hasText
-                  ? _SendBtn(key: const ValueKey('send'), onTap: onSend)
-                  : _MicBtn(key: const ValueKey('mic')),
-            ),
+            // Send button
+            _SendBtn(onTap: onSend, enabled: hasText),
           ],
         ),
       ),
@@ -975,61 +802,24 @@ class _InputBar extends StatelessWidget {
   }
 }
 
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  const _IconBtn({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-    );
-  }
-}
-
 class _SendBtn extends StatelessWidget {
   final VoidCallback onTap;
-  const _SendBtn({super.key, required this.onTap});
+  final bool enabled;
+  const _SendBtn({required this.onTap, this.enabled = true});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Container(
         width: 44,
         height: 44,
-        decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: enabled ? _kTeal : _kTeal.withValues(alpha: 0.45),
+          shape: BoxShape.circle,
+        ),
         child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
       ),
-    );
-  }
-}
-
-class _MicBtn extends StatelessWidget {
-  const _MicBtn({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: const BoxDecoration(color: _kTeal, shape: BoxShape.circle),
-      child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
     );
   }
 }

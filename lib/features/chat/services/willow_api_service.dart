@@ -26,7 +26,11 @@ class WillowApiService {
   /// cannot change it from inside the app.
   static final String _baseUrl = const String.fromEnvironment(
     'WILLOW_API_BASE_URL',
-        defaultValue: 'http://127.0.0.1:8000',
+    defaultValue: 'http://127.0.0.1:8000',
+  );
+  static final String _lanUrl = const String.fromEnvironment(
+    'WILLOW_LAN_URL',
+    defaultValue: '',
   );
   static final bool _serverMode = const String.fromEnvironment(
         'WILLOW_SERVER_MODE',
@@ -38,11 +42,25 @@ class WillowApiService {
   /// seconds so a server that is down never stalls each message on a timeout;
   /// when it comes back up, the next probe reconnects automatically.
   static bool _serverReachable = false;
+  static String? _activeBaseUrl;
   static DateTime _lastProbe = DateTime.fromMillisecondsSinceEpoch(0);
 
+  static List<String> get _candidateBaseUrls {
+    final urls = <String>[
+      if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty) _activeBaseUrl!,
+      if (_lanUrl.isNotEmpty) _lanUrl,
+      if (_baseUrl.isNotEmpty) _baseUrl,
+      'http://127.0.0.1:8000',
+      'http://10.0.2.2:8000',
+      'http://localhost:8000',
+    ];
+    return urls.toSet().toList();
+  }
+
   static Future<bool> _serverUp() async {
-    if (DateTime.now().difference(_lastProbe) < const Duration(seconds: 12)) {
-      return _serverReachable;
+    if (_serverReachable &&
+        DateTime.now().difference(_lastProbe) < const Duration(seconds: 12)) {
+      return true;
     }
     _lastProbe = DateTime.now();
     _serverReachable = await healthCheck();
@@ -50,11 +68,11 @@ class WillowApiService {
   }
 
   static void _markServerDown() {
-    _lastProbe = DateTime.now();
+    _lastProbe = DateTime.fromMillisecondsSinceEpoch(0);
     _serverReachable = false;
   }
 
-  static String get baseUrl => _baseUrl;
+  static String get baseUrl => _activeBaseUrl ?? _baseUrl;
 
   /// Always true: the in-app Willow brain (curated) can reply.
   static bool get isConfigured => true;
@@ -154,20 +172,18 @@ class WillowApiService {
     // author of every reply. If it is not reachable we say so instead of using
     // the in-app curated brain.
     if (_serverMode) {
-      if (await _serverUp()) {
-        final hosted = await _callServer(message, turns);
-        if (hosted != null) {
-          // The trained model authors the text. Suggestions stay the app's own.
-          return WillowChatResult(
-            text: hosted.text,
-            recommendations: topicRecsForFirstMention(),
-          );
-        }
-        // Health said up but the call failed: remember it so we don't keep
-        // probing on every message.
-        _markServerDown();
-        debugPrint('Model server call failed while online');
+      final hosted = await _callServer(message, turns);
+      if (hosted != null) {
+        _serverReachable = true;
+        _lastProbe = DateTime.now();
+        // The trained model authors the text. Suggestions stay the app's own.
+        return WillowChatResult(
+          text: hosted.text,
+          recommendations: topicRecsForFirstMention(),
+        );
       }
+      _markServerDown();
+      debugPrint('Model server call failed across all candidate URLs');
       return WillowChatResult(
         text: isSi ? _modelUnavailableSi : _modelUnavailableEn,
       );
@@ -229,83 +245,92 @@ class WillowApiService {
     return WillowChatResult(text: text, recommendations: recs);
   }
 
-  /// Check the (legacy) server is alive; kept for compatibility.
+  /// Check the model server is alive across wireless tunnel, LAN, and loopback URLs.
   static Future<bool> healthCheck() async {
     if (!isConfigured) return false;
-    try {
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/health'),
-            headers: {
-              'cf-access-client-id': 'bypass',
-              'User-Agent': 'MindCareApp/1.0',
-            },
-          )
-          .timeout(const Duration(seconds: 3));
-      return response.statusCode == 200;
-    } catch (_) {
-      return false;
+    for (final candidate in _candidateBaseUrls) {
+      try {
+        final response = await http
+            .get(
+              Uri.parse('$candidate/health'),
+              headers: {
+                'cf-access-client-id': 'bypass',
+                'User-Agent': 'MindCareApp/1.0',
+              },
+            )
+            .timeout(const Duration(seconds: 3));
+        if (response.statusCode == 200) {
+          _activeBaseUrl = candidate;
+          return true;
+        }
+      } catch (_) {}
     }
+    return false;
   }
 
-  /// Ask the hosted model server (Kaggle notebook via tunnel) for a reply.
+  /// Ask the hosted model server (server/app.py or tunnel) for a reply.
   static Future<WillowChatResult?> _callServer(
     String message,
     List<WillowTurn> turns,
   ) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/chat'),
-            headers: {
-              'Content-Type': 'application/json',
-              'cf-access-client-id': 'bypass',
-              'User-Agent': 'MindCareApp/1.0',
-            },
-            body: jsonEncode({
-              'message': message,
-              'lang': _looksSinhala(message) ? 'si' : 'en',
-              'history': [
-                for (final t in turns) {'role': t.role, 'content': t.text},
-              ],
-              if (_identifiedMindState != null &&
-                  (_userMessageCount >= 5 ||
-                      turns.where((t) => t.role == 'user').length + 1 >= 5))
-                'mind_state': _identifiedMindState,
-              if (_identifiedMindState != null &&
-                  (_userMessageCount >= 5 ||
-                      turns.where((t) => t.role == 'user').length + 1 >= 5))
-                'identified_mind_state': _identifiedMindState,
-              if (_identifiedMindState != null &&
-                  (_userMessageCount >= 5 ||
-                      turns.where((t) => t.role == 'user').length + 1 >= 5))
-                'context':
-                    'USER_MIND_STATE: $_identifiedMindState (identified after first $_userMessageCount messages)',
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
-      if (response.statusCode != 200) {
-        debugPrint('Hosted server error: ${response.statusCode}');
-        return null;
-      }
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final text = data['response'] as String?;
-      if (text == null || text.trim().isEmpty) return null;
-      // The trained model is the sole author whenever the server is online.
-      // A low-quality flag is logged for diagnostics but the model's own text
-      // is still returned - we never swap it for a curated reply while online.
-      if (!_looksUsable(text)) {
-        debugPrint('Hosted reply flagged low-quality; returning model output');
-      }
-      final raw = data['recommendations'];
-      final recommendations = raw is List
-          ? raw.whereType<String>().toList()
-          : const <String>[];
-      return WillowChatResult(text: text, recommendations: recommendations);
-    } catch (e) {
-      debugPrint('Hosted server unreachable: $e');
-      return null;
+    if (_activeBaseUrl == null) {
+      await healthCheck();
     }
+    final payload = jsonEncode({
+      'message': message,
+      'lang': _looksSinhala(message) ? 'si' : 'en',
+      'history': [
+        for (final t in turns) {'role': t.role, 'content': t.text},
+      ],
+      if (_identifiedMindState != null &&
+          (_userMessageCount >= 5 ||
+              turns.where((t) => t.role == 'user').length + 1 >= 5))
+        'mind_state': _identifiedMindState,
+      if (_identifiedMindState != null &&
+          (_userMessageCount >= 5 ||
+              turns.where((t) => t.role == 'user').length + 1 >= 5))
+        'identified_mind_state': _identifiedMindState,
+      if (_identifiedMindState != null &&
+          (_userMessageCount >= 5 ||
+              turns.where((t) => t.role == 'user').length + 1 >= 5))
+        'context':
+            'USER_MIND_STATE: $_identifiedMindState (identified after first $_userMessageCount messages)',
+    });
+
+    for (final candidate in _candidateBaseUrls) {
+      try {
+        final response = await http
+            .post(
+              Uri.parse('$candidate/chat'),
+              headers: {
+                'Content-Type': 'application/json',
+                'cf-access-client-id': 'bypass',
+                'User-Agent': 'MindCareApp/1.0',
+              },
+              body: payload,
+            )
+            .timeout(const Duration(seconds: 60));
+        if (response.statusCode != 200) {
+          debugPrint('Hosted server error on $candidate: ${response.statusCode}');
+          continue;
+        }
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final text = data['response'] as String?;
+        if (text == null || text.trim().isEmpty) continue;
+        _activeBaseUrl = candidate;
+        if (!_looksUsable(text)) {
+          debugPrint('Hosted reply flagged low-quality; returning model output');
+        }
+        final raw = data['recommendations'];
+        final recommendations = raw is List
+            ? raw.whereType<String>().toList()
+            : const <String>[];
+        return WillowChatResult(text: text, recommendations: recommendations);
+      } catch (e) {
+        debugPrint('Hosted server unreachable on $candidate: $e');
+      }
+    }
+    return null;
   }
 
   static bool _isSinhala(int r) => r >= 0x0d80 && r <= 0x0dff;
