@@ -17,6 +17,8 @@ import 'package:mind_care_app/data/local/notification_service.dart';
 import 'package:mind_care_app/data/local/preferences_service.dart';
 import 'package:mind_care_app/features/auth/bloc/auth_bloc.dart';
 import 'package:mind_care_app/features/settings/bloc/settings_cubit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mind_care_app/features/counsellor/data/doctor_seed_service.dart';
 import 'package:mind_care_app/services/auth/firebase_auth_service.dart';
 import 'package:mind_care_app/services/consent/consent_service.dart';
 import 'package:mind_care_app/services/analytics/firebase_analytics_service.dart';
@@ -157,6 +159,12 @@ Future<InitResult> _heavyInit(bool firebaseOk) async {
         crashlytics: crashlyticsService,
       ).catchError((e) => debugPrint('ServiceLocator failed: $e')),
     );
+    unawaited(DoctorSeedService.seedIfEmpty());
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) {
+        unawaited(DoctorSeedService.seedIfEmpty());
+      }
+    });
   }
 
   unawaited(
@@ -194,6 +202,12 @@ class MindCareApp extends StatefulWidget {
 class _MindCareAppState extends State<MindCareApp> {
   // Router is cached here — never recreated on state changes.
   GoRouter? _router;
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    unawaited(DoctorSeedService.seedIfEmpty());
+  }
 
   GoRouter _getRouter(bool onboardingComplete) {
     return _router ??= AppRouter.createRouter(onboardingComplete);

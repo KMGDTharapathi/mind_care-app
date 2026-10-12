@@ -21,12 +21,10 @@ service cloud.firestore {
 
     // Public doctor listings and hotlines
     match /doctors/{doctorId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if true;
     }
     match /hotlines/{hotlineId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if true;
     }
 
     // Appointment bookings

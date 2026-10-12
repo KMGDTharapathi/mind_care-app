@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../counsellor/data/doctor_seed_data.dart';
+import '../../counsellor/data/doctor_seed_service.dart';
 import '../models/nearby_doctor.dart';
 
 /// Fetches the doctors/counsellors stored in Firestore and maps them to
@@ -16,12 +18,36 @@ class FirestoreDoctorService {
   /// set to 0.0 for all entries. The [type] field is mapped from
   /// [specialization].
   Future<List<NearbyDoctor>> fetchAll() async {
-    final snapshot = await _firestore
+    await DoctorSeedService.seedIfEmpty();
+
+    var snapshot = await _firestore
         .collection('doctors')
         .where('is_verified', isEqualTo: true)
         .get();
 
-    final doctors = snapshot.docs.where((doc) => doc.id != '__seed_meta__').map(
+    final docs = snapshot.docs
+        .where((doc) => doc.id != '_seed_meta' && doc.id != '__seed_meta__')
+        .toList();
+    if (docs.isEmpty) {
+      return kRealDoctors.asMap().entries.map((entry) {
+        final data = entry.value;
+        final specialization =
+            data['specialization'] as String? ?? 'healthcare';
+        return NearbyDoctor(
+          id: 'seed_${entry.key}',
+          name: data['name'] as String? ?? 'Unknown',
+          address: data['address'] as String? ?? '',
+          lat: 0.0,
+          lng: 0.0,
+          distanceKm: 0.0,
+          phone: null,
+          website: null,
+          type: _specializationToType(specialization),
+        );
+      }).toList();
+    }
+
+    final doctors = docs.map(
       (doc) {
         final data = doc.data();
 
