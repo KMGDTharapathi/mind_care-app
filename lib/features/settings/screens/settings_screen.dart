@@ -198,7 +198,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () {
                       AppRouter.guestSessionActive = false;
                       context.read<AuthBloc>().add(AuthSignOut());
-                      context.go(AppRouter.signIn);
                     },
                   ),
                 ] else

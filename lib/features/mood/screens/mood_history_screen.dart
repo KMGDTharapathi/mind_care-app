@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/l10n/language_provider.dart';
+import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
 import 'package:mind_care_app/data/repositories/mood_repository.dart';
@@ -77,7 +78,18 @@ class _MoodHistoryScreenState extends State<MoodHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    _reloadEntries();
+  }
+
+  void _reloadEntries() {
     _entriesFuture = widget.repository.getLast7Days();
+  }
+
+  Future<void> _openMoodTracker() async {
+    await context.push(AppRouter.moodTracker);
+    if (mounted) {
+      setState(_reloadEntries);
+    }
   }
 
   @override
@@ -87,7 +99,7 @@ class _MoodHistoryScreenState extends State<MoodHistoryScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              _AppBar(),
+              _AppBar(onAddMood: _openMoodTracker),
               Expanded(
                 child: FutureBuilder<List<MoodEntry>>(
                   future: _entriesFuture,
@@ -109,6 +121,9 @@ class _MoodHistoryScreenState extends State<MoodHistoryScreen> {
 }
 
 class _AppBar extends StatelessWidget {
+  final VoidCallback onAddMood;
+  const _AppBar({required this.onAddMood});
+
   @override
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
@@ -120,11 +135,18 @@ class _AppBar extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.pop(),
           ),
-          Text(
-            s.moodHistory,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          Expanded(
+            child: Text(
+              s.moodHistory,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_reaction_outlined),
+            tooltip: 'Log Mood',
+            onPressed: onAddMood,
           ),
         ],
       ),
@@ -332,7 +354,7 @@ class _MoodChart extends StatelessWidget {
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final entry = dayMap[group.x];
                 if (entry == null) return null;
-                final mood = MoodEntry.mapLevelToMoodType(entry.level);
+                final mood = entry.mood;
                 return BarTooltipItem(
                   '${_moodEmoji(mood)} ${_moodLabel(mood)} (Level ${entry.level})',
                   TextStyle(
@@ -421,7 +443,7 @@ class _EntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = LanguageProvider.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final mood = MoodEntry.mapLevelToMoodType(entry.level);
+    final mood = entry.mood;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

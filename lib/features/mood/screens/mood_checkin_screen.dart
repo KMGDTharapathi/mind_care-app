@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/data/local/hive_service.dart';
 import 'package:mind_care_app/data/models/mood_entry.dart';
+import 'package:mind_care_app/data/repositories/firestore/firestore_mood_repository.dart';
 import 'package:mind_care_app/main.dart' show appLanguage;
 import 'package:uuid/uuid.dart';
 
@@ -47,6 +49,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
         timestamp: DateTime.now(),
       );
       await HiveService.moodEntries.put(entry.id, entry);
+      unawaited(FirestoreMoodRepository().saveMoodEntry(entry));
     } catch (_) {}
 
     await Future.delayed(const Duration(milliseconds: 600));
