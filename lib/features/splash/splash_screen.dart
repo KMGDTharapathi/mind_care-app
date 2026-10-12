@@ -4,7 +4,7 @@ import 'package:mind_care_app/core/router/app_router.dart';
 import 'package:mind_care_app/core/theme/app_colors.dart';
 import 'package:mind_care_app/core/widgets/leaf_background.dart';
 import 'package:mind_care_app/main.dart'
-    show hiveReadyCompleter, appUserName, splashSavedName;
+    show hiveReadyCompleter, appUserName, splashSavedName, appLanguage;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,13 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
         : null;
 
     if (!mounted) return;
-    if (savedName != null && savedName.isNotEmpty) {
-      // Returning user — show welcome-back onboarding screen
-      context.go('${AppRouter.onboarding}?returning=true');
-    } else {
-      // New user — full onboarding flow
-      context.go(AppRouter.onboarding);
-    }
+    context.go('${AppRouter.home}?lang=${appLanguage.value.languageCode}');
   }
 
   @override

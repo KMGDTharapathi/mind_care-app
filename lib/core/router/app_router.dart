@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mind_care_app/core/service_locator.dart';
 import 'package:mind_care_app/data/repositories/journal_repository.dart';
 import 'package:mind_care_app/data/repositories/firestore/firestore_mood_repository.dart';
@@ -83,35 +82,11 @@ class AppRouter {
   /// on a fresh launch.
   static bool guestSessionActive = false;
 
-  /// Creates a router with a redirect guard ensuring users are logged in
-  /// before accessing app screens.
+  /// Creates the application router starting at [splash].
   static GoRouter createRouter(bool onboardingComplete) {
     return GoRouter(
       initialLocation: splash,
       routes: _routes,
-      redirect: (context, state) {
-        final path = state.uri.path;
-        final user = FirebaseAuth.instance.currentUser;
-        // Only a real (non-anonymous) account counts as logged in on its own.
-        // Guest access requires an explicit "Continue as Guest" tap this
-        // session.
-        final hasAccount = user != null && !user.isAnonymous;
-        final loggedIn =
-            hasAccount || (guestSessionActive && user != null);
-
-        final isAuthScreen =
-            path == signIn ||
-            path == signUp ||
-            path == forgotPassword ||
-            path == splash ||
-            path == languageSelect ||
-            path == onboarding;
-
-        if (!loggedIn && !isAuthScreen) {
-          return signIn;
-        }
-        return null;
-      },
     );
   }
 
