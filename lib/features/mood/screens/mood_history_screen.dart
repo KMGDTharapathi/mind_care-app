@@ -356,7 +356,7 @@ class _MoodChart extends StatelessWidget {
                 if (entry == null) return null;
                 final mood = entry.mood;
                 return BarTooltipItem(
-                  '${_moodEmoji(mood)} ${_moodLabel(mood)} (Level ${entry.level})',
+                  '${_moodEmoji(mood)} ${_moodLabel(mood)}',
                   TextStyle(
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.w600,
@@ -460,7 +460,7 @@ class _EntryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_moodLabel(mood, isSinhala: s.isSinhala)} (Level ${entry.level})',
+                  _moodLabel(mood, isSinhala: s.isSinhala),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
